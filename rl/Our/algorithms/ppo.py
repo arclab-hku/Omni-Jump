@@ -32,18 +32,19 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from termcolor import cprint
-from rl.Dream.modules import ActorCritic
-from rl.Dream.storage import RolloutStorage
+from rl.Our.modules import ActorCritic
+from rl.Our.storage import RolloutStorage
 
-from rl.Dream.modules.actor_critic import CeEncoder
+from rl.Our.modules.actor_critic import DmEncoder
 import torch.nn.functional as F
+
 
 class PPO:
     actor_critic: ActorCritic
-    encoder_decoder: CeEncoder
+    dm_encoder: DmEncoder
     def __init__(self,
                  actor_critic,
-                 encoder_decoder,
+                 dm_encoder,
                  num_learning_epochs=1,
                  num_mini_batches=1,
                  clip_param=0.2,
@@ -76,9 +77,9 @@ class PPO:
         self.transition = RolloutStorage.Transition()
 
         ### MLP ###
-        self.encoder_decoder = encoder_decoder
-        self.encoder_decoder.to(self.device)
-        self.optimizer_encoder = optim.Adam(self.encoder_decoder.parameters(), lr=learning_rate)
+        self.dm_encoder = dm_encoder
+        self.dm_encoder.to(self.device)
+        self.optimizer_encoder = optim.Adam(self.dm_encoder.parameters(), lr=learning_rate)
 
 
         # PPO parameters
@@ -92,9 +93,9 @@ class PPO:
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
 
-    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, Hist_info_shape):
-        print("**********  Hist_info_shape  ", Hist_info_shape)
-        self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, Hist_info_shape, self.device)
+    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape):
+        # print("**********  priv_info_shape  ", action_shape)
+        self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, self.device)
 
     def test_mode(self):
         self.actor_critic.test()
@@ -121,8 +122,11 @@ class PPO:
 
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
+        self.transition.critic_observations = obs_dict['obs']
+
+        # RMA: need to record / update the vel info
         self.transition.priv_vel_info = obs_dict['priv_vel_info']
-        self.transition.proprio_hist = obs_dict['proprio_hist'].flatten(1)
+
 
         return self.transition.actions
     
@@ -146,30 +150,29 @@ class PPO:
         mean_value_loss = 0
         mean_surrogate_loss = 0
         mean_vel_loss = 0
-        mean_vae_loss = 0
-        mean_kl_loss = 0
+        mean_height_loss = 0
+        mean_contact_loss = 0
+
+
+
         if self.actor_critic.is_recurrent:
             generator = self.storage.reccurent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, proprio_hist_batch, priv_vel_info_batch, extrin_loss, extrin_gt_loss  in generator:
+            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, priv_vel_info_batch,extrin_loss, extrin_gt_loss  in generator:
 
                 obs_dict_batch = {
                     'obs': obs_batch,
-                    'proprio_hist': proprio_hist_batch,
+                    # 'priv_info': priv_info_batch,
                     'priv_vel_info': priv_vel_info_batch,
                 }
                 self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
                 actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
                 value_batch = self.actor_critic.evaluate(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
 
-                pre_feature = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
-                pre_next_obs = self.actor_critic.extrin_gt_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
-
-                kl_loss, logvar_z  = self.actor_critic.encoder_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
-
-                # extrin_gt_batch = torch.tanh(priv_vel_info_batch[:, 0:11])
+                extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
+                extrin_gt_batch = torch.tanh(priv_vel_info_batch[:, 0:11])
 
 
                 mu_batch = self.actor_critic.action_mean
@@ -212,19 +215,15 @@ class PPO:
 
                 loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
 
+                vel_loss = F.mse_loss(extrin_batch[:, 0:3], extrin_gt_batch[:, 0:3].detach())
+                height_loss = F.mse_loss(extrin_batch[:, 3:7], extrin_gt_batch[:, 3:7].detach())
+                contact_loss = F.mse_loss(extrin_batch[:, 7:11], extrin_gt_batch[:, 7:11].detach())
 
 
-                real_vel = torch.tanh(priv_vel_info_batch[:, 0:3])
-                pre_vel = pre_feature[:, 0:3]
-                vel_loss = F.mse_loss(pre_vel, real_vel.detach())
-
-                real_next_obs = torch.tanh(torch.cat([obs_batch[1:, ], priv_vel_info_batch[1:, 0:3]], dim=-1))
-                pre_next_obs_ = pre_next_obs[:-1, ]
-                vae_loss = F.mse_loss(pre_next_obs_, real_next_obs.detach())
-
-
-
-                loss_encoder = vel_loss + vae_loss + 0.1 * kl_loss
+                # vel_loss =    ((extrin_batch[:, 0:3] - extrin_gt_batch[:, 0:3].detach()) ** 2).mean()
+                # height_loss = ((extrin_batch[:, 3:7] - extrin_gt_batch[:, 3:7].detach()) ** 2).mean()
+                # contact_loss = ((extrin_batch[:, 7:11] - extrin_gt_batch[:, 7:11].detach()) ** 2).mean()
+                loss_encoder = vel_loss + height_loss + contact_loss
 
                 # Gradient step
                 self.optimizer.zero_grad()
@@ -233,14 +232,13 @@ class PPO:
                 loss.backward()
                 loss_encoder.backward()
                 nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
-                nn.utils.clip_grad_norm_(self.encoder_decoder.parameters(), self.max_grad_norm)
-
+                nn.utils.clip_grad_norm_(self.dm_encoder.parameters(), self.max_grad_norm)
                 self.optimizer_encoder.step()
                 self.optimizer.step()
 
                 mean_vel_loss += vel_loss.item()
-                mean_vae_loss += vae_loss.item()
-                mean_kl_loss  += kl_loss.item()
+                mean_height_loss += height_loss.item()
+                mean_contact_loss += contact_loss.item()
 
                 mean_value_loss += value_loss.item()
                 mean_surrogate_loss += surrogate_loss.item()
@@ -248,27 +246,11 @@ class PPO:
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
-
+        #
         # mean_vel_loss /= num_updates
-        # mean_vae_loss /= num_updates
-        # mean_kl_loss /= num_updates
+        # mean_height_loss /= num_updates
+        # mean_contact_loss /= num_updates
 
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_vae_loss, mean_kl_loss
-
-def loss_function(mu, logvar):
-    # BCE = F.binary_cross_entropy(recon_x, x.view(-1, 225), reduction='sum')
-
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-
-    return KLD
-
-def vae_loss(reconstructed, target, mean, std):
-    reconstruction_loss = nn.BCELoss(reduction='sum')(reconstructed, target)
-    kl_divergence = -0.5 * torch.sum(1 + torch.log(std.pow(2)) - mean.pow(2) - std.pow(2))
-    return reconstruction_loss + kl_divergence
+        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss

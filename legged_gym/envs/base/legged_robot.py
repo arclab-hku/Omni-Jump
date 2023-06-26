@@ -361,7 +361,14 @@ class LeggedRobot(BaseTask):
                                       self.dof_vel * self.obs_scales.dof_vel,
                                       self.actions,
                                       ), dim=-1)
-
+        elif self.cfg.env.train_type == "Our":
+            self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
+                                      self.projected_gravity,
+                                      self.commands[:, :3] * self.commands_scale,
+                                      (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
+                                      self.dof_vel * self.obs_scales.dof_vel,
+                                      self.actions,
+                                      ), dim=-1)
 
 
 
@@ -397,15 +404,16 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
             self.priv_vel_buf += (2 * torch.rand_like(self.priv_vel_buf) - 1) * self.noise_noise_vel
         # if self.cfg.env.train_type == "RMA" and self.cfg.env.stage == 2:
-        # concatenate to get full history
-        cur_obs_buf = self.obs_buf.clone().unsqueeze(1)
-        self.obs_buf_lag_history[:] = torch.cat([prev_obs_buf, cur_obs_buf], dim=1)
-        # refill the initialized buffers
-        # if reset, then the history buffer are all filled with the current observation
-        at_reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
-        self.obs_buf_lag_history[at_reset_env_ids, :, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1)
+        if self.cfg.env.train_type == "Dream" or "RMA":
+            # concatenate to get full history
+            cur_obs_buf = self.obs_buf.clone().unsqueeze(1)
+            self.obs_buf_lag_history[:] = torch.cat([prev_obs_buf, cur_obs_buf], dim=1)
+            # refill the initialized buffers
+            # if reset, then the history buffer are all filled with the current observation
+            at_reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
+            self.obs_buf_lag_history[at_reset_env_ids, :, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1)
 
-        self.proprio_hist_buf[:] = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
+            self.proprio_hist_buf[:] = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
 
 
 

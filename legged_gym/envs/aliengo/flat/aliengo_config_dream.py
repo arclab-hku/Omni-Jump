@@ -5,10 +5,11 @@ class AliengoBaseCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
         num_observations = 45
         num_vel_obs = 198
-        train_type = "RMA"  # standard, RMA, EST, Dream
+        train_type = "Dream"  # standard, RMA, EST, Dream
 
     class terrain(LeggedRobotCfg.terrain):
-        mesh_type = 'trimesh'
+        mesh_type = 'plane'
+        # "plane"
         # 'trimesh'
         measure_heights = True
         measure_obs_heights = False
@@ -147,6 +148,7 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
     class RMA(LeggedRobotCfgPPO.RMA):
         export_policy = False
         priv_mlp_units = [128, 64, 19]
+        decoder_mlp_units = [64, 128, 48]
         priv_info = False
         priv_info_dim = 187
         proprio_adapt = False

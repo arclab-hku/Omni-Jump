@@ -15,21 +15,25 @@ class CeEncoder(nn.Module):
 
         self.encoder = nn.Sequential(
             nn.Linear(num_encoder_obs, encoder_hidden_dims[0]),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1]),
-            nn.ReLU(),
+            nn.ELU(),
         )
 
+        # self.fc_mean = F.relu(nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]))
+        # self.fc_logvar = F.relu((nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]))
+        # self.encoder = nn.Sequential(*modules)
         self.fc_mean = nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2])
         self.fc_logvar = nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2])
 
+
         self.decoder = nn.Sequential(
             nn.Linear(encoder_hidden_dims[2], decoder_hidden_dims[0]),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Linear(decoder_hidden_dims[0], decoder_hidden_dims[1]),
-            nn.ReLU(),
+            nn.ELU(),
             nn.Linear(decoder_hidden_dims[1], decoder_hidden_dims[2]),
-            nn.Sigmoid()
+
         )
 
     def encode(self, x):
@@ -55,31 +59,33 @@ class CeEncoder(nn.Module):
         return next_obs_feature, z_feature, mean, logvar
     def loss_function1(self, x, y, mu, log_var):
         recon_loss = torch.sum(torch.mean(torch.square(x - y), dim=0))
-
-
         kl_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
         loss = recon_loss + self.kl_lambda * kl_loss
 
         return loss
     def loss_function(self, mu, log_var):
-        kl_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
+        # kl_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
+        kl_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+        # kl_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
 
         return kl_loss
 
 class CeEncoder1(nn.Module):
-    def __init__(self):
-        super(CeEncoder1, self).__init__()
+    # def __init__(self):
+    #     super(CeEncoder1, self).__init__()
 
-        self.fc1 = nn.Linear(225, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc31 = nn.Linear(64, 19)
-        self.fc32 = nn.Linear(64, 19)
+    def __init__(self, num_encoder_obs, encoder_hidden_dims, decoder_hidden_dims):
+        super().__init__()
+        self.fc1 = nn.Linear(num_encoder_obs, encoder_hidden_dims[0])
+        self.fc2 = nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1])
+        self.fc31 = nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2])
+        self.fc32 = nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2])
 
 
 
-        self.fc3 = nn.Linear(19, 64)
-        self.fc4 = nn.Linear(64, 128)
-        self.fc5 = nn.Linear(128, 48)
+        self.fc3 = nn.Linear(encoder_hidden_dims[2], decoder_hidden_dims[0])
+        self.fc4 = nn.Linear(decoder_hidden_dims[0], decoder_hidden_dims[1])
+        self.fc5 = nn.Linear(decoder_hidden_dims[1], decoder_hidden_dims[2])
 
     def encode(self, x):
         h1 = F.relu(self.fc1(x))
@@ -279,7 +285,7 @@ class ActorCritic(nn.Module):
 
     def encoder_loss(self, obs_dict, **kwargs):
         # value = self.critic(critic_observations)
-        _, _, _, _, _,mu, logvar = self._actor_critic(obs_dict)
+        _, _, _, _, _, mu, logvar = self._actor_critic(obs_dict)
 
         return mu, logvar
     def _actor_critic(self, obs_dict):
