@@ -41,7 +41,6 @@ from rl.RMA.runners import PPOPolicyRunner
 from rl.RMA.runners import ProprioAdaptPolicyRunner
 from rl.EST.runners import ESTPolicyRunner
 from rl.Dream.runners import DreamPolicyRunner
-
 from rl.Our.runners import OurPolicyRunner
 
 
@@ -126,9 +125,9 @@ class TaskRegistry:
         )
         return env, env_cfg
 
-    def make_alg_runner(
-        self, env, name=None, args=None, train_cfg=None, log_root="default"
-    ) -> Tuple[OnPolicyRunner, LeggedRobotCfgPPO]:
+    # def make_alg_runner( self, env, name=None, args=None, train_cfg=None, log_root="default" ) -> Tuple[OnPolicyRunner, LeggedRobotCfgPPO]:
+    def make_alg_runner(self, env, name=None, args=None, train_cfg=None, log_root="default"):
+
         """ Creates the training algorithm  either from a registered namme or from the provided config file.
 
         Args:
@@ -188,13 +187,13 @@ class TaskRegistry:
         runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)
         print("**************** RUNNER ", runner)
 
-        # save resume path before creating a new log_dir
+
+        #save resume path before creating a new log_dir
         resume = train_cfg.runner.resume
         if resume:
             # load previously trained model
+            # resume_path = get_load_path(log_root, load_run=train_cfg.runner.load_run, checkpoint=train_cfg.runner.checkpoint)
             resume_path = get_load_path(os.path.join(log_dir, "stage1_nn" if args.s_flag == "1" else "stage2_nn"), checkpoint=args.checkpoint_model)
-
-            print(f"Loading model from: {log_dir,args.checkpoint_model, resume_path}")
             runner.load(resume_path)
         return runner, train_cfg
 

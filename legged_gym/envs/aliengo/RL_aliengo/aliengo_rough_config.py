@@ -150,7 +150,6 @@ class AliengoRoughCfg(LeggedRobotCfg):
         enableMotorStrength = True
         enableMeasuredHeight = True
         enableMeasuredVel = True
-        enableForce = True
 
 class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
     class obsSize(LeggedRobotCfgPPO.obsSize):
@@ -158,9 +157,12 @@ class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
 
     class runner(LeggedRobotCfgPPO.runner):
         alg = "ppo"
+        run_name = "RoughTerrainDMEnc"
         experiment_name = "base_rough"
+        load_run = -1
         resume = False
-        max_iterations = 1000  # number of policy updates
+        resume_path = "rough.pt" # rough.pt is the trained rough terrain policy.  Keep this line if you want to eval this policy via play.py.  Comment this line if you wish to train a rough terrain policy from scratch
+        max_iterations = 1500  # number of policy updates
         save_interval = 50  # check for potential saves every this many iterations
         export_policy = False
 

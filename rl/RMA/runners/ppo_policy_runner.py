@@ -108,8 +108,6 @@ class PPOPolicyRunner:
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(it)))
                 self.save(os.path.join(self.nn_dir, 'last.pt'))
-
-
             ep_infos.clear()
         
         self.current_learning_iteration += num_learning_iterations

@@ -76,13 +76,13 @@ class OnPolicyRunner:
 
         # Log
         self.log_dir = log_dir
-        self.writer = None
-
+        # self.writer = None
         self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
         self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
 
         os.makedirs(self.nn_dir, exist_ok=True)
         os.makedirs(self.tb_dir, exist_ok=True)
+        self.writer = SummaryWriter(log_dir=self.tb_dir, flush_secs=10)
         self.tot_timesteps = 0
         self.tot_time = 0
         self.current_learning_iteration = 0
@@ -91,14 +91,11 @@ class OnPolicyRunner:
     
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
-        if self.log_dir is not None and self.writer is None:
-            self.writer = SummaryWriter(log_dir=self.tb_dir, flush_secs=10)
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
         obs_dist = self.env.get_observations()
-        privileged_obs = None
-        critic_obs = privileged_obs if privileged_obs is not None else obs_dist['obs']
 
+        critic_obs = obs_dist['obs']
         obs = obs_dist['obs']
         obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
         self.alg.actor_critic.train() # switch to train mode (for dropout for example)
@@ -117,12 +114,10 @@ class OnPolicyRunner:
                 for i in range(self.num_steps_per_env):
                     actions = self.alg.act(obs, critic_obs)
                     obs_dist,  rewards, dones, infos = self.env.step(actions)
-                    critic_obs = privileged_obs if privileged_obs is not None else obs
-                    obs, critic_obs, rewards, dones = obs_dist['obs'].to(self.device), critic_obs.to(self.device), rewards.to(self.device), dones.to(self.device)
+                    obs, critic_obs, rewards, dones = obs_dist['obs'].to(self.device), obs_dist['obs'].to(self.device), rewards.to(self.device), dones.to(self.device)
                     self.alg.process_env_step(rewards, dones, infos)
                     
                     if self.log_dir is not None:
-
                         if 'episode' in infos:
                             ep_infos.append(infos['episode'])
                         cur_reward_sum += rewards

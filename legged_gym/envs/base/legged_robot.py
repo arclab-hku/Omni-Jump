@@ -46,7 +46,7 @@ from legged_gym.utils.terrain import Terrain
 from .legged_robot_config import LeggedRobotCfg
 import time
 import pickle
-
+from termcolor import cprint
 
 SAVE_IMG = False
 MAX_DEPTH = 10
@@ -183,7 +183,7 @@ class LeggedRobot(BaseTask):
 
 
         self.obs_dict['obs'] = self.obs_buf
-        self.obs_dict['privileged_info'] = self.num_privileged_obs
+        self.obs_dict['privileged_info'] = self.privileged_obs_buf.to(self.device)
         self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
         self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device)
         return self.obs_dict, self.rew_buf, self.reset_buf, self.extras
@@ -447,12 +447,35 @@ class LeggedRobot(BaseTask):
                                       ), dim=-1)
 
 
-        if self.cfg.env.measure_obs_heights:
+        # if self.cfg.env.measure_obs_heights:
+        #     heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1,
+        #                          1.0) * self.obs_scales.height_measurements
+        #     self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+
+
+
+        if self.enable_priv_enableMeasuredVel:
+            self.privileged_obs_buf = self.base_lin_vel * self.obs_scales.lin_vel
+
+        if self.enable_priv_measured_height:
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1,
-                                 1.0) * self.obs_scales.height_measurements
-            self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+                                 1.) * self.obs_scales.height_measurements
+            if self.cfg.env.measure_obs_heights:
+                self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+
+            contact = self.contact_forces[:, self.feet_indices, 2] > 1.
+            self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
+                                           self.foot_height,
+                                           contact,
+                                           heights,
+                                           ), dim=-1)
+        if self.enable_priv_disturbance_force:
+            self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
+                                           self.disturbance_force,
+                                           ), dim=-1)
 
 
+        # cprint(f"reward: {self.obs_buf.shape, self.privileged_obs_buf.shape}", 'green', attrs=['bold'])
 
         self.count += 1
         if self.cfg.env.train_type == "lbc":
@@ -1270,6 +1293,8 @@ class LeggedRobot(BaseTask):
                         # ! set gym's PD controller
                         dof_prop['stiffness'][i_dof] *= rand_motor_strength  # self.Kp
                         dof_prop['damping'][i_dof] *= rand_motor_strength  # self.Kd
+                        # cprint(f"reward: {rand_motor_strength, dof_prop['damping'][i_dof], dof_prop['stiffness'][i_dof]}", 'green', attrs=['bold'])
+
                         motor_strength.append(rand_motor_strength)
                     self.gym.set_actor_dof_properties(env_handle, actor_handle, dof_prop)
                 if self.cfg.env.train_type == "RMA":
