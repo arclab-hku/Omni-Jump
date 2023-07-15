@@ -113,7 +113,9 @@ class LeggedRobotCfg(BaseConfig):
         rot = [0.0, 0.0, 0.0, 1.0]  # x,y,z,w [quat]
         lin_vel = [0.0, 0.0, 0.0]  # x,y,z [m/s]
         ang_vel = [0.0, 0.0, 0.0]  # x,y,z [rad/s]
-
+        default_joint_angles = {  # target angles when action = 0.0
+            "joint_a": 0.,
+            "joint_b": 0.}
     class control:
         control_type = "P"  # P: position, V: velocity, T: torques
         # PD Drive parameters:
@@ -157,6 +159,12 @@ class LeggedRobotCfg(BaseConfig):
         push_interval_s = 15
         max_push_vel_xy = 1.0
 
+        randomize_center = True
+        added_center_range = [-0.05, 0.05]
+
+        randomize_motor_strength = True
+        added_motor_strength= [1.0, 1.0]
+
     class rewards:
         class scales:
             termination = -0.0
@@ -185,6 +193,7 @@ class LeggedRobotCfg(BaseConfig):
         soft_dof_vel_limit = 1.0
         soft_torque_limit = 1.0
         base_height_target = 1.0
+        foot_height_target = 1.0
         max_contact_force = 100.0  # forces above this value are penalized
 
     class evals:
@@ -247,24 +256,12 @@ class LeggedRobotCfg(BaseConfig):
 
     class randomization:
         # Randomization Property
-        randomizeMass = False
-        randomizeMassLower = -0.25
-        randomizeMassUpper = 0.25
-        randomizeCOM = False
-        randomizeCOMLower = -0.01
-        randomizeCOMUpper = 0.01
-        randomizeFriction = False
-        randomizeFrictionLower = 0.5
-        randomizeFrictionUpper = 1.25
         randomizeMotorStrength = False
         randomizeMotorStrengthLower = 0.9
         randomizeMotorStrengthUpper = 1.1
         jointNoiseScale = 0.02
 
     class privInfo:
-        enableMass = False
-        enableCOM = False
-        enableFriction = False
         enableMotorStrength = False
         enableMeasuredHeight = False
         enableMeasuredVel = False
@@ -276,7 +273,7 @@ class LeggedRobotCfgPPO(BaseConfig):
 
     class obsSize:
         encoder_hidden_dims = None
-    
+
     class lbc:
         pass
 
@@ -322,11 +319,10 @@ class LeggedRobotCfgPPO(BaseConfig):
         resume_path = None  # updated from load_run and chkpt
         eval_baseline = False
         num_test_envs = 50
-
+        export_policy = False
 
 
     class Encoder:
-        export_policy = False
         priv_mlp_units = [256, 128, 8]
         decoder_mlp_units = [64, 128, 48]
         priv_info = False

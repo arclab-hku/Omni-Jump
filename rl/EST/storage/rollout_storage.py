@@ -31,7 +31,7 @@
 import torch
 import numpy as np
 
-from rsl_rl.utils import split_and_pad_trajectories
+from rl.EST.utils import split_and_pad_trajectories
 
 class RolloutStorage:
     class Transition:
@@ -46,7 +46,7 @@ class RolloutStorage:
             self.action_mean = None
             self.action_sigma = None
             self.hidden_states = None
-            self.priv_vel_info = None  # vel fixed value
+            self.privileged_info = None  # vel fixed value
             self.extrin_loss = None  # RMA fixed value
             self.extrin_gt_loss = None  # vel fixed value
         def clear(self):
@@ -84,8 +84,8 @@ class RolloutStorage:
         self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
 
 
-        # For Vel
-        self.priv_vel_info = torch.zeros(num_transitions_per_env, num_envs, 198, device=self.device)
+        # For privileged_info
+        self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
 
         self.num_transitions_per_env = num_transitions_per_env
         self.num_envs = num_envs
@@ -114,7 +114,7 @@ class RolloutStorage:
 
 
         # For Vel
-        self.priv_vel_info[self.step].copy_(transition.priv_vel_info)
+        self.privileged_info[self.step].copy_(transition.privileged_info)
 
         # For extrin_loss
         self.extrin_loss[self.step].copy_(transition.extrin_loss)
@@ -191,7 +191,7 @@ class RolloutStorage:
 
 
         # For Vel
-        priv_vel_info = self.priv_vel_info.flatten(0, 1)
+        privileged_info = self.privileged_info.flatten(0, 1)
 
         # For RMA
         extrin_loss = self.extrin_loss.flatten(0, 1)
@@ -214,12 +214,12 @@ class RolloutStorage:
                 old_mu_batch = old_mu[batch_idx]
                 old_sigma_batch = old_sigma[batch_idx]
 
-                priv_vel_info_batch = priv_vel_info[batch_idx]
+                privileged_info_batch = privileged_info[batch_idx]
 
 
 
                 yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
-                      old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, priv_vel_info_batch, \
+                      old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, privileged_info_batch, \
                       extrin_loss, extrin_gt_loss
 
     # for RNNs only

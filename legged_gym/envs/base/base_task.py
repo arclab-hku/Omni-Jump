@@ -65,9 +65,6 @@ class BaseTask:
         self.num_obs = cfg.env.num_observations
         self.num_privileged_obs = cfg.env.num_privileged_obs
         self.num_histroy_obs = cfg.env.num_histroy_obs
-        # self.num_env_priv_obs = cfg.env.num_env_priv_obs
-
-
 
 
         # optimization flags for pytorch JIT

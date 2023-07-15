@@ -53,8 +53,8 @@ class AliengoRoughCfg(LeggedRobotCfg):
         num_privileged_obs = None  # 187
         train_type = "standard"  # standard, priv, lbc, standard, RMA, EST, Dream
 
-        follow_cam=False
-        float_cam=False
+        follow_cam = False
+        float_cam = False
 
         measure_obs_heights = True
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
@@ -103,11 +103,20 @@ class AliengoRoughCfg(LeggedRobotCfg):
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
         added_mass_range = [-5.0, 5.0]
+        randomize_friction = True
+        friction_range = [0.2, 1.25]
+
+        randomize_center = True
+        center_range = [-0.05, 0.05]
+
+        randomize_motor_strength = True
+        added_motor_strength = [0.9, 1.1]
 
     class rewards(LeggedRobotCfg.rewards):
         base_height_target = 0.5
         max_contact_force = 500.0
         only_positive_rewards = True
+        foot_height_target = 0.09
 
         class scales(LeggedRobotCfg.rewards.scales):
             tracking_lin_vel = 1.0
@@ -116,18 +125,24 @@ class AliengoRoughCfg(LeggedRobotCfg):
             ang_vel_xy = -0.05
             orientation = -0.0
             torques = -0.00001
-            dof_vel = -0.0
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
-            action_rate = -0.01
+
+            action_rate = -0.01 / 3
+
+            dream_smoothness = -0.001
+            power_joint = -1e-4
+            foot_clearance = -0.01
+            foot_height = -0.01
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
         feet_step = True
         crash_freq = True
         any_contacts = True
+
     class randomization(LeggedRobotCfg.randomization):
         # Randomization Property
         randomizeMass = True
@@ -150,29 +165,24 @@ class AliengoRoughCfg(LeggedRobotCfg):
         enableMotorStrength = True
         enableMeasuredHeight = True
         enableMeasuredVel = True
+        enableForce = True
+
 
 class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
-    class obsSize(LeggedRobotCfgPPO.obsSize):
-        encoder_hidden_dims = [128, 64, 32]
 
     class runner(LeggedRobotCfgPPO.runner):
-        alg = "ppo"
-        run_name = "RoughTerrainDMEnc"
-        experiment_name = "base_rough"
-        load_run = -1
+        run_name = ''
+        max_iterations = 1000  # number of policy updates
         resume = False
-        resume_path = "rough.pt" # rough.pt is the trained rough terrain policy.  Keep this line if you want to eval this policy via play.py.  Comment this line if you wish to train a rough terrain policy from scratch
-        max_iterations = 1500  # number of policy updates
-        save_interval = 50  # check for potential saves every this many iterations
+        save_interval = 200  # check for potential saves every this many iterations
+        experiment_name = 'aliengo'
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        export_policy = False
-        priv_mlp_units = [128, 64, 8]
+
+        priv_mlp_units = [258, 128, 11]
         priv_info = False
         priv_info_dim = 17
         proprio_adapt = False
         checkpoint_model = None
-        proprio_adapt_out_dim = 8
-        HistoryLen = 5
-        velLen = 3
+        proprio_adapt_out_dim = 11

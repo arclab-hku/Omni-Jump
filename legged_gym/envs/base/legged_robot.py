@@ -153,11 +153,12 @@ class LeggedRobot(BaseTask):
         Args:
             actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
         """
-        # print("in step")
+
         clip_actions = self.cfg.normalization.clip_actions
         self.actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
         # step physics and render each frame
         self.render()
+
         for _ in range(self.cfg.control.decimation):
             self.torques = self._compute_torques(self.actions).view(self.torques.shape)
             self.gym.set_dof_actuation_force_tensor(
@@ -447,28 +448,25 @@ class LeggedRobot(BaseTask):
                                       ), dim=-1)
 
 
-        # if self.cfg.env.measure_obs_heights:
-        #     heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1,
-        #                          1.0) * self.obs_scales.height_measurements
-        #     self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
-
 
 
         if self.enable_priv_enableMeasuredVel:
             self.privileged_obs_buf = self.base_lin_vel * self.obs_scales.lin_vel
-
-        if self.enable_priv_measured_height:
-            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1,
-                                 1.) * self.obs_scales.height_measurements
-            if self.cfg.env.measure_obs_heights:
-                self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
-
             contact = self.contact_forces[:, self.feet_indices, 2] > 1.
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
                                            self.foot_height,
                                            contact,
-                                           heights,
                                            ), dim=-1)
+        if self.enable_priv_measured_height:
+            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.5 - self.measured_heights, -1,
+                                 1.) * self.obs_scales.height_measurements
+            self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
+                                                 heights,
+                                                 ), dim=-1)
+            if self.cfg.env.measure_obs_heights:
+                self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+
+
         if self.enable_priv_disturbance_force:
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
                                            self.disturbance_force,
@@ -588,6 +586,30 @@ class LeggedRobot(BaseTask):
         self.gym.viewer_camera_look_at(self.viewer, None, cam_pos, cam_target)
 
     # ------------- Callbacks --------------
+
+    def _process_rigid_body_props(self, props, env_id):
+
+        # randomize base mass
+        if self.cfg.domain_rand.randomize_base_mass:
+            rng = self.cfg.domain_rand.added_mass_range
+            props[0].mass += np.random.uniform(rng[0], rng[1])
+
+            if self.cfg.env.train_type == "RMA":
+                self._update_priv_buf(env_id=env_id, name='com', value=props[0].mass,
+                                      lower=rng[0], upper=rng[1])
+        return props
+
+    def _process_rigid_com_props(self, props, env_id):
+        # randomize center
+        if self.cfg.domain_rand.randomize_center:
+            center = self.cfg.domain_rand.added_center_range
+            com = [np.random.uniform(center[0], center[1]), np.random.uniform(center[0], center[1])]
+            props[0].com.x, props[0].com.y = com
+            if self.cfg.env.train_type == "RMA":
+                self._update_priv_buf(env_id=env_id, name='com', value=com,
+                                      lower=center[0], upper=center[1])
+        return props
+
     def _process_rigid_shape_props(self, props, env_id):
         """Callback allowing to store/change/randomize the rigid shape properties of each environment.
             Called During environment creation.
@@ -601,9 +623,9 @@ class LeggedRobot(BaseTask):
             [List[gymapi.RigidShapeProperties]]: Modified rigid shape properties
         """
         if self.cfg.domain_rand.randomize_friction:
+            friction_range = self.cfg.domain_rand.friction_range
             if env_id == 0:
                 # prepare friction randomization
-                friction_range = self.cfg.domain_rand.friction_range
                 num_buckets = 64
                 bucket_ids = torch.randint(0, num_buckets, (self.num_envs, 1))
                 friction_buckets = torch_rand_float(
@@ -613,6 +635,11 @@ class LeggedRobot(BaseTask):
 
             for s in range(len(props)):
                 props[s].friction = self.friction_coeffs[env_id]
+
+            if self.cfg.env.train_type == "RMA":
+                self._update_priv_buf(env_id=env_id, name='friction', value=props[0].friction,
+                                  lower=friction_range[0], upper=friction_range[1])
+
         return props
 
     def _process_dof_props(self, props, env_id):
@@ -655,20 +682,10 @@ class LeggedRobot(BaseTask):
                 self.dof_pos_limits[i, 1] = (
                     m + 0.5 * r * self.cfg.rewards.soft_dof_pos_limit
                 )
+
         return props
 
-    def _process_rigid_body_props(self, props, env_id):
-        # if env_id==0:
-        #     sum = 0
-        #     for i, p in enumerate(props):
-        #         sum += p.mass
-        #         print(f"Mass of body {i}: {p.mass} (before randomization)")
-        #     print(f"Total mass {sum} (before randomization)")
-        # randomize base mass
-        if self.cfg.domain_rand.randomize_base_mass:
-            rng = self.cfg.domain_rand.added_mass_range
-            props[0].mass += np.random.uniform(rng[0], rng[1])
-        return props
+
 
     def _post_physics_step_callback(self):
         """Callback called before computing terminations, rewards, and observations
@@ -749,6 +766,8 @@ class LeggedRobot(BaseTask):
         # pd controller
         actions_scaled = actions * self.cfg.control.action_scale
         control_type = self.cfg.control.control_type
+
+
         if control_type == "P":
             torques = (
                 self.p_gains * (actions_scaled + self.default_dof_pos - self.dof_pos)
@@ -1017,16 +1036,19 @@ class LeggedRobot(BaseTask):
         self.default_dof_pos = torch.zeros(
             self.num_dof, dtype=torch.float, device=self.device, requires_grad=False
         )
+
         for i in range(self.num_dofs):
             name = self.dof_names[i]
             angle = self.cfg.init_state.default_joint_angles[name]
             self.default_dof_pos[i] = angle
+
             found = False
             for dof_name in self.cfg.control.stiffness.keys():
                 if dof_name in name:
                     self.p_gains[i] = self.cfg.control.stiffness[dof_name]
                     self.d_gains[i] = self.cfg.control.damping[dof_name]
                     found = True
+
             if not found:
                 self.p_gains[i] = 0.0
                 self.d_gains[i] = 0.0
@@ -1034,6 +1056,7 @@ class LeggedRobot(BaseTask):
                     print(
                         f"PD gain of joint {name} were not defined, setting them to zero"
                     )
+
         self.default_dof_pos = self.default_dof_pos.unsqueeze(0)
 
     def _prepare_reward_function(self):
@@ -1239,9 +1262,7 @@ class LeggedRobot(BaseTask):
             )
             start_pose.p = gymapi.Vec3(*pos)
 
-            rigid_shape_props = self._process_rigid_shape_props(
-                rigid_shape_props_asset, i
-            )
+            rigid_shape_props = self._process_rigid_shape_props(rigid_shape_props_asset, i)
             self.gym.set_asset_rigid_shape_properties(robot_asset, rigid_shape_props)
             actor_handle = self.gym.create_actor(
                 env_handle,
@@ -1256,71 +1277,11 @@ class LeggedRobot(BaseTask):
             self.gym.set_actor_dof_properties(env_handle, actor_handle, dof_props)
             body_props = self.gym.get_actor_rigid_body_properties(env_handle, actor_handle)
             body_props = self._process_rigid_body_props(body_props, i)
+            body_props = self._process_rigid_com_props(body_props, i)
+
             self.gym.set_actor_rigid_body_properties(env_handle, actor_handle, body_props, recomputeInertia=True)
-
-
-
-            # ! add privilige env information
-
-            if self.enable_priv_mass:
-                if self.cfg.env.train_type == "RMA":
-                    prop = self.gym.get_actor_rigid_body_properties(env_handle, actor_handle)
-                    self._update_priv_buf(env_id=i, name='mass', value=prop[0].mass,
-                                      lower=self.randomize_mass_lower, upper=self.randomize_mass_upper)
-
-            if self.enable_priv_com:
-                com = [0, 0]
-                if self.randomize_com:
-                    prop = self.gym.get_actor_rigid_body_properties(env_handle, actor_handle)
-                    com = [np.random.uniform(self.randomize_com_lower, self.randomize_com_upper),
-                           np.random.uniform(self.randomize_com_lower, self.randomize_com_upper)
-                           ]
-
-                    prop[0].com.x, prop[0].com.y = com
-                    self.gym.set_actor_rigid_body_properties(env_handle, actor_handle, prop)
-                if self.cfg.env.train_type == "RMA":
-                    self._update_priv_buf(env_id=i, name='com', value=com,
-                                      lower=self.randomize_com_lower, upper=self.randomize_com_upper)
-
-            if self.enable_priv_motor_strength:
-                motor_strength = []
-                if self.randomize_motor_strength:
-                    dof_prop = self.gym.get_actor_dof_properties(env_handle, actor_handle)
-                    for i_dof in range(self.num_dof):
-                        rand_motor_strength = np.random.uniform(self.randomize_motor_strength_lower,
-                                                                self.randomize_motor_strength_upper)
-
-                        # ! set gym's PD controller
-                        dof_prop['stiffness'][i_dof] *= rand_motor_strength  # self.Kp
-                        dof_prop['damping'][i_dof] *= rand_motor_strength  # self.Kd
-                        # cprint(f"reward: {rand_motor_strength, dof_prop['damping'][i_dof], dof_prop['stiffness'][i_dof]}", 'green', attrs=['bold'])
-
-                        motor_strength.append(rand_motor_strength)
-                    self.gym.set_actor_dof_properties(env_handle, actor_handle, dof_prop)
-                if self.cfg.env.train_type == "RMA":
-                    self._update_priv_buf(env_id=i, name='motor_strength', value=motor_strength,
-                                      lower=self.randomize_motor_strength_lower,
-                                      upper=self.randomize_motor_strength_upper)
-
-            if self.enable_priv_friction:
-                friction = 1.0
-                if self.randomize_friction:
-                    rand_friction = np.random.uniform(self.randomize_friction_lower, self.randomize_friction_upper)
-                    rigid_shape_props = self.gym.get_actor_rigid_shape_properties(env_handle, actor_handle)
-                    for p in rigid_shape_props:
-                        p.friction = rand_friction
-                    self.gym.set_actor_rigid_shape_properties(env_handle, actor_handle, rigid_shape_props)
-                    friction = rand_friction
-                if self.cfg.env.train_type == "RMA":
-                    self._update_priv_buf(env_id=i, name='friction', value=friction,
-                                      lower=self.randomize_friction_lower, upper=self.randomize_friction_upper)
-
-
-
             self.envs.append(env_handle)
             self.actor_handles.append(actor_handle)
-
-        # ! add privilige information
 
         self.feet_indices = torch.zeros(
             len(feet_names), dtype=torch.long, device=self.device, requires_grad=False
@@ -1534,28 +1495,14 @@ class LeggedRobot(BaseTask):
 
     # ------------ add buffer functions----------------
     def _setup_domain_rand_config(self, rand_config):
-        self.randomize_mass = rand_config.randomizeMass
-        self.randomize_mass_lower = rand_config.randomizeMassLower
-        self.randomize_mass_upper = rand_config.randomizeMassUpper
-
-        self.randomize_com = rand_config.randomizeCOM
-        self.randomize_com_lower = rand_config.randomizeCOMLower
-        self.randomize_com_upper = rand_config.randomizeCOMUpper
-        self.randomize_friction = rand_config.randomizeFriction
-        self.randomize_friction_lower = rand_config.randomizeFrictionLower
-        self.randomize_friction_upper = rand_config.randomizeFrictionUpper
         self.randomize_motor_strength = rand_config.randomizeMotorStrength
         self.randomize_motor_strength_lower = rand_config.randomizeMotorStrengthLower
         self.randomize_motor_strength_upper = rand_config.randomizeMotorStrengthUpper
-        self.joint_noise_scale = rand_config.jointNoiseScale
 
     def _setup_priv_option_config(self, p_config):
-        self.enable_priv_mass = p_config.enableMass
-        self.enable_priv_friction = p_config.enableFriction
-        self.enable_priv_com = p_config.enableCOM
         self.enable_priv_motor_strength = p_config.enableMotorStrength
-        self.enable_priv_measured_height = p_config.enableMeasuredHeight
         self.enable_priv_enableMeasuredVel = p_config.enableMeasuredVel
+        self.enable_priv_measured_height = p_config.enableMeasuredHeight
         self.enable_priv_disturbance_force = p_config.enableForce
 
     def _update_priv_buf(self, env_id, name, value, lower=None, upper=None):
@@ -1837,3 +1784,55 @@ class LeggedRobot(BaseTask):
         step = self._eval_feet_step()
 
         return torch.logical_or(stumble, step)
+
+
+
+    ############## Dream Functions ########
+    def _reward_power_joint(self):
+        a = torch.norm(self.torques[:, ], p=1, dim=1)
+        b = torch.norm(self.dof_vel[:, ], p=1, dim=1)
+        r = a * b
+        return r
+
+    def _reward_dream_smoothness(self):
+        return torch.sum(torch.square(self.actions - 2 * self.last_actions + self.last_actions_2), dim=1)
+
+    def _reward_power_distribution(self):
+        r = torch.mul(self.torques[:, ], self.dof_vel[:, ])
+        # d = torch.square(r)
+
+        c = torch.var(r, dim=1)
+        d = torch.sum(torch.abs(r), dim=1)
+        # cprint(f"reward: {self.torques.shape, r.shape, d.shape,c, d, c.shape}", 'green', attrs=['bold'])
+        return d
+
+        # return d
+
+    def _reward_foot_clearance(self):
+        self.re_foot = torch.zeros_like(self.foot_height)
+        for i in range(0, 4):
+            real_foot_height = torch.mean(self.foot_height[:, i].unsqueeze(1) - self.measured_heights, dim=1)
+            c = torch.sum(torch.abs(self.foot_vel[:, 2 * i: 2 * i + 2]), dim=1)
+            b = torch.norm(self.foot_vel[:, 2 * i: 2 * i + 2], p=1, dim=1)
+            self.re_foot[:, i] = torch.mul(torch.square(real_foot_height - self.cfg.rewards.foot_height_target), c)
+
+        foot_reward = torch.sum(self.re_foot, dim=1)
+        # cprint(f"foot: { self.re_foot,  foot_reward}", 'green', attrs=['bold'])
+
+        return foot_reward
+
+    def _reward_foot_height(self):
+        self.re_foot = torch.zeros_like(self.foot_height)
+        for i in range(0, 4):
+            real_foot_height = torch.mean(self.foot_height[:, i].unsqueeze(1) - self.measured_heights, dim=1)
+
+            self.re_foot[:, i] = torch.square(real_foot_height - self.cfg.rewards.foot_height_target)
+
+        # a = torch.square(self.foot_height[:, ])
+        b = torch.sum(torch.square(self.re_foot[:, ]), dim=1)
+        foot_reward = torch.exp(-10 * b)
+
+        # cprint(f"foot: {self.foot_height, b,  self.re_foot, foot_reward}", 'green', attrs=['bold'])
+
+        return foot_reward
+
