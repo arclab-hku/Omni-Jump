@@ -102,7 +102,6 @@ class RolloutStorage:
         if self.step >= self.num_transitions_per_env:
             raise AssertionError("Rollout buffer overflow")
         self.observations[self.step].copy_(transition.observations)
-        if self.privileged_observations is not None: self.privileged_observations[self.step].copy_(transition.critic_observations)
         self.actions[self.step].copy_(transition.actions)
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))
@@ -113,7 +112,7 @@ class RolloutStorage:
         self._save_hidden_states(transition.hidden_states)
 
 
-        # For Vel
+        # For privileged_info
         self.privileged_info[self.step].copy_(transition.privileged_info)
 
         # For extrin_loss
@@ -175,11 +174,8 @@ class RolloutStorage:
         indices = torch.randperm(num_mini_batches*mini_batch_size, requires_grad=False, device=self.device)
 
         observations = self.observations.flatten(0, 1)
+        critic_observations = observations
 
-        if self.privileged_observations is not None:
-            critic_observations = self.privileged_observations.flatten(0, 1)
-        else:
-            critic_observations = observations
 
         actions = self.actions.flatten(0, 1)
         values = self.values.flatten(0, 1)
@@ -226,10 +222,8 @@ class RolloutStorage:
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):
 
         padded_obs_trajectories, trajectory_masks = split_and_pad_trajectories(self.observations, self.dones)
-        if self.privileged_observations is not None: 
-            padded_critic_obs_trajectories, _ = split_and_pad_trajectories(self.privileged_observations, self.dones)
-        else: 
-            padded_critic_obs_trajectories = padded_obs_trajectories
+
+        padded_critic_obs_trajectories = padded_obs_trajectories
 
         mini_batch_size = self.num_envs // num_mini_batches
         for ep in range(num_epochs):

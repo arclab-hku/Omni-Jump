@@ -50,7 +50,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = None  # 187
+        num_privileged_obs = 11  # 187
         train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False

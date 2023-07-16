@@ -46,17 +46,17 @@ class AliengoRoughCfg(LeggedRobotCfg):
         num_envs = 4096  # was getting a seg fault
         # num_envs = 100  # was getting a seg fault
         num_actions = 12
-        num_observations = 235
+        num_observations = 45
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = None  # 187
-        train_type = "standard"  # standard, priv, lbc, standard, RMA, EST, Dream
+        num_privileged_obs = 11  # 187
+        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
 
-        measure_obs_heights = True
+        measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain(LeggedRobotCfg.terrain):
@@ -130,12 +130,12 @@ class AliengoRoughCfg(LeggedRobotCfg):
             feet_air_time = 1.0
             collision = -1.0
 
-            action_rate = -0.01 / 3
+            action_rate = -0.01
 
-            dream_smoothness = -0.001
-            power_joint = -1e-4
-            foot_clearance = -0.01
-            foot_height = -0.01
+            # dream_smoothness = -0.001
+            # power_joint = -1e-4
+            # foot_clearance = -0.01
+            # foot_height = -0.01
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
@@ -145,27 +145,15 @@ class AliengoRoughCfg(LeggedRobotCfg):
 
     class randomization(LeggedRobotCfg.randomization):
         # Randomization Property
-        randomizeMass = True
-        randomizeMassLower = -5
-        randomizeMassUpper = 5
-        randomizeCOM = True
-        randomizeCOMLower = -0.05
-        randomizeCOMUpper = 0.05
-        randomizeFriction = True
-        randomizeFrictionLower = 0.2
-        randomizeFrictionUpper = 1.25
         randomizeMotorStrength = True
         randomizeMotorStrengthLower = 0.9
         randomizeMotorStrengthUpper = 1.1
 
     class privInfo(LeggedRobotCfg.privInfo):
-        enableMass = True
-        enableCOM = True
-        enableFriction = True
         enableMotorStrength = True
-        enableMeasuredHeight = True
         enableMeasuredVel = True
-        enableForce = True
+        enableMeasuredHeight = False
+        enableForce = False
 
 
 class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
@@ -174,7 +162,7 @@ class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
         run_name = ''
         max_iterations = 1000  # number of policy updates
         resume = False
-        save_interval = 200  # check for potential saves every this many iterations
+        save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'aliengo'
         export_policy = False
 

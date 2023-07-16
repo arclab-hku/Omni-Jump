@@ -375,16 +375,11 @@ class LeggedRobot(BaseTask):
             [torch.Tensor]: Vector of scales used to multiply a uniform distribution in [-1, 1]
         """
         noise_vec = torch.zeros_like(self.obs_buf[0])
+        noise_vel = torch.zeros_like(self.privileged_obs_buf[0])
         self.add_noise = self.cfg.noise.add_noise
         noise_scales = self.cfg.noise.noise_scales
         noise_level = self.cfg.noise.noise_level
-        noise_vec[:3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
-        noise_vec[3:6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
-        noise_vec[6:9] = noise_scales.gravity * noise_level
-        noise_vec[9:12] = 0.0  # commands
-        noise_vec[12:24] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
-        noise_vec[24:36] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
-        noise_vec[36:48] = 0.0  # previous actions
+
         if self.cfg.env.train_type == "standard":
             noise_vec[:3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
             noise_vec[3:6] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
@@ -393,15 +388,23 @@ class LeggedRobot(BaseTask):
             noise_vec[12:24] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
             noise_vec[24:36] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
             noise_vec[36:48] = 0.  # previous actions
+        elif self.cfg.env.train_type == "RMA":
+            noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
+            noise_vec[3:6] = noise_scales.gravity * noise_level
+            noise_vec[6:9] = 0.  # commands
+            noise_vec[9:21] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
+            noise_vec[21:33] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
+            noise_vec[33:45] = 0.  # previous actions
 
+        noise_vel[:3] = noise_scales.lin_vel * noise_level * self.obs_scales.lin_vel
+        noise_vel[3:7] = 0
+        noise_vel[7:11] = 0
+        if self.enable_priv_measured_height:
+            noise_vel[11:198] = noise_scales.height_measurements * noise_level * self.obs_scales.height_measurements
 
         if self.cfg.terrain.measure_heights:
-            noise_vec[48:235] = (
-                noise_scales.height_measurements
-                * noise_level
-                * self.obs_scales.height_measurements
-            )
-        return noise_vec
+            noise_vec[48:235] = (noise_scales.height_measurements*noise_level * self.obs_scales.height_measurements)
+        return noise_vec, noise_vel
     def compute_observations(self):
         """Computes observations"""
 
@@ -414,7 +417,7 @@ class LeggedRobot(BaseTask):
                                       self.dof_vel * self.obs_scales.dof_vel,
                                       self.actions,
                                       ), dim=-1)
-        elif self.cfg.env.train_type == "RMA":
+        elif self.cfg.env.train_type == "RMA" or "EST" or "Dream" or "Our":
             self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
                                       self.projected_gravity,
                                       self.commands[:, :3] * self.commands_scale,
@@ -422,30 +425,7 @@ class LeggedRobot(BaseTask):
                                       self.dof_vel * self.obs_scales.dof_vel,
                                       self.actions,
                                       ), dim=-1)
-        elif self.cfg.env.train_type == "EST":
-            self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
-                                      self.projected_gravity,
-                                      self.commands[:, :3] * self.commands_scale,
-                                      (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                      self.dof_vel * self.obs_scales.dof_vel,
-                                      self.actions,
-                                      ), dim=-1)
-        elif self.cfg.env.train_type == "Dream":
-            self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
-                                      self.projected_gravity,
-                                      self.commands[:, :3] * self.commands_scale,
-                                      (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                      self.dof_vel * self.obs_scales.dof_vel,
-                                      self.actions,
-                                      ), dim=-1)
-        elif self.cfg.env.train_type == "Our":
-            self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
-                                      self.projected_gravity,
-                                      self.commands[:, :3] * self.commands_scale,
-                                      (self.dof_pos - self.default_dof_pos) * self.obs_scales.dof_pos,
-                                      self.dof_vel * self.obs_scales.dof_vel,
-                                      self.actions,
-                                      ), dim=-1)
+
 
 
 
@@ -541,6 +521,7 @@ class LeggedRobot(BaseTask):
         # add noise if needed
         if self.add_noise:
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
+            self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_noise_vel
 
         if self.cfg.env.train_type == "Dream" or "RMA":
             # deal with normal observation, do sliding window
@@ -929,7 +910,9 @@ class LeggedRobot(BaseTask):
         self.common_step_counter = 0
         self.extras = {}
         #### add noise #################
-        self.noise_scale_vec = self._get_noise_scale_vec(self.cfg)
+        # self.noise_scale_vec = self._get_noise_scale_vec(self.cfg)
+        self.noise_scale_vec, self.noise_noise_vel = self._get_noise_scale_vec(self.cfg)
+
         self.gravity_vec = to_torch(
             get_axis_params(-1.0, self.up_axis_idx), device=self.device
         ).repeat((self.num_envs, 1))
