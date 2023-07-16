@@ -26,7 +26,7 @@ class PPOPolicyRunner:
         self.cfg=train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
-        self.rma_cfg = train_cfg["RMA"]
+        self.encoder_cfg = train_cfg["Encoder"]
         self.device = device
         self.env = env
 
@@ -34,7 +34,7 @@ class PPOPolicyRunner:
         actor_critic: ActorCritic = actor_critic_class( self.env.num_obs,
                                                         self.env.num_actions,
                                                         **self.policy_cfg,
-                                                        **self.rma_cfg ).to(self.device)
+                                                        **self.encoder_cfg).to(self.device)
         alg_class = eval(self.cfg["algorithm_class_name"]) # PPO
         self.alg: PPO = alg_class(actor_critic,
                                   device=self.device,
@@ -43,7 +43,7 @@ class PPOPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions], [self.rma_cfg["priv_info_dim"]])
+        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions], [self.encoder_cfg["priv_info_dim"]])
 
         # Log
         self.log_dir = log_dir
@@ -198,7 +198,7 @@ class PPOPolicyRunner:
         self.current_learning_iteration = loaded_dict['iter']
 
         # export policy as a jit module (used to run it from C++)
-        if self.rma_cfg['export_policy']:
+        if self.cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')

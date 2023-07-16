@@ -191,7 +191,7 @@ class ActorCritic(nn.Module):
 
     def _actor_critic(self, obs_dict):
         obs = obs_dict['obs']
-        obs_hight = obs_dict['priv_vel_info'][:, 11:198]
+        obs_hight = obs_dict['privileged_info'][:, 11:198]
         base_height = torch.mean(obs_hight, dim=1).unsqueeze(1)
         obs_priv =  torch.cat([obs_dict['priv_info'][:, 0:16], base_height], dim=-1)
 

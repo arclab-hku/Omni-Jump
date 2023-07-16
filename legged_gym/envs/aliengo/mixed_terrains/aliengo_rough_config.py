@@ -159,9 +159,13 @@ class AliengoRoughCfg(LeggedRobotCfg):
         randomizeMotorStrengthUpper = 1.1
 
     class privInfo(LeggedRobotCfg.privInfo):
+        enableMass = True
+        enableFriction = True
+        enableCOM = True
+
         enableMotorStrength = True
         enableMeasuredVel = True
-        enableMeasuredHeight = False
+        enableMeasuredHeight = True
         enableForce = False
 
 

@@ -623,6 +623,18 @@ class LeggedRobot(BaseTask):
 
         return props
 
+
+    def _process_motor_strength_props(self, props, env_id):
+        # randomize center
+        if self.cfg.domain_rand.randomize_center:
+            center = self.cfg.domain_rand.added_center_range
+            com = [np.random.uniform(center[0], center[1]), np.random.uniform(center[0], center[1])]
+            props[0].com.x, props[0].com.y = com
+            if self.cfg.env.train_type == "RMA":
+                self._update_priv_buf(env_id=env_id, name='com', value=com,
+                                      lower=center[0], upper=center[1])
+        return props
+
     def _process_dof_props(self, props, env_id):
         """Callback allowing to store/change/randomize the DOF properties of each environment.
             Called During environment creation.
@@ -663,6 +675,28 @@ class LeggedRobot(BaseTask):
                 self.dof_pos_limits[i, 1] = (
                     m + 0.5 * r * self.cfg.rewards.soft_dof_pos_limit
                 )
+        # ! set gym's PD controller
+        for i in range(self.num_dof):
+            name = self.dof_names[i]
+            for dof_name in self.cfg.control.stiffness.keys():
+                if dof_name in name:
+                    props['driveMode'][i] = gymapi.DOF_MODE_POS
+                    props['stiffness'][i] = self.cfg.control.stiffness[dof_name]  # self.Kp
+                    props['damping'][i] = self.cfg.control.damping[dof_name]  # self.Kd
+        motor_strength = []
+        if self.randomize_motor_strength:
+            for i_dof in range(self.num_dof):
+                rand_motor_strength = np.random.uniform(self.cfg.domain_rand.added_motor_strength[0],
+                                                        self.cfg.domain_rand.added_motor_strength[1])
+
+                # ! set gym's PD controller
+                props['stiffness'][i_dof] *= rand_motor_strength  # self.Kp
+                props['damping'][i_dof] *= rand_motor_strength  # self.Kd
+                motor_strength.append(rand_motor_strength)
+        if self.cfg.env.train_type == "RMA":
+            self._update_priv_buf(env_id=env_id, name='motor_strength', value=motor_strength,
+                                  lower=self.cfg.domain_rand.added_motor_strength[0],
+                                  upper=self.cfg.domain_rand.added_motor_strength[1])
 
         return props
 
@@ -1257,7 +1291,12 @@ class LeggedRobot(BaseTask):
                 0,
             )
             dof_props = self._process_dof_props(dof_props_asset, i)
+
+
             self.gym.set_actor_dof_properties(env_handle, actor_handle, dof_props)
+
+
+
             body_props = self.gym.get_actor_rigid_body_properties(env_handle, actor_handle)
             body_props = self._process_rigid_body_props(body_props, i)
             body_props = self._process_rigid_com_props(body_props, i)
@@ -1483,6 +1522,10 @@ class LeggedRobot(BaseTask):
         self.randomize_motor_strength_upper = rand_config.randomizeMotorStrengthUpper
 
     def _setup_priv_option_config(self, p_config):
+        self.enable_priv_mass = p_config.enableMass
+        self.enable_priv_friction = p_config.enableFriction
+        self.enable_priv_com = p_config.enableCOM
+
         self.enable_priv_motor_strength = p_config.enableMotorStrength
         self.enable_priv_enableMeasuredVel = p_config.enableMeasuredVel
         self.enable_priv_measured_height = p_config.enableMeasuredHeight

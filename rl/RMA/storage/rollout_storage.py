@@ -31,7 +31,7 @@
 import torch
 import numpy as np
 
-from rsl_rl.utils import split_and_pad_trajectories
+from rl.RMA.utils import split_and_pad_trajectories
 
 class RolloutStorage:
     class Transition:
@@ -47,7 +47,7 @@ class RolloutStorage:
             self.action_sigma = None
             self.hidden_states = None
             self.priv_info = None # RMA fixed value
-            self.priv_vel_info = None  # vel fixed value
+            self.privileged_info = None  # vel fixed value
         def clear(self):
             self.__init__()
 
@@ -81,12 +81,10 @@ class RolloutStorage:
 
         self.priv_info = torch.zeros(num_transitions_per_env, num_envs, 17, device=self.device)
         # For Vel
-        self.priv_vel_info = torch.zeros(num_transitions_per_env, num_envs, 198, device=self.device)
+        self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 198, device=self.device)
 
         self.num_transitions_per_env = num_transitions_per_env
         self.num_envs = num_envs
-
-
 
         # rnn
         self.saved_hidden_states_a = None
@@ -98,7 +96,6 @@ class RolloutStorage:
         if self.step >= self.num_transitions_per_env:
             raise AssertionError("Rollout buffer overflow")
         self.observations[self.step].copy_(transition.observations)
-        if self.privileged_observations is not None: self.privileged_observations[self.step].copy_(transition.critic_observations)
         self.actions[self.step].copy_(transition.actions)
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))
@@ -110,7 +107,7 @@ class RolloutStorage:
         # For RMA
         self.priv_info[self.step].copy_(transition.priv_info)
         # For Vel
-        self.priv_vel_info[self.step].copy_(transition.priv_vel_info)
+        self.privileged_info[self.step].copy_(transition.privileged_info)
 
         self.step += 1
 
@@ -166,11 +163,7 @@ class RolloutStorage:
 
         observations = self.observations.flatten(0, 1)
 
-        if self.privileged_observations is not None:
-            critic_observations = self.privileged_observations.flatten(0, 1)
-        else:
-            critic_observations = observations
-
+        critic_observations = observations
         actions = self.actions.flatten(0, 1)
         values = self.values.flatten(0, 1)
         returns = self.returns.flatten(0, 1)
@@ -182,7 +175,7 @@ class RolloutStorage:
         # For RMA
         priv_info = self.priv_info.flatten(0, 1)
         # For RMA
-        priv_vel_info = self.priv_vel_info.flatten(0, 1)
+        privileged_info = self.privileged_info.flatten(0, 1)
 
 
         for epoch in range(num_epochs):
@@ -202,19 +195,17 @@ class RolloutStorage:
                 old_mu_batch = old_mu[batch_idx]
                 old_sigma_batch = old_sigma[batch_idx]
                 priv_info_batch = priv_info[batch_idx]
-                priv_vel_info_batch = priv_vel_info[batch_idx]
+                privileged_info_batch = privileged_info[batch_idx]
 
                 yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
-                       old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, priv_info_batch, priv_vel_info_batch
+                       old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, priv_info_batch, privileged_info_batch
 
     # for RNNs only
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):
 
         padded_obs_trajectories, trajectory_masks = split_and_pad_trajectories(self.observations, self.dones)
-        if self.privileged_observations is not None: 
-            padded_critic_obs_trajectories, _ = split_and_pad_trajectories(self.privileged_observations, self.dones)
-        else: 
-            padded_critic_obs_trajectories = padded_obs_trajectories
+        padded_critic_obs_trajectories = padded_obs_trajectories
+
 
         mini_batch_size = self.num_envs // num_mini_batches
         for ep in range(num_epochs):
