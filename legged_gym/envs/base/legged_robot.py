@@ -266,7 +266,7 @@ class LeggedRobot(BaseTask):
         """Check if environments need to be reset"""
         self.reset_buf = torch.any(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1)> 1.0, dim=1)
         self.time_out_buf = (self.episode_length_buf > self.max_episode_length)  # no terminal reward for time-outs
-        self.reset_buf |= self.time_out_buf
+        # self.reset_buf |= self.time_out_buf
 
     def reset_idx(self, env_ids):
         """Reset some environments.
@@ -1424,7 +1424,7 @@ class LeggedRobot(BaseTask):
             [type]: [description]
         """
         if self.cfg.terrain.mesh_type == "plane":
-            assert(False)
+            # assert(False)
             return torch.zeros(
                 self.num_envs,
                 self.num_height_points,
@@ -1819,3 +1819,29 @@ class LeggedRobot(BaseTask):
 
         return foot_reward
 
+
+
+    ############## Motion Functions ########
+    def _reward_f_hip_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [0, 3]] - self.default_dof_pos[:, [0, 3]]), dim=1)
+
+    def _reward_r_hip_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [6, 9]] - self.default_dof_pos[:, [6, 9]]), dim=1)
+
+    def _reward_f_thigh_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [1, 4]] - self.default_dof_pos[:, [1, 4]]), dim=1)
+
+    def _reward_r_thigh_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [7, 10]] - self.default_dof_pos[:, [7, 10]]), dim=1)
+
+    def _reward_f_calf_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [2, 5]] - self.default_dof_pos[:, [2, 5]]), dim=1)
+
+    def _reward_r_calf_motion(self):
+        # cosmetic penalty for hip motion
+        return torch.sum(torch.abs(self.dof_pos[:, [8, 11]] - self.default_dof_pos[:, [8, 11]]), dim=1)

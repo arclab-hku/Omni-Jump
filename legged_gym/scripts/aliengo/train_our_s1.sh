@@ -12,7 +12,7 @@ echo extra "${EXTRA_ARGS}"
 
 CUDA_VISIBLE_DEVICES=${GPUS} \
 python train.py --task=aliengo_rough  --num_envs=4096 --headless --seed=${SEED} \
---algo=PPO \
+--algo=Our \
 --priv_info \
---output_name=alieng_test/rma/"${CACHE}" \
+--output_name=alieng_test/our/"${CACHE}" \
 ${EXTRA_ARGS}

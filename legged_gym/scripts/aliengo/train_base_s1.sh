@@ -14,5 +14,5 @@ CUDA_VISIBLE_DEVICES=${GPUS} \
 python train.py --task=aliengo_rough  --num_envs=4096 --headless --seed=${SEED} \
 --algo=On \
 --priv_info \
---output_name=alieng_test/"${CACHE}" \
+--output_name=alieng_test/oracle/"${CACHE}" \
 ${EXTRA_ARGS}

@@ -31,7 +31,7 @@
 import torch
 import numpy as np
 
-from rsl_rl.utils import split_and_pad_trajectories
+from rl.Dream.utils import split_and_pad_trajectories
 
 
 class RolloutStorage:
@@ -47,7 +47,7 @@ class RolloutStorage:
             self.action_mean = None
             self.action_sigma = None
             self.hidden_states = None
-            self.priv_vel_info = None  # vel fixed value
+            self.privileged_info = None  # privileged_info fixed value
             self.proprio_hist = None  # His fixed value
             self.extrin_loss = None  # RMA fixed value
             self.extrin_gt_loss = None  # vel fixed value
@@ -59,7 +59,6 @@ class RolloutStorage:
                  Hist_info_shape, device='cpu'):
 
         self.device = device
-
         self.obs_shape = obs_shape
         self.privileged_obs_shape = privileged_obs_shape
         self.actions_shape = actions_shape
@@ -87,8 +86,8 @@ class RolloutStorage:
         self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 19, device=self.device)
         self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 48, device=self.device)
 
-        # For Vel
-        self.priv_vel_info = torch.zeros(num_transitions_per_env, num_envs, 200, device=self.device)
+        # For privileged_info
+        self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 200, device=self.device)
 
         # For hist
         self.proprio_hist = torch.zeros(num_transitions_per_env, num_envs, Hist_info_shape[0], device=self.device)
@@ -109,8 +108,6 @@ class RolloutStorage:
         if self.step >= self.num_transitions_per_env:
             raise AssertionError("Rollout buffer overflow")
         self.observations[self.step].copy_(transition.observations)
-        if self.privileged_observations is not None: self.privileged_observations[self.step].copy_(
-            transition.critic_observations)
         self.actions[self.step].copy_(transition.actions)
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))
@@ -119,18 +116,22 @@ class RolloutStorage:
         self.mu[self.step].copy_(transition.action_mean)
         self.sigma[self.step].copy_(transition.action_sigma)
         self._save_hidden_states(transition.hidden_states)
+        from termcolor import cprint
 
-        # For Vel
-        self.priv_vel_info[self.step].copy_(transition.priv_vel_info)
+        # For privileged_info
+        self.privileged_info[self.step].copy_(transition.privileged_info)
+
+
         # For His
         self.proprio_hist[self.step].copy_(transition.proprio_hist)
-
         # For extrin_loss
         self.extrin_loss[self.step].copy_(transition.extrin_loss)
         self.extrin_gt_loss[self.step].copy_(transition.extrin_gt_loss)
 
         # For next_obs
         self.next_observations[self.step].copy_(transition.next_observations)
+
+
 
         self.step += 1
 
@@ -188,11 +189,7 @@ class RolloutStorage:
         indices = torch.randperm(num_mini_batches * mini_batch_size, requires_grad=False, device=self.device)
 
         observations = self.observations.flatten(0, 1)
-
-        if self.privileged_observations is not None:
-            critic_observations = self.privileged_observations.flatten(0, 1)
-        else:
-            critic_observations = observations
+        critic_observations = observations
 
         actions = self.actions.flatten(0, 1)
         values = self.values.flatten(0, 1)
@@ -202,9 +199,9 @@ class RolloutStorage:
         old_mu = self.mu.flatten(0, 1)
         old_sigma = self.sigma.flatten(0, 1)
 
-        # For Vel
-        priv_vel_info = self.priv_vel_info.flatten(0, 1)
-        # For RMA
+        # For privileged_info
+        privileged_info = self.privileged_info.flatten(0, 1)
+        # For history
         proprio_hist = self.proprio_hist.flatten(0, 1)
         # For Loss
         extrin_loss = self.extrin_loss.flatten(0, 1)
@@ -228,24 +225,22 @@ class RolloutStorage:
                 advantages_batch = advantages[batch_idx]
                 old_mu_batch = old_mu[batch_idx]
                 old_sigma_batch = old_sigma[batch_idx]
-                priv_vel_info_batch = priv_vel_info[batch_idx]
+                privileged_info_batch = privileged_info[batch_idx]
                 proprio_hist_batch = proprio_hist[batch_idx]
 
                 next_obs_batch = next_observations[batch_idx]
 
                 yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
                     old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (
-                None, None), None, proprio_hist_batch, priv_vel_info_batch, \
+                None, None), None, proprio_hist_batch, privileged_info_batch, \
                     extrin_loss, extrin_gt_loss, next_obs_batch
 
     # for RNNs only
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):
 
         padded_obs_trajectories, trajectory_masks = split_and_pad_trajectories(self.observations, self.dones)
-        if self.privileged_observations is not None:
-            padded_critic_obs_trajectories, _ = split_and_pad_trajectories(self.privileged_observations, self.dones)
-        else:
-            padded_critic_obs_trajectories = padded_obs_trajectories
+        padded_critic_obs_trajectories = padded_obs_trajectories
+
 
         mini_batch_size = self.num_envs // num_mini_batches
         for ep in range(num_epochs):

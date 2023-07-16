@@ -7,13 +7,12 @@ import statistics
 from termcolor import cprint
 
 from torch.utils.tensorboard import SummaryWriter
-from rl.Our.utils.utils import export_policy_as_jit
+from rl.EST.utils.utils import export_policy_as_jit
 import torch
 
 from rl.Our.algorithms import PPO
 from rl.Our.modules import ActorCritic, ActorCriticRecurrent
 from rl.Our.env import VecEnv
-
 
 from rl.Our.modules.actor_critic import DmEncoder
 
@@ -26,24 +25,22 @@ class OurPolicyRunner:
                  log_dir=None,
                  device='cpu'):
 
-        self.cfg=train_cfg["runner"]
+        self.cfg = train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
-        self.rma_cfg = train_cfg["RMA"]
+        self.encoder_cfg = train_cfg["Encoder"]
+
+        self.encoder_mlp = train_cfg["Encoder"]['priv_mlp_units']
+
         self.device = device
         self.env = env
-        self.priv_mlp = train_cfg["RMA"]['priv_mlp_units']
-
-        actor_critic_class = eval(self.cfg["policy_class_name"]) # ActorCritic
-        actor_critic: ActorCritic = actor_critic_class( self.env.num_obs,
-                                                        self.env.num_actions,
-                                                        **self.policy_cfg,
-                                                        **self.rma_cfg ).to(self.device)
-
-        dm_encoder = DmEncoder(self.env.num_obs, self.priv_mlp)
-
-
-        alg_class = eval(self.cfg["algorithm_class_name"]) # PPO
+        actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
+        actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
+                                                       self.env.num_actions,
+                                                       **self.policy_cfg,
+                                                       **self.encoder_cfg).to(self.device)
+        dm_encoder = DmEncoder(self.env.num_obs, self.encoder_mlp)
+        alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.alg: PPO = alg_class(actor_critic,
                                   dm_encoder,
                                   device=self.device,
@@ -52,7 +49,8 @@ class OurPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions])
+        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
+                              [self.env.num_privileged_obs], [self.env.num_actions])
 
         # Log
         self.log_dir = log_dir
@@ -66,12 +64,13 @@ class OurPolicyRunner:
         self.current_learning_iteration = 0
 
         _ = self.env.reset()
-    
+
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         if init_at_random_ep_len:
-            self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
+            self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf,
+                                                             high=int(self.env.max_episode_length))
         obs_dict = self.env.get_observations()
-        self.alg.actor_critic.train() # switch to train mode (for dropout for example)
+        self.alg.actor_critic.train()  # switch to train mode (for dropout for example)
 
         ep_infos = []
         rewbuffer = deque(maxlen=100)
@@ -89,7 +88,7 @@ class OurPolicyRunner:
                     obs_dict, rewards, dones, infos = self.env.step(actions)
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
                     self.alg.process_env_step(rewards, dones, infos)
-                    
+
                     if self.log_dir is not None:
                         # Book keeping
                         if 'episode' in infos:
@@ -108,7 +107,7 @@ class OurPolicyRunner:
                 # Learning step
                 start = stop
                 self.alg.compute_returns(obs_dict)
-            
+
             mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss = self.alg.update()
             stop = time.time()
             learn_time = stop - start
@@ -117,13 +116,10 @@ class OurPolicyRunner:
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(it)))
                 self.save(os.path.join(self.nn_dir, 'last.pt'))
-
-
             ep_infos.clear()
-        
+
         self.current_learning_iteration += num_learning_iterations
         self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
-
 
     def log(self, locs, width=80, pad=35):
         self.tot_timesteps += self.num_steps_per_env * self.env.num_envs
@@ -147,9 +143,9 @@ class OurPolicyRunner:
         mean_std = self.alg.actor_critic.std.mean()
         fps = int(self.num_steps_per_env * self.env.num_envs / (locs['collection_time'] + locs['learn_time']))
 
-        self.writer.add_scalar('Vel/vel_loss',     locs['mean_vel_loss'], locs['it'])
-        self.writer.add_scalar('Vel/height_loss',  locs['mean_height_loss'], locs['it'])
-        self.writer.add_scalar('Vel/contact_loss', locs['mean_contact_loss'],locs['it'])
+        self.writer.add_scalar('Vel/vel_loss', locs['mean_vel_loss'], locs['it'])
+        self.writer.add_scalar('Vel/height_loss', locs['mean_height_loss'], locs['it'])
+        self.writer.add_scalar('Vel/contact_loss', locs['mean_contact_loss'], locs['it'])
 
         self.writer.add_scalar('Loss/value_function', locs['mean_value_loss'], locs['it'])
         self.writer.add_scalar('Loss/surrogate', locs['mean_surrogate_loss'], locs['it'])
@@ -170,24 +166,24 @@ class OurPolicyRunner:
             log_string = (f"""{'#' * width}\n"""
                           f"""{str.center(width, ' ')}\n\n"""
                           f"""{'Computation:':>{pad}} {fps:.0f} steps/s (collection: {locs[
-                            'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
+                              'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
                           f"""{'Value function loss:':>{pad}} {locs['mean_value_loss']:.4f}\n"""
                           f"""{'Surrogate loss:':>{pad}} {locs['mean_surrogate_loss']:.4f}\n"""
                           f"""{'Mean action noise std:':>{pad}} {mean_std.item():.2f}\n"""
                           f"""{'Mean reward:':>{pad}} {statistics.mean(locs['rewbuffer']):.2f}\n"""
                           f"""{'Mean episode length:':>{pad}} {statistics.mean(locs['lenbuffer']):.2f}\n""")
-                        #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
-                        #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
+            #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
+            #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
         else:
             log_string = (f"""{'#' * width}\n"""
                           f"""{str.center(width, ' ')}\n\n"""
                           f"""{'Computation:':>{pad}} {fps:.0f} steps/s (collection: {locs[
-                            'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
+                              'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
                           f"""{'Value function loss:':>{pad}} {locs['mean_value_loss']:.4f}\n"""
                           f"""{'Surrogate loss:':>{pad}} {locs['mean_surrogate_loss']:.4f}\n"""
                           f"""{'Mean action noise std:':>{pad}} {mean_std.item():.2f}\n""")
-                        #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
-                        #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
+            #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
+            #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
 
         log_string += ep_string
         log_string += (f"""{'-' * width}\n"""
@@ -206,23 +202,20 @@ class OurPolicyRunner:
             'optimizer_encoder_state_dict': self.alg.optimizer_encoder.state_dict(),
             'iter': self.current_learning_iteration,
             'infos': infos,
-            }, path)
+        }, path)
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
         self.alg.actor_critic.load_state_dict(loaded_dict['actor_state_dict'])
         self.alg.dm_encoder.load_state_dict(loaded_dict["dm_encoder_state_dict"])
 
-
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
             self.alg.optimizer_encoder.load_state_dict(loaded_dict['optimizer_encoder_state_dict'])
         self.current_learning_iteration = loaded_dict['iter']
 
-
-
         # export policy as a jit module (used to run it from C++)
-        if self.rma_cfg['export_policy']:
+        if self.cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')
@@ -232,7 +225,7 @@ class OurPolicyRunner:
         return loaded_dict['infos']
 
     def get_inference_policy(self, device=None):
-        self.alg.actor_critic.eval() # switch to evaluation mode (dropout for example)
+        self.alg.actor_critic.eval()  # switch to evaluation mode (dropout for example)
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference

@@ -113,9 +113,6 @@ class PPO:
         self.transition.action_mean = self.actor_critic.action_mean.detach()
         self.transition.action_sigma = self.actor_critic.action_std.detach()
 
-        # cprint(f"Encoder loss: { self.transition.values ,  self.transition.values.shape}", 'red', attrs=['bold'])
-
-
         ##############add loss #############
         self.transition.extrin_loss = self.actor_critic.extrin_loss(obs_dict).detach()
         self.transition.extrin_gt_loss = self.actor_critic.extrin_gt_loss(obs_dict).detach()
@@ -124,39 +121,11 @@ class PPO:
         self.transition.observations = obs_dict['obs']
         self.transition.critic_observations = obs_dict['obs']
 
-        # RMA: need to record / update the privileged_info info
+        # privileged_info: need to record / update the privileged_info info
         self.transition.privileged_info = obs_dict['privileged_info']
 
 
         return self.transition.actions
-    def process_env_step1(self, rewards, dones, infos):
-        self.transition.rewards = rewards.clone()
-
-        def calculate_bootstrap_prob(rewards):
-            cv = torch.std(rewards) / torch.mean(rewards)
-            bootstrapping_prob = 1 - torch.tanh(cv)
-            return bootstrapping_prob
-        self.transition.dones = dones
-
-        pboot = calculate_bootstrap_prob(self.transition.rewards)
-        # cprint(f"foot: {self.transition.rewards, pboot}", 'green', attrs=['bold'])
-
-        if pboot < 1e-7:
-            # Bootstrapping on time outs
-            pass
-        else:
-            # 不执行自助法抽样的代码
-            if 'time_outs' in infos:
-                self.transition.rewards += self.gamma * torch.squeeze(
-                    self.transition.values * infos['time_outs'].unsqueeze(1).to(self.device), 1)
-                # 计算回合奖励的引导概率
-
-        # if pboot <= 1e-5:
-        #     self.transition.rewards -= self.transition.rewards
-        # Record the transition
-        self.storage.add_transitions(self.transition)
-        self.transition.clear()
-        self.actor_critic.reset(dones)
     def process_env_step(self, rewards, dones, infos):
         self.transition.rewards = rewards.clone()
         self.transition.dones = dones
@@ -181,7 +150,6 @@ class PPO:
         mean_contact_loss = 0
 
 
-
         if self.actor_critic.is_recurrent:
             generator = self.storage.reccurent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         else:
@@ -197,10 +165,6 @@ class PPO:
                 self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
                 actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
                 value_batch = self.actor_critic.evaluate(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
-
-                extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
-                extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11])
-
 
                 mu_batch = self.actor_critic.action_mean
                 sigma_batch = self.actor_critic.action_std
@@ -242,14 +206,15 @@ class PPO:
 
                 loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
 
+
+                extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
+                extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11])
+
                 vel_loss = F.mse_loss(extrin_batch[:, 0:3], extrin_gt_batch[:, 0:3].detach())
                 height_loss = F.mse_loss(extrin_batch[:, 3:7], extrin_gt_batch[:, 3:7].detach())
                 contact_loss = F.mse_loss(extrin_batch[:, 7:11], extrin_gt_batch[:, 7:11].detach())
 
 
-                # vel_loss =    ((extrin_batch[:, 0:3] - extrin_gt_batch[:, 0:3].detach()) ** 2).mean()
-                # height_loss = ((extrin_batch[:, 3:7] - extrin_gt_batch[:, 3:7].detach()) ** 2).mean()
-                # contact_loss = ((extrin_batch[:, 7:11] - extrin_gt_batch[:, 7:11].detach()) ** 2).mean()
                 loss_encoder = vel_loss + height_loss + contact_loss
 
                 # Gradient step
@@ -273,10 +238,7 @@ class PPO:
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
-        #
-        # mean_vel_loss /= num_updates
-        # mean_height_loss /= num_updates
-        # mean_contact_loss /= num_updates
+
 
         self.storage.clear()
 

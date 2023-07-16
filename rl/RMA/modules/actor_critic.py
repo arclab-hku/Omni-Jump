@@ -143,9 +143,6 @@ class ActorCritic(nn.Module):
         # disable args validation for speedup
         Normal.set_default_validate_args = False
 
-        # seems that we get better performance without init
-        # self.init_memory_weights(self.memory_a, 0.001, 0.)
-        # self.init_memory_weights(self.memory_c, 0.001, 0.)
 
     @staticmethod
     # not used at the moment
@@ -171,9 +168,6 @@ class ActorCritic(nn.Module):
     def entropy(self):
         return self.distribution.entropy().sum(dim=-1)
 
-    # def update_distribution(self, observations):
-    #     mean = self.actor(observations)
-    #     self.distribution = Normal(mean, mean*0. + self.std)
 
     def act(self, obs_dict, **kwargs):
         # self.update_distribution(observations)

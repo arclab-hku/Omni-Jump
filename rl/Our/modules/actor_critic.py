@@ -163,11 +163,11 @@ class ActorCritic(nn.Module):
     def _actor_critic(self, obs_dict):
 
         obs = obs_dict['obs']
-        obs_vel = obs_dict['priv_vel_info'][:, 0:3]
-        obs_hight = obs_dict['priv_vel_info'][:, 11:198]
+        obs_vel = obs_dict['privileged_info'][:, 0:3]
+        obs_hight = obs_dict['privileged_info'][:, 11:198]
         # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
 
-        extrin_gt = obs_dict['priv_vel_info'][:, 0:11]
+        extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
 
         extrin_en = self.dm_encoder(obs)
