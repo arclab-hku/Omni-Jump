@@ -103,6 +103,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
         added_mass_range = [-5.0, 5.0]
+
         randomize_friction = True
         friction_range = [0.2, 1.25]
 
@@ -129,7 +130,6 @@ class AliengoRoughCfg(LeggedRobotCfg):
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
-
             action_rate = -0.01
             #### motion
             # f_hip_motion = -0.1
