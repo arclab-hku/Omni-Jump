@@ -152,11 +152,11 @@ class AliengoRoughCfg(LeggedRobotCfg):
         crash_freq = True
         any_contacts = True
 
-    class randomization(LeggedRobotCfg.randomization):
-        # Randomization Property
-        randomizeMotorStrength = True
-        randomizeMotorStrengthLower = 0.9
-        randomizeMotorStrengthUpper = 1.1
+    # class randomization(LeggedRobotCfg.randomization):
+    #     # Randomization Property
+    #     randomizeMotorStrength = True
+    #     randomizeMotorStrengthLower = 0.9
+    #     randomizeMotorStrengthUpper = 1.1
 
     class privInfo(LeggedRobotCfg.privInfo):
         enableMass = True
