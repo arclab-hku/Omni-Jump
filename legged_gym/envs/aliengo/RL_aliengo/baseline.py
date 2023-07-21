@@ -51,7 +51,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
         num_privileged_obs = 11  # 187
-        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
+        train_type = "EST"  # standard, priv, lbc, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
@@ -103,6 +103,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
         added_mass_range = [-5.0, 5.0]
+
         randomize_friction = True
         friction_range = [0.2, 1.25]
 
@@ -123,15 +124,22 @@ class AliengoRoughCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.0
+            orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
-
             action_rate = -0.01
+            #### motion
+            # f_hip_motion = -0.1
+            # r_hip_motion = -0.1
+            # f_thigh_motion = -0.1
+            # r_thigh_motion = -0.1
+            # f_calf_motion = -0.1
+            # r_calf_motion = -0.1
 
+            #### smoothness
             # dream_smoothness = -0.001
             # power_joint = -1e-4
             # foot_clearance = -0.01
@@ -143,14 +151,9 @@ class AliengoRoughCfg(LeggedRobotCfg):
         crash_freq = True
         any_contacts = True
 
-    class randomization(LeggedRobotCfg.randomization):
-        # Randomization Property
-        randomizeMotorStrength = True
-        randomizeMotorStrengthLower = 0.9
-        randomizeMotorStrengthUpper = 1.1
+
 
     class privInfo(LeggedRobotCfg.privInfo):
-        enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = False
         enableForce = False
@@ -170,7 +173,8 @@ class AliengoRoughCfgPPO(LeggedRobotCfgPPO):
 
         priv_mlp_units = [258, 128, 11]
         priv_info = False
-        priv_info_dim = 17
+        priv_info_dim = 187
+        velLen = 3
         proprio_adapt = False
         checkpoint_model = None
         proprio_adapt_out_dim = 11

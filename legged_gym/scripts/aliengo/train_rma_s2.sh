@@ -15,6 +15,6 @@ python train.py --task=aliengo_rough --headless --seed=${SEED} \
 --num_envs=5000 \
 --algo=ProprioAdapt \
 --priv_info --proprio_adapt \
---output_name=alieng_test/"${CACHE}" \
---checkpoint_model=outputs/alieng_test/"${CACHE}"/stage1_nn/last.pt \
+--output_name=aliengo_test/rma/"${CACHE}" \
+--checkpoint_model=outputs/aliengo_test/rma/"${CACHE}"/stage1_nn/last.pt \
 ${EXTRA_ARGS}

@@ -7,6 +7,8 @@
     </content>
     <orderEntry type="jdk" jdkName="rlgpu" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="workspace" level="project" />
+    <orderEntry type="library" name="ROS" level="project" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="format" value="GOOGLE" />

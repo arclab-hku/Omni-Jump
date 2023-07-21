@@ -249,7 +249,7 @@ class LeggedRobot(BaseTask):
         self.reset_buf = torch.any(
             torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1.0, dim=1)
         self.time_out_buf = (self.episode_length_buf > self.max_episode_length)  # no terminal reward for time-outs
-        self.reset_buf |= self.time_out_buf
+        # self.reset_buf |= self.time_out_buf
 
     def reset_idx(self, env_ids):
         """Reset some environments.
@@ -1456,7 +1456,6 @@ class LeggedRobot(BaseTask):
         # self.commands[:, 3] = heading
 
     def _setup_priv_option_config(self, p_config):
-        self.enable_priv_motor_strength = p_config.enableMotorStrength
         self.enable_priv_enableMeasuredVel = p_config.enableMeasuredVel
         self.enable_priv_measured_height = p_config.enableMeasuredHeight
         self.enable_priv_disturbance_force = p_config.enableForce

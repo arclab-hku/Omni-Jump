@@ -112,7 +112,7 @@ class ActorCritic(nn.Module):
 
         # Policy
         actor_layers = []
-        actor_layers.append(nn.Linear(mlp_input_shape, actor_hidden_dims[0]))
+        actor_layers.append(nn.Linear(53, actor_hidden_dims[0]))
         actor_layers.append(activation)
         for l in range(len(actor_hidden_dims)):
             if l == len(actor_hidden_dims) - 1:
@@ -124,7 +124,7 @@ class ActorCritic(nn.Module):
 
         # Value function
         critic_layers = []
-        critic_layers.append(nn.Linear(mlp_input_shape, critic_hidden_dims[0]))
+        critic_layers.append(nn.Linear(232, critic_hidden_dims[0]))
         critic_layers.append(activation)
         for l in range(len(critic_hidden_dims)):
             if l == len(critic_hidden_dims) - 1:
@@ -143,6 +143,9 @@ class ActorCritic(nn.Module):
         # disable args validation for speedup
         Normal.set_default_validate_args = False
 
+        # seems that we get better performance without init
+        # self.init_memory_weights(self.memory_a, 0.001, 0.)
+        # self.init_memory_weights(self.memory_c, 0.001, 0.)
 
     @staticmethod
     # not used at the moment
@@ -168,10 +171,13 @@ class ActorCritic(nn.Module):
     def entropy(self):
         return self.distribution.entropy().sum(dim=-1)
 
+    # def update_distribution(self, observations):
+    #     mean = self.actor(observations)
+    #     self.distribution = Normal(mean, mean*0. + self.std)
 
     def act(self, obs_dict, **kwargs):
         # self.update_distribution(observations)
-        mean, std, _, _, _ = self._actor_critic(obs_dict)
+        mean, std, _, _, _ , _= self._actor_critic(obs_dict)
         self.distribution = Normal(mean, mean * 0. + std)
         return self.distribution.sample()
 
@@ -181,19 +187,19 @@ class ActorCritic(nn.Module):
     def act_inference(self, obs_dict):
         # actions_mean = self.actor(observations)
         # used for testing
-        actions_mean, _, _, _, _ = self._actor_critic(obs_dict)
+        actions_mean, _, _, _, _, _ = self._actor_critic(obs_dict)
         return actions_mean
 
     def evaluate(self, obs_dict, **kwargs):
         # value = self.critic(critic_observations)
-        _, _, value, _, _ = self._actor_critic(obs_dict)
+        _, _, value, _, _ , _= self._actor_critic(obs_dict)
         return value
 
     def _actor_critic(self, obs_dict):
         obs = obs_dict['obs']
+        obs_vel = obs_dict['privileged_info'][:, 0:3]
         obs_hight = obs_dict['privileged_info'][:, 11:198]
-        base_height = torch.mean(obs_hight, dim=1).unsqueeze(1)
-        obs_priv =  torch.cat([obs_dict['priv_info'][:, 0:16], base_height], dim=-1)
+        obs_priv = obs_dict['priv_info']
 
         extrin, extrin_gt = None, None
         if self.priv_info:
@@ -207,7 +213,7 @@ class ActorCritic(nn.Module):
                 extrin_gt = torch.tanh(extrin_gt)
                 extrin = torch.tanh(extrin)
 
-                obs = torch.cat([obs, extrin], dim=-1)
+                actor_obs = torch.cat([obs, extrin], dim=-1)
 
             else:
 
@@ -215,16 +221,16 @@ class ActorCritic(nn.Module):
 
                 extrin = torch.tanh(extrin_en)
 
-                obs = torch.cat([obs, extrin], dim=-1)
+                actor_obs = torch.cat([obs, extrin], dim=-1)
 
+        obs_critic = torch.cat([obs, obs_hight], dim=-1)
 
-
-        mu = self.actor(obs)
-        value = self.critic(obs)
+        mu = self.actor(actor_obs)
+        value = self.critic(obs_critic)
         sigma = self.std
 
-
-        return mu, mu * 0 + sigma, value, extrin, extrin_gt
+        mu1 = self.actor(actor_obs)
+        return mu, mu * 0 + sigma, value, extrin, extrin_gt, mu1
 
 
 def get_activation(act_name):

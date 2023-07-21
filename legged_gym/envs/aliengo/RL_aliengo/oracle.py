@@ -154,7 +154,6 @@ class AliengoRoughCfg(LeggedRobotCfg):
 
 
     class privInfo(LeggedRobotCfg.privInfo):
-        enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
         enableForce = False
