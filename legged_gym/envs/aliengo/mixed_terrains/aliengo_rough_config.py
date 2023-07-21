@@ -129,7 +129,6 @@ class AliengoRoughCfg(LeggedRobotCfg):
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
-
             action_rate = -0.01
             #### motion
             # f_hip_motion = -0.1
