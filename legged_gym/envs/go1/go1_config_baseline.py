@@ -27,10 +27,12 @@ class Go1BaseCfg(LeggedRobotCfg):
             "RL_hip_joint": 0.1,  # [rad]
             "FR_hip_joint": -0.1,  # [rad]
             "RR_hip_joint": -0.1,  # [rad]
+
             "FL_thigh_joint": 0.8,  # [rad]
             "RL_thigh_joint": 1.0,  # [rad]
             "FR_thigh_joint": 0.8,  # [rad]
             "RR_thigh_joint": 1.0,  # [rad]
+
             "FL_calf_joint": -1.5,  # [rad]
             "RL_calf_joint": -1.5,  # [rad]
             "FR_calf_joint": -1.5,  # [rad]
@@ -41,15 +43,16 @@ class Go1BaseCfg(LeggedRobotCfg):
         # PD Drive parameters:
         control_type = "P"
         # stiffness = {'joint': 20.}  # [N*m/rad]
-        stiffness = {'hip_joint': 40, 'thigh_joint': 40., 'calf_joint': 40.}  # [N*m/rad]
-        damping = {'hip_joint': 2., 'thigh_joint': 2., 'calf_joint': 2.}  # [N*m*s/rad]
+        stiffness = {"joint": 40.0}  # [N*m/rad]
+        # damping = {'joint': 0.5}     # [N*m*s/rad]
+        damping = {"joint": 2.0}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
@@ -79,7 +82,7 @@ class Go1BaseCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.2
+            orientation = -0.0
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
@@ -87,13 +90,13 @@ class Go1BaseCfg(LeggedRobotCfg):
             collision = -1.0
 
             action_rate = -0.01
-            #### motion
-            f_hip_motion = -0.1
-            r_hip_motion = -0.1
-            f_thigh_motion = -0.1
-            r_thigh_motion = -0.1
-            f_calf_motion = -0.1
-            r_calf_motion = -0.1
+            # #### motion
+            # f_hip_motion = -0.1
+            # r_hip_motion = -0.1
+            # f_thigh_motion = -0.1
+            # r_thigh_motion = -0.1
+            # f_calf_motion = -0.1
+            # r_calf_motion = -0.1
 
             #### smoothness
             # dream_smoothness = -0.001
@@ -107,20 +110,14 @@ class Go1BaseCfg(LeggedRobotCfg):
         crash_freq = True
         any_contacts = True
 
-    class randomization(LeggedRobotCfg.randomization):
-        # Randomization Property
-        randomizeMotorStrength = True
-        randomizeMotorStrengthLower = 0.9
-        randomizeMotorStrengthUpper = 1.1
-
     class privInfo(LeggedRobotCfg.privInfo):
         enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
         enableForce = False
+
+
 class Go1BaseCfgPPO(LeggedRobotCfgPPO):
-
-
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
         max_iterations = 1000  # number of policy updates

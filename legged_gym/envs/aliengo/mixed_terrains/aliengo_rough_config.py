@@ -60,7 +60,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain(LeggedRobotCfg.terrain):
-        mesh_type = "plane"
+        mesh_type = "trimesh"
 
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.38]  # x,y,z [m]
@@ -103,6 +103,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
         added_mass_range = [-5.0, 5.0]
+
         randomize_friction = True
         friction_range = [0.2, 1.25]
 
@@ -123,7 +124,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.2
+            orientation = -0.0
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
@@ -150,11 +151,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
         crash_freq = True
         any_contacts = True
 
-    class randomization(LeggedRobotCfg.randomization):
-        # Randomization Property
-        randomizeMotorStrength = True
-        randomizeMotorStrengthLower = 0.9
-        randomizeMotorStrengthUpper = 1.1
+
 
     class privInfo(LeggedRobotCfg.privInfo):
         enableMotorStrength = True

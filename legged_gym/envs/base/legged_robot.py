@@ -209,7 +209,6 @@ class LeggedRobot(BaseTask):
 
         foot_height = self.rigid_body_state[:, self.feet_indices, 2:3]
         foot_vel = self.rigid_body_state[:, self.feet_indices, 7:9]
-
         self.foot_height = torch.cat((foot_height[:, 0, ],
                                       foot_height[:, 1, ],
                                       foot_height[:, 2, ],
@@ -249,7 +248,7 @@ class LeggedRobot(BaseTask):
         self.reset_buf = torch.any(
             torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1.0, dim=1)
         self.time_out_buf = (self.episode_length_buf > self.max_episode_length)  # no terminal reward for time-outs
-        # self.reset_buf |= self.time_out_buf
+        self.reset_buf |= self.time_out_buf
 
     def reset_idx(self, env_ids):
         """Reset some environments.
@@ -951,6 +950,7 @@ class LeggedRobot(BaseTask):
 
         foot_height = self.rigid_body_state[:, self.feet_indices, 2:3]
         foot_vel = self.rigid_body_state[:, self.feet_indices, 7:9]
+        print('sffsgsgreer', self.feet_indices, foot_height)
 
         self.foot_height = torch.cat((foot_height[:, 0, ],
                                       foot_height[:, 1, ],
@@ -1251,6 +1251,8 @@ class LeggedRobot(BaseTask):
         self.feet_indices = torch.zeros(
             len(feet_names), dtype=torch.long, device=self.device, requires_grad=False
         )
+
+
         for i in range(len(feet_names)):
             self.feet_indices[i] = self.gym.find_actor_rigid_body_handle(
                 self.envs[0], self.actor_handles[0], feet_names[i]
