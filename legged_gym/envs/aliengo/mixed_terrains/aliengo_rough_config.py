@@ -50,8 +50,8 @@ class AliengoRoughCfg(LeggedRobotCfg):
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = 198  # 187
-        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
+        num_privileged_obs = 11  # 187
+        train_type = "EST"  # standard, priv, lbc, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
@@ -124,7 +124,7 @@ class AliengoRoughCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.0
+            orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
@@ -154,9 +154,8 @@ class AliengoRoughCfg(LeggedRobotCfg):
 
 
     class privInfo(LeggedRobotCfg.privInfo):
-        enableMotorStrength = True
         enableMeasuredVel = True
-        enableMeasuredHeight = True
+        enableMeasuredHeight = False
         enableForce = False
 
 
