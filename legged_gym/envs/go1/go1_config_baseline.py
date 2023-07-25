@@ -4,17 +4,19 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class Go1BaseCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):  # comment if use visual
         num_envs = 4096  # was getting a seg fault
+        # num_envs = 100  # was getting a seg fault
         num_actions = 12
-        num_observations = 45
+        num_observations = 235
+        # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
         num_privileged_obs = 198  # 187
-        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
+        train_type = "standard"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
 
-        measure_obs_heights = False
+        measure_obs_heights = True
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain(LeggedRobotCfg.terrain):
@@ -52,7 +54,7 @@ class Go1BaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]

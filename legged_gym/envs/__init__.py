@@ -44,7 +44,10 @@ from .aliengo.mixed_terrains.aliengo_rough_config import (
 )
 from .aliengo.flat.aliengo_flat_config import AliengoFlatCfg, AliengoFlatCfgPPO
 from .aliengo.mixed_terrains.aliengo_obs_config import AliengoObsCfg, AliengoObsCfgPPO
-from .aliengo.mixed_terrains.aliengo_lbc_config import AliengoLbcCfg, AliengoLbcCfgPPO
+# from .aliengo.mixed_terrains.aliengo_lbc_config import AliengoLbcCfg, AliengoLbcCfgPPO
+
+
+from .aliengo.aliengo_config_baseline import AliengoBaseCfg, AliengoBaseCfgPPO
 
 
 from .anymal_c.mixed_terrains.anymal_c_rough_config import (
@@ -78,14 +81,18 @@ task_registry.register(
     "aliengo_rough", Aliengo, AliengoRoughCfg(), AliengoRoughCfgPPO()
 )
 task_registry.register("aliengo_obs", Aliengo, AliengoObsCfg(), AliengoObsCfgPPO())
-task_registry.register("aliengo_lbc", Aliengo, AliengoLbcCfg(), AliengoLbcCfgPPO())
+# task_registry.register("aliengo_lbc", Aliengo, AliengoLbcCfg(), AliengoLbcCfgPPO())
 
-task_registry.register("aliengo_nav", AliengoNav, AliengoNavCfg(), AliengoNavCfgAlg())
+# task_registry.register("aliengo_nav", AliengoNav, AliengoNavCfg(), AliengoNavCfgAlg())
 
 task_registry.register("anymal_b", Anymal, AnymalBRoughCfg(), AnymalBRoughCfgPPO())
 task_registry.register("a1", LeggedRobot, A1RoughCfg(), A1RoughCfgPPO())
 task_registry.register("cassie", Cassie, CassieRoughCfg(), CassieRoughCfgPPO())
 
+
+
+
+task_registry.register("aliengo", Aliengo, AliengoBaseCfg(), AliengoBaseCfgPPO())
 
 
 task_registry.register(
