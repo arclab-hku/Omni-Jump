@@ -51,14 +51,14 @@ class AliengoBaseCfg(LeggedRobotCfg):
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
         num_privileged_obs = 198  # 187
-        train_type = "RMA"  # standard, priv, lbc, standard, RMA, EST, Dream
+        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
 
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
-        num_histroy_obs = 30
+
     class terrain(LeggedRobotCfg.terrain):
         mesh_type = "trimesh"
 
@@ -124,27 +124,26 @@ class AliengoBaseCfg(LeggedRobotCfg):
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
             orientation = -0.2
-            torques = -0.0
+            torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
 
             action_rate = -0.01
+            #### motion
+            f_hip_motion = -0.1
+            r_hip_motion = -0.1
+            f_thigh_motion = -0.1
+            r_thigh_motion = -0.1
+            f_calf_motion = -0.1
+            r_calf_motion = -0.1
 
             #### smoothness
-            dream_smoothness = -0.01
-            power_joint = -1e-5
+            dream_smoothness = -0.001
+            power_joint = -1e-4
             foot_clearance = -0.01
             foot_height = -0.01
-            #### motion
-            f_hip_motion = -0.01
-            r_hip_motion = -0.01
-            f_thigh_motion = -0.01
-            r_thigh_motion = -0.01
-            f_calf_motion = -0.01
-            r_calf_motion = -0.01
-
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
@@ -152,12 +151,13 @@ class AliengoBaseCfg(LeggedRobotCfg):
         crash_freq = True
         any_contacts = True
 
+    class randomization(LeggedRobotCfg.randomization):
+        # Randomization Property
+        randomizeMotorStrength = True
+        randomizeMotorStrengthLower = 0.9
+        randomizeMotorStrengthUpper = 1.1
 
     class privInfo(LeggedRobotCfg.privInfo):
-        enableMass = True
-        enableFriction = True
-        enableCOM = True
-
         enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
@@ -175,10 +175,11 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [128, 64, 8]
+
+        priv_mlp_units = [258, 128, 11]
         priv_info = False
-        priv_info_dim = 17
+        priv_info_dim = 187
         velLen = 3
         proprio_adapt = False
         checkpoint_model = None
-        proprio_adapt_out_dim = 8
+        proprio_adapt_out_dim = 11
