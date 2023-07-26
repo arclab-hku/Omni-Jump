@@ -16,5 +16,5 @@ python train.py --task=go1 --headless --seed=${SEED} \
 --algo=ProprioAdapt \
 --priv_info --proprio_adapt \
 --output_name=go1/"${CACHE}" \
---checkpoint_model=outputs/go1/rma/"${CACHE}"/stage1_nn/last.pt \
+--checkpoint_model=outputs/go1/"${CACHE}"/stage1_nn/last.pt \
 ${EXTRA_ARGS}
