@@ -25,8 +25,8 @@ class PlayJoy():
         self.env_cfg, self.train_cfg = task_registry.get_cfgs(name=args.task)
         # override some parameters for testing
         self.env_cfg.env.num_envs = min(self.env_cfg.env.num_envs, 1)
-        self.env_cfg.terrain.num_rows = 1
-        self.env_cfg.terrain.num_cols = 1
+        self.env_cfg.terrain.num_rows = 2
+        self.env_cfg.terrain.num_cols = 2
         self.env_cfg.terrain.curriculum = False
         self.env_cfg.noise.add_noise = False
         self.env_cfg.domain_rand.randomize_friction = False

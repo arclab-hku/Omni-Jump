@@ -97,15 +97,14 @@ class PPO:
         self.transition.actions_log_prob = self.actor_critic.get_actions_log_prob(self.transition.actions).detach()
         self.transition.action_mean = self.actor_critic.action_mean.detach()
         self.transition.action_sigma = self.actor_critic.action_std.detach()
-
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
         self.transition.critic_observations = obs_dict['obs']
         # RMA: need to record / update the priv info
         self.transition.priv_info = obs_dict['priv_info']
+        # RMA: need to record / update the vel info
+        self.transition.priv_vel_info = obs_dict['priv_vel_info']
 
-        # privileged_info: need to record / update the privileged_info info
-        self.transition.privileged_info = obs_dict['privileged_info']
 
         return self.transition.actions
     
@@ -133,12 +132,12 @@ class PPO:
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, priv_info_batch, privileged_info_batch in generator:
+            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, priv_info_batch, priv_vel_info_batch in generator:
 
                 obs_dict_batch = {
                     'obs': obs_batch,
                     'priv_info': priv_info_batch,
-                    'privileged_info': privileged_info_batch,
+                    'priv_vel_info': priv_vel_info_batch,
                 }
                 self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
                 actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)

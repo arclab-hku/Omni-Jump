@@ -14,5 +14,5 @@ CUDA_VISIBLE_DEVICES=${GPUS} \
 python train.py --task=go1  --num_envs=4096 --headless --seed=${SEED} \
 --algo=PPO \
 --priv_info \
---output_name=go1/"${CACHE}" \
+--output_name=go1/rma/"${CACHE}" \
 ${EXTRA_ARGS}

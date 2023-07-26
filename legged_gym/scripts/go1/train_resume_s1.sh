@@ -13,8 +13,8 @@ echo extra "${EXTRA_ARGS}"
 CUDA_VISIBLE_DEVICES=${GPUS} \
 python train.py --task=go1  --num_envs=4096 --headless --seed=${SEED} \
 --s_flag=1 \
---algo=PPO \
+--algo=On \
 --priv_info \
---output_name=go1/"${CACHE}" \
---checkpoint_model=model_6000.pt \
+--output_name=go1/base/"${CACHE}" \
+--checkpoint_model=model_600.pt \
 ${EXTRA_ARGS}

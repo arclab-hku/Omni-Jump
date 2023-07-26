@@ -121,7 +121,7 @@ class PPO:
 
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
-        self.transition.privileged_info = obs_dict['privileged_info']
+        self.transition.priv_vel_info = obs_dict['priv_vel_info']
         self.transition.proprio_hist = obs_dict['proprio_hist'].flatten(1)
 
         return self.transition.actions
@@ -156,13 +156,13 @@ class PPO:
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-                old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, proprio_hist_batch, privileged_info_batch, \
+                old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, proprio_hist_batch, priv_vel_info_batch, \
                 extrin_loss, extrin_gt_loss, next_obs_batch in generator:
 
             obs_dict_batch = {
                 'obs': obs_batch,
                 'proprio_hist': proprio_hist_batch,
-                'privileged_info': privileged_info_batch,
+                'priv_vel_info': priv_vel_info_batch,
             }
 
             self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
@@ -223,11 +223,11 @@ class PPO:
             kl_loss, logvar_z = self.actor_critic.encoder_loss(obs_dict_batch, masks=masks_batch,
                                                                hidden_states=hid_states_batch[1])
 
-            real_vel = torch.tanh(privileged_info_batch[:, 0:3])
+            real_vel = torch.tanh(priv_vel_info_batch[:, 0:3])
             pre_vel = pre_feature[:, 0:3]
             vel_loss = F.mse_loss(pre_vel, real_vel.detach())
 
-            real_next_obs = torch.tanh(torch.cat([next_obs_batch[: -1, ], privileged_info_batch[1:, 0:3]], dim=-1))
+            real_next_obs = torch.tanh(torch.cat([next_obs_batch[: -1, ], priv_vel_info_batch[1:, 0:3]], dim=-1))
             pre_next_obs_ = pre_next_obs[:-1, ]
             vae_loss = F.mse_loss(pre_next_obs_, real_next_obs.detach())
 

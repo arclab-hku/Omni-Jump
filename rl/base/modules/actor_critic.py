@@ -38,6 +38,7 @@ from torch.nn.modules import rnn
 class ActorCritic(nn.Module):
     is_recurrent = False
     def __init__(self,  num_actor_obs,
+                        num_critic_obs,
                         num_actions,
                         actor_hidden_dims=[256, 256, 256],
                         critic_hidden_dims=[256, 256, 256],
@@ -51,7 +52,7 @@ class ActorCritic(nn.Module):
         activation = get_activation(activation)
 
         mlp_input_dim_a = num_actor_obs
-        mlp_input_dim_c = num_actor_obs
+        mlp_input_dim_c = num_critic_obs
 
         # Policy
         actor_layers = []
@@ -119,44 +120,21 @@ class ActorCritic(nn.Module):
         mean = self.actor(observations)
         self.distribution = Normal(mean, mean*0. + self.std)
 
-    def act(self, obs_dict, **kwargs):
-        # self.update_distribution(observations)
-        mean, std, _ = self._actor_critic(obs_dict)
-
-        self.distribution = Normal(mean, mean * 0. + std)
+    def act(self, observations, **kwargs):
+        self.update_distribution(observations)
         return self.distribution.sample()
-
-
     
     def get_actions_log_prob(self, actions):
         return self.distribution.log_prob(actions).sum(dim=-1)
 
-    def act_inference(self, obs_dict):
-        # actions_mean = self.actor(observations)
-        # used for testing
-        actions_mean, _, _ = self._actor_critic(obs_dict)
+    def act_inference(self, observations):
+        obs = observations['obs']
+        actions_mean = self.actor(obs)
         return actions_mean
 
-    def evaluate(self, obs_dict, **kwargs):
-        # value = self.critic(critic_observations)
-        _, _, value = self._actor_critic(obs_dict)
+    def evaluate(self, critic_observations, **kwargs):
+        value = self.critic(critic_observations)
         return value
-
-
-    def _actor_critic(self, obs_dict):
-
-        actor_obs = obs_dict['obs']
-        critic_obs = obs_dict['obs']
-
-        mu = self.actor(actor_obs)
-        value = self.critic(critic_obs)
-        sigma = self.std
-
-
-        return mu, mu * 0 + sigma, value
-
-
-
 
 def get_activation(act_name):
     if act_name == "elu":

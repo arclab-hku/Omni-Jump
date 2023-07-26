@@ -11,8 +11,8 @@ EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 echo extra "${EXTRA_ARGS}"
 
 CUDA_VISIBLE_DEVICES=${GPUS} \
-python train.py --task=aliengo_rough  --num_envs=4096 --headless --seed=${SEED} \
+python train.py --task=aliengo  --num_envs=4096 --headless --seed=${SEED} \
 --algo=Dream \
 --priv_info \
---output_name=alieng_test/dream/"${CACHE}" \
+--output_name=aliengo/dream/"${CACHE}" \
 ${EXTRA_ARGS}

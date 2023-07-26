@@ -25,7 +25,7 @@ class ProprioAdaptPolicyRunner(object):
 
         self.cfg=train_cfg["runner"]
         self.policy_cfg = train_cfg["policy"]
-        self.encoder_cfg = train_cfg["Encoder"]
+        self.rma_cfg = train_cfg["RMA"]
         self.device = device
         self.env = env
 
@@ -33,7 +33,7 @@ class ProprioAdaptPolicyRunner(object):
         self.actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
                                                        self.env.num_actions,
                                                        **self.policy_cfg,
-                                                       **self.encoder_cfg).to(self.device)
+                                                       **self.rma_cfg).to(self.device)
 
         self.actor_critic.to(self.device)
         self.actor_critic.eval()
@@ -68,11 +68,10 @@ class ProprioAdaptPolicyRunner(object):
         _ = self.env.reset()
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
-
-        cprint(f"foot: {self.encoder_cfg['checkpoint_model']}", 'green', attrs=['bold'])
-
         # restore the training
-        self.restore_train(self.encoder_cfg['checkpoint_model'])
+        cprint(f"foot: {self.rma_cfg['checkpoint_model']}", 'green', attrs=['bold'])
+
+        self.restore_train(self.rma_cfg['checkpoint_model'])
 
         _t = time.time()
         _last_t = time.time()
@@ -86,10 +85,10 @@ class ProprioAdaptPolicyRunner(object):
             input_dict = {
                 'obs': obs_dict['obs'].detach(),
                 'priv_info': obs_dict['priv_info'],
-                'privileged_info': obs_dict['privileged_info'],
+                'priv_vel_info': obs_dict['priv_vel_info'],
                 'proprio_hist': obs_dict['proprio_hist'].detach(),
             }
-            mu, _, _, e, e_gt = self.actor_critic._actor_critic(input_dict)
+            mu, _, _, e, e_gt,_ = self.actor_critic._actor_critic(input_dict)
 
             # cprint(f"Encoder loss: {e.shape, e_gt.shape}", 'green', attrs=['bold'])
 
@@ -156,7 +155,7 @@ class ProprioAdaptPolicyRunner(object):
         self.actor_critic.load_state_dict(loaded_dict['model_state_dict'])
 
         # export policy as a jit module (used to run it from C++)
-        if self.cfg['export_policy']:
+        if self.rma_cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s2')
             # two of the network in actor critic

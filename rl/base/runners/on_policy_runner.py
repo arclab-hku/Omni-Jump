@@ -36,13 +36,14 @@ import statistics
 from torch.utils.tensorboard import SummaryWriter
 import torch
 from termcolor import cprint
+from rsl_rl.algorithms import PPO
+from rsl_rl.modules import ActorCritic, ActorCriticRecurrent
+from rsl_rl.env import VecEnv
 
 from rl.base.algorithms import PPO
 from rl.base.modules import ActorCritic, ActorCriticRecurrent
 from rl.base.env import VecEnv
 from rl.RMA.utils.utils import export_policy_as_jit
-
-
 class OnPolicyRunner:
 
     def __init__(self,
@@ -51,33 +52,33 @@ class OnPolicyRunner:
                  log_dir=None,
                  device='cpu'):
 
-        self.cfg = train_cfg["runner"]
+        self.cfg=train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
-
+        self.rma_cfg = train_cfg["RMA"]
         self.device = device
         self.env = env
         if self.env.num_privileged_obs is not None:
-            num_critic_obs = self.env.num_privileged_obs
+            num_critic_obs = self.env.num_privileged_obs 
         else:
 
             num_critic_obs = self.env.num_obs
-        actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
-        actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
-                                                       self.env.num_actions,
-                                                       **self.policy_cfg).to(self.device)
-        alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
+        actor_critic_class = eval(self.cfg["policy_class_name"]) # ActorCritic
+        actor_critic: ActorCritic = actor_critic_class( self.env.num_obs,
+                                                        num_critic_obs,
+                                                        self.env.num_actions,
+                                                        **self.policy_cfg).to(self.device)
+        alg_class = eval(self.cfg["algorithm_class_name"]) # PPO
         self.alg: PPO = alg_class(actor_critic, device=self.device, **self.alg_cfg)
         self.num_steps_per_env = self.cfg["num_steps_per_env"]
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
-                              [self.env.num_privileged_obs], [self.env.num_actions])
+        self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs], [self.env.num_privileged_obs], [self.env.num_actions])
 
         # Log
         self.log_dir = log_dir
-        # self.writer = None
+
         self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
         self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
 
@@ -89,18 +90,19 @@ class OnPolicyRunner:
         self.current_learning_iteration = 0
 
         _ = self.env.reset()
-
+    
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
         # initialize writer
-        if init_at_random_ep_len:
-            self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf,
-                                                             high=int(self.env.max_episode_length))
-        obs_dict = self.env.get_observations()
 
-        critic_obs = obs_dict['obs']
-        obs = obs_dict['obs']
+        if init_at_random_ep_len:
+            self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf, high=int(self.env.max_episode_length))
+        obs_dist = self.env.get_observations()
+        privileged_obs = None
+        critic_obs = privileged_obs if privileged_obs is not None else obs_dist['obs']
+
+        obs = obs_dist['obs']
         obs, critic_obs = obs.to(self.device), critic_obs.to(self.device)
-        self.alg.actor_critic.train()  # switch to train mode (for dropout for example)
+        self.alg.actor_critic.train() # switch to train mode (for dropout for example)
 
         ep_infos = []
         rewbuffer = deque(maxlen=100)
@@ -114,14 +116,14 @@ class OnPolicyRunner:
             # Rollout
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
-                    actions = self.alg.act(obs_dict)
-
-                    obs_dist, rewards, dones, infos = self.env.step(actions)
-                    obs, critic_obs, rewards, dones = obs_dist['obs'].to(self.device), obs_dist['obs'].to(
-                        self.device), rewards.to(self.device), dones.to(self.device)
+                    actions = self.alg.act(obs, critic_obs)
+                    obs_dist,  rewards, dones, infos = self.env.step(actions)
+                    critic_obs = privileged_obs if privileged_obs is not None else obs
+                    obs, critic_obs, rewards, dones = obs_dist['obs'].to(self.device), critic_obs.to(self.device), rewards.to(self.device), dones.to(self.device)
                     self.alg.process_env_step(rewards, dones, infos)
-
+                    
                     if self.log_dir is not None:
+
                         if 'episode' in infos:
                             ep_infos.append(infos['episode'])
                         cur_reward_sum += rewards
@@ -137,8 +139,8 @@ class OnPolicyRunner:
 
                 # Learning step
                 start = stop
-                self.alg.compute_returns(obs_dict)
-
+                self.alg.compute_returns(critic_obs)
+            
             mean_value_loss, mean_surrogate_loss = self.alg.update()
             stop = time.time()
             learn_time = stop - start
@@ -148,7 +150,7 @@ class OnPolicyRunner:
                 self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(it)))
                 self.save(os.path.join(self.nn_dir, 'last.pt'))
             ep_infos.clear()
-
+        
         self.current_learning_iteration += num_learning_iterations
         self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(self.current_learning_iteration)))
 
@@ -178,9 +180,9 @@ class OnPolicyRunner:
         self.writer.add_scalar('Loss/surrogate', locs['mean_surrogate_loss'], locs['it'])
         self.writer.add_scalar('Loss/learning_rate', self.alg.learning_rate, locs['it'])
         self.writer.add_scalar('Policy/mean_noise_std', mean_std.item(), locs['it'])
-        # self.writer.add_scalar('Perf/total_fps', fps, locs['it'])
-        # self.writer.add_scalar('Perf/collection time', locs['collection_time'], locs['it'])
-        # self.writer.add_scalar('Perf/learning_time', locs['learn_time'], locs['it'])
+        self.writer.add_scalar('Perf/total_fps', fps, locs['it'])
+        self.writer.add_scalar('Perf/collection time', locs['collection_time'], locs['it'])
+        self.writer.add_scalar('Perf/learning_time', locs['learn_time'], locs['it'])
         if len(locs['rewbuffer']) > 0:
             self.writer.add_scalar('Train/mean_reward', statistics.mean(locs['rewbuffer']), locs['it'])
             self.writer.add_scalar('Train/mean_episode_length', statistics.mean(locs['lenbuffer']), locs['it'])
@@ -193,24 +195,24 @@ class OnPolicyRunner:
             log_string = (f"""{'#' * width}\n"""
                           f"""{str.center(width, ' ')}\n\n"""
                           f"""{'Computation:':>{pad}} {fps:.0f} steps/s (collection: {locs[
-                              'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
+                            'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
                           f"""{'Value function loss:':>{pad}} {locs['mean_value_loss']:.4f}\n"""
                           f"""{'Surrogate loss:':>{pad}} {locs['mean_surrogate_loss']:.4f}\n"""
                           f"""{'Mean action noise std:':>{pad}} {mean_std.item():.2f}\n"""
                           f"""{'Mean reward:':>{pad}} {statistics.mean(locs['rewbuffer']):.2f}\n"""
                           f"""{'Mean episode length:':>{pad}} {statistics.mean(locs['lenbuffer']):.2f}\n""")
-            #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
-            #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
+                        #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
+                        #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
         else:
             log_string = (f"""{'#' * width}\n"""
                           f"""{str.center(width, ' ')}\n\n"""
                           f"""{'Computation:':>{pad}} {fps:.0f} steps/s (collection: {locs[
-                              'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
+                            'collection_time']:.3f}s, learning {locs['learn_time']:.3f}s)\n"""
                           f"""{'Value function loss:':>{pad}} {locs['mean_value_loss']:.4f}\n"""
                           f"""{'Surrogate loss:':>{pad}} {locs['mean_surrogate_loss']:.4f}\n"""
                           f"""{'Mean action noise std:':>{pad}} {mean_std.item():.2f}\n""")
-            #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
-            #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
+                        #   f"""{'Mean reward/step:':>{pad}} {locs['mean_reward']:.2f}\n"""
+                        #   f"""{'Mean episode length/episode:':>{pad}} {locs['mean_trajectory_length']:.2f}\n""")
 
         log_string += ep_string
         log_string += (f"""{'-' * width}\n"""
@@ -227,7 +229,7 @@ class OnPolicyRunner:
             'optimizer_state_dict': self.alg.optimizer.state_dict(),
             'iter': self.current_learning_iteration,
             'infos': infos,
-        }, path)
+            }, path)
 
     def load(self, path, load_optimizer=True):
         loaded_dict = torch.load(path)
@@ -237,7 +239,7 @@ class OnPolicyRunner:
         self.current_learning_iteration = loaded_dict['iter']
 
         # export policy as a jit module (used to run it from C++)
-        if self.cfg['export_policy']:
+        if self.rma_cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')
@@ -246,7 +248,7 @@ class OnPolicyRunner:
         return loaded_dict['infos']
 
     def get_inference_policy(self, device=None):
-        self.alg.actor_critic.eval()  # switch to evaluation mode (dropout for example)
+        self.alg.actor_critic.eval() # switch to evaluation mode (dropout for example)
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference

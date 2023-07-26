@@ -29,18 +29,18 @@ class ESTPolicyRunner:
         self.cfg=train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
-        self.encoder_cfg = train_cfg["Encoder"]
+        self.rma_cfg = train_cfg["RMA"]
         self.device = device
         self.env = env
-
+        self.priv_mlp = train_cfg["RMA"]['priv_mlp_units']
 
         actor_critic_class = eval(self.cfg["policy_class_name"]) # ActorCritic
         actor_critic: ActorCritic = actor_critic_class( self.env.num_obs,
                                                         self.env.num_actions,
                                                         **self.policy_cfg,
-                                                        **self.encoder_cfg).to(self.device)
+                                                        **self.rma_cfg ).to(self.device)
 
-        dm_encoder = DmEncoder(self.env.num_obs, self.encoder_cfg['priv_mlp_units'])
+        dm_encoder = DmEncoder(self.env.num_obs, self.priv_mlp)
 
 
         alg_class = eval(self.cfg["algorithm_class_name"]) # PPO
@@ -117,6 +117,8 @@ class ESTPolicyRunner:
             if it % self.save_interval == 0:
                 self.save(os.path.join(self.nn_dir, 'model_{}.pt'.format(it)))
                 self.save(os.path.join(self.nn_dir, 'last.pt'))
+
+
             ep_infos.clear()
         
         self.current_learning_iteration += num_learning_iterations
@@ -211,14 +213,16 @@ class ESTPolicyRunner:
         self.alg.actor_critic.load_state_dict(loaded_dict['actor_state_dict'])
         self.alg.dm_encoder.load_state_dict(loaded_dict["dm_encoder_state_dict"])
 
+
         if load_optimizer:
             self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
             self.alg.optimizer_encoder.load_state_dict(loaded_dict['optimizer_encoder_state_dict'])
         self.current_learning_iteration = loaded_dict['iter']
 
 
+
         # export policy as a jit module (used to run it from C++)
-        if self.cfg['export_policy']:
+        if self.rma_cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')

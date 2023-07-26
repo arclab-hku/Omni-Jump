@@ -60,7 +60,10 @@ class RolloutStorage:
 
         # Core
         self.observations = torch.zeros(num_transitions_per_env, num_envs, *obs_shape, device=self.device)
-
+        if privileged_obs_shape[0] is not None:
+            self.privileged_observations = torch.zeros(num_transitions_per_env, num_envs, *privileged_obs_shape, device=self.device)
+        else:
+            self.privileged_observations = None
         self.rewards = torch.zeros(num_transitions_per_env, num_envs, 1, device=self.device)
         self.actions = torch.zeros(num_transitions_per_env, num_envs, *actions_shape, device=self.device)
         self.dones = torch.zeros(num_transitions_per_env, num_envs, 1, device=self.device).byte()
@@ -86,6 +89,7 @@ class RolloutStorage:
         if self.step >= self.num_transitions_per_env:
             raise AssertionError("Rollout buffer overflow")
         self.observations[self.step].copy_(transition.observations)
+        if self.privileged_observations is not None: self.privileged_observations[self.step].copy_(transition.critic_observations)
         self.actions[self.step].copy_(transition.actions)
         self.rewards[self.step].copy_(transition.rewards.view(-1, 1))
         self.dones[self.step].copy_(transition.dones.view(-1, 1))
@@ -146,7 +150,10 @@ class RolloutStorage:
         indices = torch.randperm(num_mini_batches*mini_batch_size, requires_grad=False, device=self.device)
 
         observations = self.observations.flatten(0, 1)
-        critic_observations = observations
+        if self.privileged_observations is not None:
+            critic_observations = self.privileged_observations.flatten(0, 1)
+        else:
+            critic_observations = observations
 
         actions = self.actions.flatten(0, 1)
         values = self.values.flatten(0, 1)
@@ -179,8 +186,10 @@ class RolloutStorage:
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):
 
         padded_obs_trajectories, trajectory_masks = split_and_pad_trajectories(self.observations, self.dones)
-
-        padded_critic_obs_trajectories = padded_obs_trajectories
+        if self.privileged_observations is not None: 
+            padded_critic_obs_trajectories, _ = split_and_pad_trajectories(self.privileged_observations, self.dones)
+        else: 
+            padded_critic_obs_trajectories = padded_obs_trajectories
 
         mini_batch_size = self.num_envs // num_mini_batches
         for ep in range(num_epochs):
