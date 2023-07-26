@@ -36,7 +36,7 @@ from .base.legged_robot import LeggedRobot
 
 from .anymal_c.anymal import Anymal
 from .aliengo.aliengo import Aliengo
-from .aliengo.aliengoNav import AliengoNav
+# from .aliengo.aliengoNav import AliengoNav
 
 from .aliengo.mixed_terrains.aliengo_rough_config import (
     AliengoRoughCfg,

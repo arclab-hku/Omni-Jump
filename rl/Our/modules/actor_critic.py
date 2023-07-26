@@ -178,7 +178,7 @@ class ActorCritic(nn.Module):
 
         actor_obs = torch.cat([obs, extrin], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
-
+        print('sffs', obs_hight.shape, critic_obs.shape)
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std

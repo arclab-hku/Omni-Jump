@@ -366,7 +366,7 @@ class LeggedRobot(BaseTask):
             noise_vec[12:24] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
             noise_vec[24:36] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
             noise_vec[36:48] = 0.  # previous actions
-        elif self.cfg.env.train_type == "RMA":
+        elif self.cfg.env.train_type == "RMA" or "EST" or "Dream" or "Our":
             noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
             noise_vec[3:6] = noise_scales.gravity * noise_level
             noise_vec[6:9] = 0.  # commands

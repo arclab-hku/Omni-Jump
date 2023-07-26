@@ -46,17 +46,17 @@ class AliengoBaseCfg(LeggedRobotCfg):
         num_envs = 4096  # was getting a seg fault
         # num_envs = 100  # was getting a seg fault
         num_actions = 12
-        num_observations = 235
+        num_observations = 45
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
         num_privileged_obs = 198  # 187
-        train_type = "standard"  # standard, priv, lbc, standard, RMA, EST, Dream
+        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
 
-        measure_obs_heights = True
+        measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain(LeggedRobotCfg.terrain):
@@ -70,16 +70,14 @@ class AliengoBaseCfg(LeggedRobotCfg):
             "RL_hip_joint": 0.1,  # [rad]
             "FR_hip_joint": -0.1,  # [rad]
             "RR_hip_joint": -0.1,  # [rad]
-
             "FL_thigh_joint": 0.8,  # [rad]
             "RL_thigh_joint": 1.0,  # [rad]
             "FR_thigh_joint": 0.8,  # [rad]
             "RR_thigh_joint": 1.0,  # [rad]
-
-            "FL_calf_joint": -1.5,  # [rad]
-            "RL_calf_joint": -1.5,  # [rad]
-            "FR_calf_joint": -1.5,  # [rad]
-            "RR_calf_joint": -1.5,  # [rad]
+            "FL_calf_joint": -1.8,  # [rad]
+            "RL_calf_joint": -1.8,  # [rad]
+            "FR_calf_joint": -1.8,  # [rad]
+            "RR_calf_joint": -1.8,  # [rad]
         }
 
     class control(LeggedRobotCfg.control):
@@ -95,7 +93,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
+        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo/urdf/aliengo.urdf"
         name = "aliengo"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
@@ -142,10 +140,10 @@ class AliengoBaseCfg(LeggedRobotCfg):
             # r_calf_motion = -0.1
 
             #### smoothness
-            # dream_smoothness = -0.001
-            # power_joint = -1e-4
-            # foot_clearance = -0.01
-            # foot_height = -0.01
+            dream_smoothness = -0.001
+            power_joint = -1e-5
+            foot_clearance = -0.01
+            foot_height = -0.01
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
@@ -156,6 +154,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
 
     class privInfo(LeggedRobotCfg.privInfo):
+        enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
         enableForce = False

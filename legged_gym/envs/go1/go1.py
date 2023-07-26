@@ -2,22 +2,13 @@ from time import time
 import numpy as np
 import os
 
-from isaacgym.torch_utils import *
 from isaacgym import gymtorch, gymapi, gymutil
 
 import torch
-from torch import nn
-# from torch.tensor import Tensor
-from typing import Tuple, Dict
+
 
 from legged_gym.envs import LeggedRobot
-from legged_gym import LEGGED_GYM_ROOT_DIR
 from .go1_config_baseline import Go1BaseCfg
-
-LEG_NUM = 4
-LEG_DOF = 3
-LEN_HIST = 5
-MODEL_IN_SIZE = 2 * LEG_DOF * LEN_HIST
 
 class Go1CameraMixin:
     def __init__(self, *args, **kwargs):
