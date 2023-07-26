@@ -70,8 +70,6 @@ class PPO:
         self.actor_critic = actor_critic
         self.actor_critic.to(self.device)
 
-
-
         self.storage = None # initialized later
         self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=learning_rate)
         self.transition = RolloutStorage.Transition()
@@ -113,19 +111,16 @@ class PPO:
         self.transition.action_mean = self.actor_critic.action_mean.detach()
         self.transition.action_sigma = self.actor_critic.action_std.detach()
 
-        # cprint(f"Encoder loss: { self.transition.values ,  self.transition.values.shape}", 'red', attrs=['bold'])
-
-
         ##############add loss #############
         self.transition.extrin_loss = self.actor_critic.extrin_loss(obs_dict).detach()
         self.transition.extrin_gt_loss = self.actor_critic.extrin_gt_loss(obs_dict).detach()
 
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
-        self.transition.critic_observations = obs_dict['obs']
+        # self.transition.critic_observations = obs_dict['obs']
 
-        # RMA: need to record / update the vel info
-        self.transition.priv_vel_info = obs_dict['priv_vel_info']
+        # privileged_info: need to record / update the vel info
+        self.transition.privileged_info = obs_dict['privileged_info']
 
 
         return self.transition.actions
@@ -154,18 +149,17 @@ class PPO:
         mean_contact_loss = 0
 
 
-
         if self.actor_critic.is_recurrent:
             generator = self.storage.reccurent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, priv_vel_info_batch,extrin_loss, extrin_gt_loss  in generator:
+            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, privileged_info_batch, extrin_loss, extrin_gt_loss  in generator:
 
                 obs_dict_batch = {
                     'obs': obs_batch,
                     # 'priv_info': priv_info_batch,
-                    'priv_vel_info': priv_vel_info_batch,
+                    'privileged_info': privileged_info_batch,
                 }
                 self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
                 actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)
@@ -177,22 +171,22 @@ class PPO:
                 sigma_batch = self.actor_critic.action_std
                 entropy_batch = self.actor_critic.entropy
 
-
                 # KL
                 if self.desired_kl != None and self.schedule == 'adaptive':
                     with torch.inference_mode():
                         kl = torch.sum(
-                            torch.log(sigma_batch / old_sigma_batch + 1.e-5) + (torch.square(old_sigma_batch) + torch.square(old_mu_batch - mu_batch)) / (2.0 * torch.square(sigma_batch)) - 0.5, axis=-1)
+                            torch.log(sigma_batch / old_sigma_batch + 1.e-5) + (
+                                        torch.square(old_sigma_batch) + torch.square(old_mu_batch - mu_batch)) / (
+                                        2.0 * torch.square(sigma_batch)) - 0.5, axis=-1)
                         kl_mean = torch.mean(kl)
 
                         if kl_mean > self.desired_kl * 2.0:
                             self.learning_rate = max(1e-5, self.learning_rate / 1.5)
                         elif kl_mean < self.desired_kl / 2.0 and kl_mean > 0.0:
                             self.learning_rate = min(1e-2, self.learning_rate * 1.5)
-                        
+
                         for param_group in self.optimizer.param_groups:
                             param_group['lr'] = self.learning_rate
-
 
                 # Surrogate loss
                 ratio = torch.exp(actions_log_prob_batch - torch.squeeze(old_actions_log_prob_batch))
@@ -213,19 +207,13 @@ class PPO:
 
                 loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
 
-                extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch,
-                                                             hidden_states=hid_states_batch[1])
-                extrin_gt_batch = torch.tanh(priv_vel_info_batch[:, 0:11])
-                cprint(f"Encoder loss: { priv_vel_info_batch.shape  }", 'red', attrs=['bold'])
+                extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[1])
+                extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11])
 
                 vel_loss = F.mse_loss(extrin_batch[:, 0:3], extrin_gt_batch[:, 0:3].detach())
                 height_loss = F.mse_loss(extrin_batch[:, 3:7], extrin_gt_batch[:, 3:7].detach())
                 contact_loss = F.mse_loss(extrin_batch[:, 7:11], extrin_gt_batch[:, 7:11].detach())
 
-
-                # vel_loss =    ((extrin_batch[:, 0:3] - extrin_gt_batch[:, 0:3].detach()) ** 2).mean()
-                # height_loss = ((extrin_batch[:, 3:7] - extrin_gt_batch[:, 3:7].detach()) ** 2).mean()
-                # contact_loss = ((extrin_batch[:, 7:11] - extrin_gt_batch[:, 7:11].detach()) ** 2).mean()
                 loss_encoder = vel_loss + height_loss + contact_loss
 
                 # Gradient step
@@ -249,10 +237,7 @@ class PPO:
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
-        #
-        # mean_vel_loss /= num_updates
-        # mean_height_loss /= num_updates
-        # mean_contact_loss /= num_updates
+
 
         self.storage.clear()
 

@@ -289,11 +289,11 @@ class ActorCritic(nn.Module):
     def _actor_critic(self, obs_dict):
 
         obs = obs_dict['obs']
-        obs_vel = obs_dict['priv_vel_info'][:, 0:3]
-        obs_hight = obs_dict['priv_vel_info'][:, 11:198]
+        obs_vel = obs_dict['privileged_info'][:, 0:3]
+        obs_hight = obs_dict['privileged_info'][:, 11:198]
         obs_his = obs_dict['proprio_hist']
         obs_his = obs_his.flatten(1)
-        obs_force = obs_dict['priv_vel_info'][:,  198:200]
+        obs_force = obs_dict['privileged_info'][:,  198:200]
 
         # cprint(f"Force: {obs_dict['priv_vel_info'][:, 198:200]}", 'green', attrs=['bold'])
 
@@ -305,7 +305,7 @@ class ActorCritic(nn.Module):
 
         actor_obs = torch.cat([obs, z_feature], dim=-1)  #### 45 + 19 = 64
 
-        critic_obs = torch.cat([obs, obs_vel, obs_force, obs_hight], dim=-1)  ## 45 + 3 + 187 + 2 = 237
+        critic_obs = torch.cat([obs_vel, obs, obs_force, obs_hight], dim=-1)  ## 45 + 3 + 187 + 2 = 237
 
 
         mu = self.actor(actor_obs)

@@ -124,7 +124,7 @@ class ActorCritic(nn.Module):
 
         # Value function
         critic_layers = []
-        critic_layers.append(nn.Linear(232, critic_hidden_dims[0]))
+        critic_layers.append(nn.Linear(53, critic_hidden_dims[0]))
         critic_layers.append(activation)
         for l in range(len(critic_hidden_dims)):
             if l == len(critic_hidden_dims) - 1:
@@ -197,10 +197,10 @@ class ActorCritic(nn.Module):
 
     def _actor_critic(self, obs_dict):
         obs = obs_dict['obs']
-        obs_vel = obs_dict['priv_vel_info'][:, 0:3]
-        obs_hight = obs_dict['priv_vel_info'][:, 11:198]
+        obs_vel = obs_dict['privileged_info'][:, 0:3]
+        obs_hight = obs_dict['privileged_info'][:, 11:198]
         obs_priv = obs_dict['priv_info']
-
+        actor_obs = obs
         extrin, extrin_gt = None, None
         if self.priv_info:
             if self.priv_info_stage2:
@@ -223,10 +223,10 @@ class ActorCritic(nn.Module):
 
                 actor_obs = torch.cat([obs, extrin], dim=-1)
 
-        obs_critic = torch.cat([obs, obs_hight], dim=-1)
+
 
         mu = self.actor(actor_obs)
-        value = self.critic(obs_critic)
+        value = self.critic(actor_obs)
         sigma = self.std
 
         mu1 = self.actor(actor_obs)

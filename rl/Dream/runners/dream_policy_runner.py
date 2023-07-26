@@ -28,20 +28,20 @@ class DreamPolicyRunner:
         self.cfg = train_cfg["runner"]
         self.alg_cfg = train_cfg["algorithm"]
         self.policy_cfg = train_cfg["policy"]
-        self.rma_cfg = train_cfg["RMA"]
+        self.encoder_cfg = train_cfg["Encoder"]
         self.device = device
         self.env = env
-        self.encoder_mlp = train_cfg["RMA"]['priv_mlp_units']
-        self.decoder_mlp = train_cfg["RMA"]['decoder_mlp_units']
+        self.encoder_mlp = train_cfg["Encoder"]['priv_mlp_units']
+        self.decoder_mlp = train_cfg["Encoder"]['decoder_mlp_units']
 
-        self.HistoryLen = train_cfg["RMA"]['HistoryLen']
-        self.proprio_adapt_output = train_cfg["RMA"]['proprio_adapt_out_dim']
+        self.HistoryLen = train_cfg["Encoder"]['HistoryLen']
+        self.proprio_adapt_output = train_cfg["Encoder"]['proprio_adapt_out_dim']
 
         actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
         actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
                                                        self.env.num_actions,
                                                        **self.policy_cfg,
-                                                       **self.rma_cfg).to(self.device)
+                                                       **self.encoder_cfg).to(self.device)
 
         num_encoder_input = self.env.num_obs * self.HistoryLen
 
@@ -58,9 +58,9 @@ class DreamPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        print('sff', self.rma_cfg["Hist_info_dim"])
+        print('sff', self.encoder_cfg["Hist_info_dim"])
         self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
-                              [self.env.num_privileged_obs], [self.env.num_actions], [self.rma_cfg["Hist_info_dim"]])
+                              [self.env.num_privileged_obs], [self.env.num_actions], [self.encoder_cfg["Hist_info_dim"]])
 
         # Log
         self.log_dir = log_dir
@@ -97,9 +97,7 @@ class DreamPolicyRunner:
                     actions = self.alg.act(obs_dict)
                     nex_obs_dict, rewards, dones, infos = self.env.step(actions)
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
-
                     self.alg.process_env_step(rewards, dones, infos, nex_obs_dict)
-
                     obs_dict = nex_obs_dict
 
                     if self.log_dir is not None:
@@ -229,7 +227,7 @@ class DreamPolicyRunner:
         self.current_learning_iteration = loaded_dict['iter']
 
         # export policy as a jit module (used to run it from C++)
-        if self.rma_cfg['export_policy']:
+        if self.cfg['export_policy']:
             cprint('Exporting policy to jit module(C++)', 'green', attrs=['bold'])
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')

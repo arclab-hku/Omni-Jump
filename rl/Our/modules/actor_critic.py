@@ -163,11 +163,11 @@ class ActorCritic(nn.Module):
     def _actor_critic(self, obs_dict):
 
         obs = obs_dict['obs']
-        obs_vel = obs_dict['priv_vel_info'][:, 0:3]
-        obs_hight = obs_dict['priv_vel_info'][:, 11:198]
+        obs_vel = obs_dict['privileged_info'][:, 0:3]
+        obs_hight = obs_dict['privileged_info'][:, 11:198]
         # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
 
-        extrin_gt = obs_dict['priv_vel_info'][:, 0:11]
+        extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
 
         extrin_en = self.dm_encoder(obs)
@@ -178,7 +178,7 @@ class ActorCritic(nn.Module):
 
         actor_obs = torch.cat([obs, extrin], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
-
+        print('sffs', obs_hight.shape, critic_obs.shape)
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
