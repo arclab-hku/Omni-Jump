@@ -15,6 +15,6 @@ python train.py --task=aliengo --headless --seed=${SEED} \
 --num_envs=5000 \
 --algo=ProprioAdapt \
 --priv_info --proprio_adapt \
---output_name=aliengo/"${CACHE}" \
---checkpoint_model=outputs/aliengo_rma/"${CACHE}"/stage1_nn/last.pt \
+--output_name=aliengo/rma/"${CACHE}" \
+--checkpoint_model=outputs/aliengo/rma/"${CACHE}"/stage1_nn/last.pt \
 ${EXTRA_ARGS}

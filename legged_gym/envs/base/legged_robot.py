@@ -318,7 +318,7 @@ class LeggedRobot(BaseTask):
         if self.enable_priv_measured_height:
             noise_vel[11:198] = noise_scales.height_measurements * noise_level * self.obs_scales.height_measurements
 
-        if self.cfg.terrain.measure_heights:
+        if self.cfg.env.measure_obs_heights:
             noise_vec[48:235] = (noise_scales.height_measurements * noise_level * self.obs_scales.height_measurements)
         return noise_vec, noise_vel
     def compute_observations(self):
@@ -1433,7 +1433,7 @@ class LeggedRobot(BaseTask):
     def _update_priv_buf(self, env_id, name, value, lower=None, upper=None):
         # normalize to -1, 1
         s, e = self.priv_info_dict[name]
-        if eval(f'self.enable_priv_{name}'):
+        if eval(f'self.cfg.domain_rand.randomize_{name}'):
             if type(value) is list:
                 value = to_torch(value, dtype=torch.float, device=self.device)
             if type(lower) is list or upper is list:
