@@ -148,22 +148,17 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
         if args.checkpoint is not None:
             cfg_train.runner.checkpoint = args.checkpoint
         if args.priv_info:
-            cfg_train.RMA.priv_info = args.priv_info
+            cfg_train.Encoder.priv_info = args.priv_info
         if args.proprio_adapt:
-            cfg_train.RMA.proprio_adapt = args.proprio_adapt
+            cfg_train.Encoder.proprio_adapt = args.proprio_adapt
         if args.lin_vel_x is not None and args.lin_vel_y is not None and args.heading is not None:
             env_cfg.commands.ranges.lin_vel_x = [args.lin_vel_x, args.lin_vel_x]
             env_cfg.commands.ranges.lin_vel_y = [args.lin_vel_y, args.lin_vel_y]
             env_cfg.commands.ranges.heading = [args.heading, args.heading]
-        # if args.fault is not None: # fix the fault rand sample range
-        #     env_cfg.RMA.randomization.randomizeMotorFaultLower = args.fault
-        #     env_cfg.RMA.randomization.randomizeMotorFaultUpper = args.fault
-        # if args.fault_transitions is not None:
-        #     env_cfg.RMA.randomization.faultResampleList = args.fault_transitions
         if args.export_policy:
-            cfg_train.RMA.export_policy = args.export_policy
+            cfg_train.Encoder.export_policy = args.export_policy
         if args.checkpoint_model:
-            cfg_train.RMA.checkpoint_model = args.checkpoint_model
+            cfg_train.Encoder.checkpoint_model = args.checkpoint_model
             print('ssf', args.checkpoint_model)
 
     return env_cfg, cfg_train
@@ -184,7 +179,7 @@ def get_args():
         {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
         {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
 
-        # ! RMA
+        # !
         {"name": "--output_name", "type": str, "default": "debug", "help": "where you save and load the nn policy"},
         {"name": "--test", "action": "store_true", "default": False, "help": "whether or not test the policy"},
         {"name": "--algo", "type": str, "default": "PPO", "help": "which algorithm used to train the policy, PPO or padapt"},

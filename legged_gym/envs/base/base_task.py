@@ -64,13 +64,11 @@ class BaseTask():
             self.graphics_device_id = -1
 
         self.num_envs = cfg.env.num_envs
-
-        self.num_obs = cfg.env.num_observations + 12 * (
-                    cfg.history.pos_num_history_stack - 1 + cfg.history.vel_num_history_stack - 1 + cfg.history.action_num_history_stack - 1)
-        self.num_privileged_obs = cfg.env.num_privileged_obs
         self.num_actions = cfg.env.num_actions
 
-        self.num_vel_obs = cfg.env.num_vel_obs
+        self.num_obs = cfg.env.num_observations
+        self.num_privileged_obs = cfg.env.num_privileged_obs
+        self.num_histroy_obs = cfg.env.num_histroy_obs
 
         # optimization flags for pytorch JIT
         torch._C._jit_set_profiling_mode(False)
@@ -78,17 +76,22 @@ class BaseTask():
 
         # allocate buffers
         self.obs_buf = torch.zeros(self.num_envs, self.num_obs, device=self.device, dtype=torch.float)
-        self.priv_vel_buf = torch.zeros(self.num_envs, self.num_vel_obs, device=self.device, dtype=torch.float)
-
-
         self.rew_buf = torch.zeros(self.num_envs, device=self.device, dtype=torch.float)
         self.reset_buf = torch.ones(self.num_envs, device=self.device, dtype=torch.long)
         self.episode_length_buf = torch.zeros(self.num_envs, device=self.device, dtype=torch.long)
         self.time_out_buf = torch.zeros(self.num_envs, device=self.device, dtype=torch.bool)
-
+        if self.num_privileged_obs is not None:
+            self.privileged_obs_buf = torch.zeros(
+                self.num_envs,
+                self.num_privileged_obs,
+                device=self.device,
+                dtype=torch.float,
+            )
+        else:
+            self.privileged_obs_buf = None
         self.extras = {}
 
-        self._allocate_buffers() # RMA specific buffers
+        self._allocate_buffers()  # his specific buffers
         # create envs, sim and viewer
         self.create_sim()
         self.gym.prepare_sim(self.sim)
@@ -131,7 +134,8 @@ class BaseTask():
         # step the simulator
         self.step(zero_actions)
         self.obs_dict['obs'] = torch.clip(self.obs_buf, -self.clip_obs, self.clip_obs)
-        self.obs_dict['priv_vel_info'] = torch.clip(self.priv_vel_buf, -self.clip_obs, self.clip_obs)
+        if self.num_privileged_obs is not None:
+            self.obs_dict['privileged_info'] = torch.clip(self.privileged_obs_buf, -self.clip_obs, self.clip_obs)
 
         return self.obs_dict
 

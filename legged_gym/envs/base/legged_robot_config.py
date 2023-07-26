@@ -42,7 +42,10 @@ class LeggedRobotCfg(BaseConfig):
         send_timeouts = True  # send time out information to the algorithm
         episode_length_s = 20  # episode length in seconds
         train_type = "EST"  # standard, RMA, EST
-        stage = 0
+        measure_obs_heights = False
+        num_histroy_obs = 1
+        num_env_priv_obs = None  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
+
     class terrain:
         mesh_type = 'plane'  # "heightfield" # none, plane, heightfield or trimesh
         horizontal_scale = 0.1  # [m]
@@ -54,11 +57,12 @@ class LeggedRobotCfg(BaseConfig):
         restitution = 0.
         # rough terrain only:
         measure_heights = True
-        measure_obs_heights = False
+
 
         measured_points_x = [-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7,
                              0.8]  # 1mx1.6m rectangle (without center line)
         measured_points_y = [-0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5]
+        num_points = len(measured_points_x) * len(measured_points_y)
         selected = False  # select a unique terrain type and pass all arguments
         terrain_kwargs = None  # Dict of arguments for selected terrain
         max_init_terrain_level = 5  # starting curriculum state
@@ -103,6 +107,7 @@ class LeggedRobotCfg(BaseConfig):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
 
+        use_actuator_network = False
     class asset:
         file = ""
         name = "legged_robot"  # actor name
@@ -136,6 +141,11 @@ class LeggedRobotCfg(BaseConfig):
         push_interval_s = 15
         max_push_vel_xy = 1.
 
+        randomize_center = True
+        added_center_range = [-0.05, 0.05]
+
+        randomize_motor_strength = True
+        added_motor_strength = [1.0, 1.0]
     class rewards:
         class scales:
             termination = -0.0
@@ -175,7 +185,7 @@ class LeggedRobotCfg(BaseConfig):
             RMA_smoothness = 0.0
             RMA_foot_slip = 0.0
             RMA_action_magnitude = 0.0
-            motion = 0
+
             ### dream
             orientation_base = 0.0
             dream_smoothness = 0.0
@@ -186,14 +196,17 @@ class LeggedRobotCfg(BaseConfig):
 
         only_positive_rewards = True  # if true negative total rewards are clipped at zero (avoids early termination problems)
         tracking_sigma = 0.25  # tracking reward = exp(-error^2/sigma)
-        soft_dof_pos_limit = 1.  # percentage of urdf limits, values above this limit are penalized
-        soft_dof_vel_limit = 1.
-        soft_torque_limit = 1.
-        base_height_target = 1.
-        foot_height_target = 1
+        soft_dof_pos_limit = 1.0  # percentage of urdf limits, values above this limit are penalized
+        soft_dof_vel_limit = 1.0
+        soft_torque_limit = 1.0
+        base_height_target = 1.0
+        foot_height_target = 1.0
         max_contact_force = 100.  # forces above this value are penalized
-        terminate_base_height = False
-
+    class evals:
+        feet_stumble = False
+        feet_step = False
+        crash_freq = False
+        any_contacts = False
     class normalization:
         class obs_scales:
             lin_vel = 2.0
@@ -243,54 +256,18 @@ class LeggedRobotCfg(BaseConfig):
             default_buffer_size_multiplier = 5
             contact_collection = 2  # 0: never, 1: last sub-step, 2: all sub-steps (default=2)
 
-    class history: # previous state: >1; only current state: =1
-        pos_num_history_stack = 1
-        vel_num_history_stack = 1
-        action_num_history_stack = 1
+    class randomization:
+        # Randomization Property
+        randomizeMotorStrength = False
+        randomizeMotorStrengthLower = 0.9
+        randomizeMotorStrengthUpper = 1.1
+        jointNoiseScale = 0.02
 
-    # ***************** RMA specific *****************
-    class RMA:
-        class adaptor:
-            propHistoryLen = 30
-            privInfoDim = 17
-
-        class randomization:
-            # Randomization Property
-            randomizeMass = False
-            randomizeMassLower = -0.25
-            randomizeMassUpper = 0.25
-            randomizeCOM = False
-            randomizeCOMLower = -0.01
-            randomizeCOMUpper = 0.01
-            randomizeFriction = False
-            randomizeFrictionLower = 0.5
-            randomizeFrictionUpper = 1.25
-            randomizeMotorStrength = False
-            randomizeMotorStrengthLower = 0.9
-            randomizeMotorStrengthUpper = 1.1
-
-            randomizeMotorFault = False
-            randomizeMotorFaultLower = 0.02  # extreme case
-            randomizeMotorFaultUpper = 1.0  # normal
-            motorFaultJoints = ['FL_calf_joint', 'FR_calf_joint']  # which joint to fault
-            motorTotalFaultProb = 0.1  # fine tune 0.1
-            totalFaultJointPoses = [0.1, 0.8, -2.6,
-                                    -0.1, 0.8, -2.6,
-                                    0.1, 1.0, -2.6,
-                                    -0.1, 1.0, -2.6]  # freeze total fault joint angle
-            faultResampleTime = 3.0
-            faultResampleList = []
-
-            jointNoiseScale = 0.02
-
-        class privInfo:
-            enableMass = False
-            enableCOM = False
-            enableFriction = False
-            enableMotorStrength = False
-            enableMeasuredHeight = False
-            enableMeasuredVel = False
-            enableForce = False
+    class privInfo:
+        enableMotorStrength = False
+        enableMeasuredHeight = False
+        enableMeasuredVel = False
+        enableForce = False
 
 
 
@@ -321,7 +298,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         gamma = 0.99
         lam = 0.95
         desired_kl = 0.01
-        max_grad_norm = 1.
+        max_grad_norm = 1.0
 
     class runner:
         policy_class_name = 'ActorCritic'
@@ -338,9 +315,10 @@ class LeggedRobotCfgPPO(BaseConfig):
         load_run = -1  # -1 = last run
         checkpoint = -1  # -1 = last saved model
         resume_path = None  # updated from load_run and chkpt
-
-    class RMA:
+        eval_baseline = False
+        num_test_envs = 50
         export_policy = False
+    class Encoder:
         priv_mlp_units = [256, 128, 8]
         decoder_mlp_units = [64, 128, 48]
         priv_info = False
