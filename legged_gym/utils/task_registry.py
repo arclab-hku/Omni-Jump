@@ -164,16 +164,14 @@ class TaskRegistry():
                     f'are you intentionally going to overwrite files in {args.output_name}, type yes to continue \n')
                 if user_input != 'yes':
                     exit()
-            # else:
-            #     os.makedirs(log_dir)
-            #
-            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
-            # copyfile(save_item, log_dir + '/train_cfg_general.py')
-            #
-            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', name, name + '_config.py')
-            # copyfile(save_item, log_dir + '/train_cfg_robot.py')
 
+            os.makedirs(log_dir, exist_ok=True)
+            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
+            copyfile(save_item, log_dir + '/train_cfg_general.py')
 
+            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'aliengo',
+                                     name + '_config_baseline.py')
+            copyfile(save_item, log_dir + '/train_cfg_robot.py')
 
         train_cfg_dict = class_to_dict(train_cfg)
         runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)

@@ -50,7 +50,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = 198  # 187
+        num_privileged_obs = 200  # 187
         train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
@@ -93,7 +93,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo/urdf/aliengo.urdf"
+        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
         name = "aliengo"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
@@ -132,12 +132,12 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
             action_rate = -0.01
             #### motion
-            f_hip_motion = -0.1
-            r_hip_motion = -0.1
-            f_thigh_motion = -0.1
-            r_thigh_motion = -0.1
-            f_calf_motion = -0.1
-            r_calf_motion = -0.1
+            # f_hip_motion = -0.1
+            # r_hip_motion = -0.1
+            # f_thigh_motion = -0.1
+            # r_thigh_motion = -0.1
+            # f_calf_motion = -0.1
+            # r_calf_motion = -0.1
 
             #### smoothness
             dream_smoothness = -0.001
@@ -161,16 +161,16 @@ class AliengoBaseCfg(LeggedRobotCfg):
         enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
-        enableForce = False
+        enableForce = True
 
 
 class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
 
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
-        max_iterations = 1000  # number of policy updates
+        max_iterations = 3000  # number of policy updates
         resume = False
-        save_interval = 50  # check for potential saves every this many iterations
+        save_interval = 100  # check for potential saves every this many iterations
         experiment_name = 'aliengo'
         export_policy = False
 
@@ -178,7 +178,7 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
 
         priv_mlp_units = [258, 128, 11]
         priv_info = False
-        priv_info_dim = 187
+        priv_info_dim = 200
         velLen = 3
         proprio_adapt = False
         checkpoint_model = None

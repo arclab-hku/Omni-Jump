@@ -156,7 +156,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             env_cfg.commands.ranges.lin_vel_y = [args.lin_vel_y, args.lin_vel_y]
             env_cfg.commands.ranges.heading = [args.heading, args.heading]
         if args.export_policy:
-            cfg_train.Encoder.export_policy = args.export_policy
+            cfg_train.runner.export_policy = args.export_policy
         if args.checkpoint_model:
             cfg_train.Encoder.checkpoint_model = args.checkpoint_model
             print('ssf', args.checkpoint_model)

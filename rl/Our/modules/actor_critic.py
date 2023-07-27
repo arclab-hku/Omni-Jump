@@ -61,7 +61,7 @@ class ActorCritic(nn.Module):
 
         num_actor_input = num_obs + self.proprio_adapt_output
 
-        num_critic_input = num_obs + self.velLen + self.priv_info_dim  ##### 45 + 3 + 187
+        num_critic_input = num_obs  + self.priv_info_dim  ##### 45 + 3 + 187
 
         self.dm_encoder = DmEncoder(num_obs, self.priv_mlp)
         cprint(f"Encoder MLP: {self.dm_encoder}", 'green', attrs=['bold'])
@@ -164,7 +164,7 @@ class ActorCritic(nn.Module):
 
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
-        obs_hight = obs_dict['privileged_info'][:, 11:198]
+        obs_hight = obs_dict['privileged_info'][:, 3:200]
         # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
 
         extrin_gt = obs_dict['privileged_info'][:, 0:11]
@@ -178,7 +178,6 @@ class ActorCritic(nn.Module):
 
         actor_obs = torch.cat([obs, extrin], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
-
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
