@@ -55,7 +55,7 @@ class Go1BaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
@@ -88,7 +88,7 @@ class Go1BaseCfg(LeggedRobotCfg):
             orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
-            base_height = -1.0
+            base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
             action_rate = -0.01
@@ -101,10 +101,10 @@ class Go1BaseCfg(LeggedRobotCfg):
             r_calf_motion = -0.06
 
             #### smoothness
-            # dream_smoothness = -0.001
-            # power_joint = -1e-4
-            # foot_clearance = -0.01
-            # foot_height = -0.01
+            dream_smoothness = -0.001
+            power_joint = -1e-4
+            foot_clearance = -0.01
+            foot_height = -0.01
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True

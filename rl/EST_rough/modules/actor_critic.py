@@ -171,15 +171,15 @@ class ActorCritic(nn.Module):
 
 
         extrin_en = self.dm_encoder(obs)
-
-        actor_obs = torch.cat([obs, extrin_en], dim=-1)  ## 45 + 11
+        extrin = torch.tanh(extrin_en)
+        extrin_gt = torch.tanh(extrin_gt)
+        actor_obs = torch.cat([obs, extrin], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
 
-        extrin = torch.tanh(extrin_en)
-        extrin_gt = torch.tanh(extrin_gt)
+
 
         return mu, mu * 0 + sigma, value, extrin, extrin_gt
 
