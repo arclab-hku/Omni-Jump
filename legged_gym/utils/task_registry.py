@@ -41,9 +41,15 @@ from rl.base.runners import OnPolicyRunner
 from rl.RMA.runners import PPOPolicyRunner
 from rl.RMA.runners import ProprioAdaptPolicyRunner
 from rl.EST.runners import ESTPolicyRunner
+from rl.EST_rough.runners import ESTRoughPolicyRunner
+
 from rl.Dream.runners import DreamPolicyRunner
 
-from rl.Our.runners import OurPolicyRunner
+from rl.Gen.runners import GenPolicyRunner
+from rl.Gen_base.runners import GenBasePolicyRunner
+
+
+
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 from .helpers import get_args, update_cfg_from_args, class_to_dict, get_load_path, set_seed, parse_sim_params
@@ -169,7 +175,7 @@ class TaskRegistry():
             save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
             copyfile(save_item, log_dir + '/train_cfg_general.py')
 
-            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'aliengo',
+            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', name,
                                      name + '_config_baseline.py')
             copyfile(save_item, log_dir + '/train_cfg_robot.py')
 

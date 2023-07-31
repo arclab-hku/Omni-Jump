@@ -85,6 +85,118 @@
       <pose>0 0 0 0 0 0</pose>
     </sensor>
   </gazebo>
+  <!-- Depth camera -->
+  <!-- <gazebo>
+        <plugin name="camera_plugin" filename="libgazebo_ros_openni_kinect.so">
+            <baseline>0.025</baseline>
+            <always_on>true</always_on>
+            <updateRate>0.0</updateRate>
+            <cameraName>unitree_camera_left</cameraName>
+            <frameName>depthCamera_link_left</frameName>
+            <imageTopicName>rgb/imageRaw_left</imageTopicName>
+            <depthImageTopicName>depth/imageRaw_left</depthImageTopicName>
+            <pointCloudTopicName>depth/points_left</pointCloudTopicName>
+            <cameraInfoTopicName>rgb/cameraInfo_left</cameraInfoTopicName>              
+            <depthImageCameraInfoTopicName>depth/cameraInfo_left</depthImageCameraInfoTopicName>            
+            <pointCloudCutoff>0.1</pointCloudCutoff>                
+            <pointCloudCutoffMax>1.5</pointCloudCutoffMax>                
+            <distortionK1>0.0</distortionK1>
+            <distortionK2>0.0</distortionK2>
+            <distortionK3>0.0</distortionK3>
+            <distortionT1>0.0</distortionT1>
+            <distortionT2>0.0</distortionT2>
+            <CxPrime>0.0</CxPrime>
+            <Cx>0.0045</Cx>
+            <Cy>0.0039</Cy>
+            <focalLength>0.004</focalLength>
+            <hackBaseline>0.0</hackBaseline>
+        </plugin>
+    </gazebo> -->
+  <!-- <gazebo reference="depthCamera_link_left">
+        <sensor name="unitree_camera_left" type="depth_camera">
+            <update_rate>16</update_rate>
+            <always_on>true</always_on>
+            <visualize>true</visualize>
+            <camera>
+                <horizontal_fov>2.094</horizontal_fov>
+                <image>
+                    <width>928</width>
+                    <height>800</height>
+                    <format>R8G8B8</format>
+                </image>
+                <depth_camera></depth_camera>
+                <clip>
+                    <near>0.1</near>
+                    <far>100</far>
+                </clip>
+            </camera>
+            <plugin name="camera_plugin" filename="libgazebo_ros_openni_kinect.so">
+                <baseline>0.025</baseline>
+                <always_on>true</always_on>
+                <updateRate>0.0</updateRate>
+                <cameraName>unitree_camera_left</cameraName>
+                <frameName>depthCamera_link_left</frameName>
+                <imageTopicName>rgb/imageRaw_left</imageTopicName>
+                <depthImageTopicName>depth/imageRaw_left</depthImageTopicName>
+                <pointCloudTopicName>depth/points_left</pointCloudTopicName>
+                <cameraInfoTopicName>rgb/cameraInfo_left</cameraInfoTopicName>              
+                <depthImageCameraInfoTopicName>depth/cameraInfo_left</depthImageCameraInfoTopicName>            
+                <pointCloudCutoff>0.1</pointCloudCutoff>                
+                <pointCloudCutoffMax>1.5</pointCloudCutoffMax>                
+                <distortionK1>0.0</distortionK1>
+                <distortionK2>0.0</distortionK2>
+                <distortionK3>0.0</distortionK3>
+                <distortionT1>0.0</distortionT1>
+                <distortionT2>0.0</distortionT2>
+                <CxPrime>0.0</CxPrime>
+                <Cx>0.0045</Cx>
+                <Cy>0.0039</Cy>
+                <focalLength>0.004</focalLength>
+                <hackBaseline>0.0</hackBaseline>
+            </plugin>
+        </sensor>
+    </gazebo> -->
+  <gazebo reference="depthCamera_link_left">
+    <sensor name="camera_link_camera" type="depth">
+      <update_rate>20</update_rate>
+      <camera>
+        <horizontal_fov>1.047198</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>3</far>
+        </clip>
+      </camera>
+      <plugin filename="libgazebo_ros_openni_kinect.so" name="camera_link_controller">
+        <baseline>0.2</baseline>
+        <alwaysOn>true</alwaysOn>
+        <updateRate>1.0</updateRate>
+        <cameraName>camera_link_ir</cameraName>
+        <imageTopicName>/camera_link/color/image_raw</imageTopicName>
+        <cameraInfoTopicName>/camera_link/color/camera_info</cameraInfoTopicName>
+        <depthImageTopicName>/camera_link/depth/image_raw</depthImageTopicName>
+        <depthImageInfoTopicName>/camera_link/depth/camera_info</depthImageInfoTopicName>
+        <pointCloudTopicName>/camera_link/depth/points</pointCloudTopicName>
+        <frameName>depthCamera_link_left</frameName>
+        <pointCloudCutoff>0.5</pointCloudCutoff>
+        <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
+        <distortionK1>0.00000001</distortionK1>
+        <distortionK2>0.00000001</distortionK2>
+        <distortionK3>0.00000001</distortionK3>
+        <distortionT1>0.00000001</distortionT1>
+        <distortionT2>0.00000001</distortionT2>
+        <CxPrime>0</CxPrime>
+        <Cx>0</Cx>
+        <Cy>0</Cy>
+        <focalLength>0</focalLength>
+        <hackBaseline>0</hackBaseline>
+      </plugin>
+    </sensor>
+  </gazebo>
   <!-- Foot contacts. -->
   <gazebo reference="FR_calf">
     <sensor name="FR_foot_contact" type="contact">
@@ -279,6 +391,8 @@
     <kp value="1000000.0"/>
     <kd value="1.0"/>
   </gazebo>
+  <!-- <xacro:include filename="$(find go1_gazebo)/launch/stairs.urdf.xacro"/> -->
+  <!-- <xacro:stairs stairs="15" xpos="0" ypos="0" zpos="0" /> -->
   <!-- Debug mode will hung up the robot, use "true" or "false" to switch it. -->
   <!-- <xacro:if value="$(arg DEBUG)">
         <link name="world"/>
@@ -305,7 +419,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/trunk.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/trunk.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -358,7 +472,7 @@
     <visual>
       <origin rpy="3.14159265359 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/hip.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/hip.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -400,7 +514,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/thigh_mirror.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/thigh_mirror.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -428,7 +542,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/calf.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/calf.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -444,7 +558,7 @@
       <inertia ixx="0.002939186297" ixy="1.440899e-06" ixz="-0.00010535955" iyy="0.00295576935" iyz="-2.4397752e-05" izz="3.0273372e-05"/>
     </inertial>
   </link>
-  <joint name="FR_foot_fixed" type="fixed" dont_collapse="true">
+  <joint name="FR_foot_fixed" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 -0.213"/>
     <parent link="FR_calf"/>
     <child link="FR_foot"/>
@@ -510,7 +624,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/hip.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/hip.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -552,7 +666,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/thigh.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/thigh.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -580,7 +694,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/calf.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/calf.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -596,7 +710,7 @@
       <inertia ixx="0.002939186297" ixy="1.440899e-06" ixz="-0.00010535955" iyy="0.00295576935" iyz="-2.4397752e-05" izz="3.0273372e-05"/>
     </inertial>
   </link>
-  <joint name="FL_foot_fixed" type="fixed" dont_collapse="true">
+  <joint name="FL_foot_fixed" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 -0.213"/>
     <parent link="FL_calf"/>
     <child link="FL_foot"/>
@@ -662,7 +776,7 @@
     <visual>
       <origin rpy="3.14159265359 3.14159265359 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/hip.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/hip.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -704,7 +818,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/thigh_mirror.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/thigh_mirror.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -732,7 +846,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/calf.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/calf.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -748,7 +862,7 @@
       <inertia ixx="0.002939186297" ixy="1.440899e-06" ixz="-0.00010535955" iyy="0.00295576935" iyz="-2.4397752e-05" izz="3.0273372e-05"/>
     </inertial>
   </link>
-  <joint name="RR_foot_fixed" type="fixed" dont_collapse="true">
+  <joint name="RR_foot_fixed" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 -0.213"/>
     <parent link="RR_calf"/>
     <child link="RR_foot"/>
@@ -814,7 +928,7 @@
     <visual>
       <origin rpy="0 3.14159265359 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/hip.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/hip.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -856,7 +970,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/thigh.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/thigh.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -884,7 +998,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/calf.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/calf.dae" scale="1 1 1"/>
       </geometry>
       <!-- <material name="orange"/> -->
     </visual>
@@ -900,7 +1014,7 @@
       <inertia ixx="0.002939186297" ixy="1.440899e-06" ixz="-0.00010535955" iyy="0.00295576935" iyz="-2.4397752e-05" izz="3.0273372e-05"/>
     </inertial>
   </link>
-  <joint name="RL_foot_fixed" type="fixed" dont_collapse="true">
+  <joint name="RL_foot_fixed" type="fixed">
     <origin rpy="0 0 0" xyz="0 0 -0.213"/>
     <parent link="RL_calf"/>
     <child link="RL_foot"/>
@@ -969,7 +1083,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/depthCamera.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/depthCamera.dae" scale="1 1 1"/>
       </geometry>
     </visual>
     <inertial>
@@ -1043,7 +1157,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/depthCamera.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/depthCamera.dae" scale="1 1 1"/>
       </geometry>
     </visual>
     <inertial>
@@ -1117,7 +1231,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/depthCamera.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/depthCamera.dae" scale="1 1 1"/>
       </geometry>
     </visual>
     <inertial>
@@ -1191,7 +1305,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/depthCamera.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/depthCamera.dae" scale="1 1 1"/>
       </geometry>
     </visual>
     <inertial>
@@ -1265,7 +1379,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/depthCamera.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/depthCamera.dae" scale="1 1 1"/>
       </geometry>
     </visual>
     <inertial>
@@ -1353,7 +1467,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/ultraSound.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/ultraSound.dae" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -1378,7 +1492,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/ultraSound.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/ultraSound.dae" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>
@@ -1403,7 +1517,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="../meshes/ultraSound.dae" scale="1 1 1"/>
+        <mesh filename="package://go1_description/meshes/ultraSound.dae" scale="1 1 1"/>
       </geometry>
       <material name="black"/>
     </visual>

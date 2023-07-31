@@ -93,7 +93,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
+        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_ye/urdf/aliengo.urdf"
         name = "aliengo"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
@@ -129,19 +129,18 @@ class AliengoBaseCfg(LeggedRobotCfg):
             base_height = -0.0
             feet_air_time = 1.0
             collision = -1.0
-
             action_rate = -0.01
             #### motion
-            # f_hip_motion = -0.1
-            # r_hip_motion = -0.1
-            # f_thigh_motion = -0.1
-            # r_thigh_motion = -0.1
-            # f_calf_motion = -0.1
-            # r_calf_motion = -0.1
+            # f_hip_motion = -0.04
+            # r_hip_motion = -0.04
+            # f_thigh_motion = -0.04
+            # r_thigh_motion = -0.04
+            # f_calf_motion = -0.04
+            # r_calf_motion = -0.04
 
             #### smoothness
             dream_smoothness = -0.001
-            power_joint = -1e-4
+            power_joint = -1e-5
             foot_clearance = -0.01
             foot_height = -0.01
 

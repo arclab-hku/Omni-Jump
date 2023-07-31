@@ -3,20 +3,21 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 
 class Go1BaseCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):  # comment if use visual
+        # num_envs = 4096
         num_envs = 4096  # was getting a seg fault
         # num_envs = 100  # was getting a seg fault
         num_actions = 12
-        num_observations = 235
+        num_observations = 45
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = 198  # 187
-        train_type = "standard"  # standard, priv, lbc, standard, RMA, EST, Dream
+        num_privileged_obs = 200  # 187
+        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream
 
         follow_cam = False
         float_cam = False
 
-        measure_obs_heights = True
+        measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain(LeggedRobotCfg.terrain):
@@ -54,11 +55,11 @@ class Go1BaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip"]
+        terminate_after_contacts_on =  ["base", "trunk", "hip"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
 
     class domain_rand(LeggedRobotCfg.domain_rand):
@@ -84,21 +85,20 @@ class Go1BaseCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.0
+            orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
-            base_height = -0.0
+            base_height = -1.0
             feet_air_time = 1.0
             collision = -1.0
-
             action_rate = -0.01
             # #### motion
-            # f_hip_motion = -0.1
-            # r_hip_motion = -0.1
-            # f_thigh_motion = -0.1
-            # r_thigh_motion = -0.1
-            # f_calf_motion = -0.1
-            # r_calf_motion = -0.1
+            f_hip_motion = -0.06
+            r_hip_motion = -0.06
+            f_thigh_motion = -0.06
+            r_thigh_motion = -0.06
+            f_calf_motion = -0.06
+            r_calf_motion = -0.06
 
             #### smoothness
             # dream_smoothness = -0.001
@@ -116,22 +116,22 @@ class Go1BaseCfg(LeggedRobotCfg):
         enableMotorStrength = True
         enableMeasuredVel = True
         enableMeasuredHeight = True
-        enableForce = False
+        enableForce = True
 
 
 class Go1BaseCfgPPO(LeggedRobotCfgPPO):
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
-        max_iterations = 1000  # number of policy updates
+        max_iterations = 2000  # number of policy updates
         resume = False
-        save_interval = 50  # check for potential saves every this many iterations
+        save_interval = 100  # check for potential saves every this many iterations
         experiment_name = 'go1'
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
         priv_mlp_units = [258, 128, 11]
         priv_info = False
-        priv_info_dim = 187
+        priv_info_dim = 200
         velLen = 3
         proprio_adapt = False
         checkpoint_model = None
