@@ -59,7 +59,7 @@ class ActorCritic(nn.Module):
 
         self.velLen = kwargs['velLen']
 
-        num_actor_input = num_obs +  self.velLen
+        num_actor_input = num_obs + self.velLen
 
         num_critic_input = num_obs  + self.priv_info_dim  ##### 45 + 3 + 187
 
@@ -164,7 +164,7 @@ class ActorCritic(nn.Module):
 
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
-        obs_hight = obs_dict['privileged_info'][:, 3:200]
+        obs_hight = obs_dict['privileged_info'][:, 3:198]
         # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
 
         extrin_gt = obs_dict['privileged_info'][:, 0:11]
@@ -173,17 +173,17 @@ class ActorCritic(nn.Module):
         extrin_en = self.dm_encoder(obs)
 
 
-        extrin = torch.tanh(extrin_en)
-        extrin_gt = torch.tanh(extrin_gt)
+        # # extrin = torch.tanh(extrin_en)
+        # extrin_gt = torch.tanh(extrin_gt)
 
-        actor_obs = torch.cat([ obs, extrin], dim=-1)  ## 45 + 11
+        actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
 
 
-        return mu, mu * 0 + sigma, value, extrin, extrin_gt
+        return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 
 
 def get_activation(act_name):

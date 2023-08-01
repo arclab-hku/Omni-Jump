@@ -80,7 +80,7 @@ class RolloutStorage:
 
 
         # For entrin loss
-        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
+        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 3, device=self.device)
         self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
 
         # For privileged_info

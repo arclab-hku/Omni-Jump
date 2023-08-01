@@ -172,8 +172,8 @@ class TaskRegistry():
                     exit()
 
             os.makedirs(log_dir, exist_ok=True)
-            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
-            copyfile(save_item, log_dir + '/train_cfg_general.py')
+            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
+            # copyfile(save_item, log_dir + '/train_cfg_general.py')
 
             save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', name,
                                      name + '_config_baseline.py')

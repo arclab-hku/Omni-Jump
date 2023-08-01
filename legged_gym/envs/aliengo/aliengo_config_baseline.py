@@ -126,23 +126,23 @@ class AliengoBaseCfg(LeggedRobotCfg):
             orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
-            base_height = -0.0
+            base_height = -0.5
             feet_air_time = 1.0
             collision = -1.0
             action_rate = -0.01
             #### motion
-            # f_hip_motion = -0.04
-            # r_hip_motion = -0.04
-            # f_thigh_motion = -0.04
-            # r_thigh_motion = -0.04
-            # f_calf_motion = -0.04
-            # r_calf_motion = -0.04
+            # f_hip_motion = -0.1
+            # r_hip_motion = -0.1
+            # f_thigh_motion = -0.1
+            # r_thigh_motion = -0.1
+            # f_calf_motion = -0.1
+            # r_calf_motion = -0.1
 
             #### smoothness
-            dream_smoothness = -0.001
-            power_joint = -1e-5
-            foot_clearance = -0.01
-            foot_height = -0.01
+            # dream_smoothness = -0.001
+            # power_joint = -1e-4
+            # foot_clearance = -0.01
+            # foot_height = -0.01
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
@@ -169,7 +169,7 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
         run_name = ''
         max_iterations = 3000  # number of policy updates
         resume = False
-        save_interval = 100  # check for potential saves every this many iterations
+        save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'aliengo'
         export_policy = False
 
