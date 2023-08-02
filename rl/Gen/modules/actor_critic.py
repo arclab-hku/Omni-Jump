@@ -17,6 +17,7 @@ class DmEncoder(nn.Module):
             nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1]),
             nn.ReLU(),
             nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]),
+            nn.Tanh(),
         )
 
     def forward(self, dm):
@@ -174,7 +175,7 @@ class ActorCritic(nn.Module):
 
 
         # # extrin = torch.tanh(extrin_en)
-        # extrin_gt = torch.tanh(extrin_gt)
+        extrin_gt = torch.tanh(extrin_gt)
 
         actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
