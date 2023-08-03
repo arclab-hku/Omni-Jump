@@ -159,7 +159,7 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             cfg_train.runner.export_policy = args.export_policy
         if args.checkpoint_model:
             cfg_train.Encoder.checkpoint_model = args.checkpoint_model
-            print('ssf', args.checkpoint_model)
+            print('load model', args.checkpoint_model)
 
     return env_cfg, cfg_train
 

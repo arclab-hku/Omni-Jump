@@ -106,8 +106,8 @@ class LeggedRobotCfg(BaseConfig):
         action_scale = 0.5
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
-
         use_actuator_network = False
+        actuator_net_file = None
     class asset:
         file = ""
         name = "legged_robot"  # actor name
@@ -141,11 +141,18 @@ class LeggedRobotCfg(BaseConfig):
         push_interval_s = 15
         max_push_vel_xy = 1.
 
-        randomize_center = True
+        randomize_center = False
         added_center_range = [-0.05, 0.05]
 
-        randomize_motor_strength = True
+        randomize_motor_strength = False
         added_motor_strength = [1.0, 1.0]
+
+        randomize_lag_timesteps = False
+        added_lag_timesteps = 6
+
+        randomize_Motor_Offset = False  # actuator net: True
+        added_Motor_OffsetRange = [-0.02, 0.02]
+
     class rewards:
         class scales:
             termination = -0.0

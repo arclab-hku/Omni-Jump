@@ -44,7 +44,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "POSE"
+        control_type = "actuator_net"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -53,6 +53,8 @@ class Go1BaseCfg(LeggedRobotCfg):
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
+        use_actuator_network = True
+        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_go1_ground_2_400.pt"
 
     class asset(LeggedRobotCfg.asset):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
@@ -75,6 +77,13 @@ class Go1BaseCfg(LeggedRobotCfg):
 
         randomize_motor_strength = True
         added_motor_strength = [0.9, 1.1]
+
+        randomize_lag_timesteps = True   # actuator net: True
+        added_lag_timesteps = 6
+
+        randomize_Motor_Offset = True  # actuator net: True
+        added_Motor_OffsetRange = [-0.02, 0.02]
+
 
     class rewards(LeggedRobotCfg.rewards):
         base_height_target = 0.5

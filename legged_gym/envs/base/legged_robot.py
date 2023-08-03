@@ -63,6 +63,25 @@ class LeggedRobot(BaseTask):
         self._prepare_reward_function()
         self.init_done = True
 
+        # load actuator network
+        if self.cfg.control.control_type == "actuator_net":
+            print("********* Load actuator net from *********", self.cfg.control.actuator_net_file)
+            actuator_network_path = self.cfg.control.actuator_net_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
+            actuator_network = torch.jit.load(actuator_network_path).to(self.device)
+
+            def eval_actuator_network(joint_pos, joint_pos_last, joint_pos_last_last, joint_vel, joint_vel_last,
+                                      joint_vel_last_last):
+                xs = torch.cat((joint_pos.unsqueeze(-1),
+                                joint_pos_last.unsqueeze(-1),
+                                joint_pos_last_last.unsqueeze(-1),
+                                joint_vel.unsqueeze(-1),
+                                joint_vel_last.unsqueeze(-1),
+                                joint_vel_last_last.unsqueeze(-1)), dim=-1)
+                torques = actuator_network(xs.view(self.num_envs * 12, 6))
+                return torques.view(self.num_envs, 12)
+
+            self.actuator_network = eval_actuator_network
+
     def make_handle_trans(self, res, env_num, trans, rot, hfov=None):
         # TODO Add camera sensors here?
         camera_props = gymapi.CameraProperties()
@@ -514,7 +533,15 @@ class LeggedRobot(BaseTask):
                             props['driveMode'][i] = gymapi.DOF_MODE_POS
                             props['stiffness'][i] = self.cfg.control.stiffness[dof_name] * rand_motor_strength  # self.Kp
                             props['damping'][i] = self.cfg.control.damping[dof_name] * rand_motor_strength  # self.Kd
+                        elif self.cfg.control.control_type == "actuator_net":
 
+                            rand_motor_offset = np.random.uniform(self.cfg.domain_rand.added_Motor_OffsetRange[0],
+                                              self.cfg.domain_rand.added_Motor_OffsetRange[1])
+
+                            self.motor_offsets[env_id][i] = rand_motor_offset
+                            self.motor_strengths[env_id][i] = rand_motor_strength
+
+                            print("***********", self.motor_offsets, self.motor_strengths)
                         else:
                             self.p_gains[env_id][i] = self.cfg.control.stiffness[dof_name] * rand_motor_strength
                             self.d_gains[env_id][i] = self.cfg.control.damping[dof_name] * rand_motor_strength
@@ -601,6 +628,28 @@ class LeggedRobot(BaseTask):
                     self.p_gains * (actions_scaled + self.default_dof_pos - self.dof_pos)
                     - self.d_gains * self.dof_vel
             )
+
+
+        elif control_type == "actuator_net":
+
+            if self.cfg.domain_rand.added_lag_timesteps:
+                self.lag_buffer = self.lag_buffer[1:] + [actions_scaled.clone()]
+                self.joint_pos_target = self.lag_buffer[0] + self.default_dof_pos
+            else:
+                self.joint_pos_target = actions_scaled + self.default_dof_pos
+
+            self.joint_pos_err = self.dof_pos - self.joint_pos_target + self.motor_offsets
+            self.joint_vel = self.dof_vel
+
+            torques = self.actuator_network(self.joint_pos_err, self.joint_pos_err_last, self.joint_pos_err_last_last,
+                                            self.joint_vel, self.joint_vel_last, self.joint_vel_last_last)
+            self.joint_pos_err_last_last = torch.clone(self.joint_pos_err_last)
+            self.joint_pos_err_last = torch.clone(self.joint_pos_err)
+            self.joint_vel_last_last = torch.clone(self.joint_vel_last)
+            self.joint_vel_last = torch.clone(self.joint_vel)
+            # scale the output
+            torques = torques * self.motor_strengths
+
         elif control_type == "V":
             torques = (
                     self.p_gains * (actions_scaled - self.dof_vel)
@@ -844,6 +893,18 @@ class LeggedRobot(BaseTask):
 
         self.default_dof_pos = self.default_dof_pos.unsqueeze(0)
 
+
+        # Additionally initialize actuator network hidden state tensors
+        self.lag_buffer = [torch.zeros_like(self.dof_pos) for i in range(self.cfg.domain_rand.added_lag_timesteps + 1)]
+
+        # if self.cfg.control.control_type == "POSE":
+        # init pos err and vel buffer(12 DOF)
+        self.joint_pos_err_last_last = torch.zeros((self.num_envs, 12), device=self.device)
+        self.joint_pos_err_last = torch.zeros((self.num_envs, 12), device=self.device)
+        self.joint_vel_last_last = torch.zeros((self.num_envs, 12), device=self.device)
+        self.joint_vel_last = torch.zeros((self.num_envs, 12), device=self.device)
+
+
     def _prepare_reward_function(self):
         """ Prepares a list of reward functions, whcih will be called to compute the total reward.
             Looks for self._reward_<REWARD_NAME>, where <REWARD_NAME> are names of all non zero reward scales in the cfg.
@@ -1014,7 +1075,12 @@ class LeggedRobot(BaseTask):
         self.actor_handles = []
         self.envs = []
         self.coms = []
-        # if self.cfg.control.control_type != "POSE":
+        # if self.cfg.control.control_type != "actuator_network":
+        self.motor_strengths = torch.ones(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+                                          requires_grad=False)
+        self.motor_offsets = torch.zeros(self.num_envs, self.num_dof, dtype=torch.float, device=self.device,
+                                         requires_grad=False)
+
         self.p_gains = torch.zeros(self.num_envs, self.num_actions, dtype=torch.float, device=self.device,
                                    requires_grad=False)
         self.d_gains = torch.zeros(self.num_envs, self.num_actions, dtype=torch.float, device=self.device,
