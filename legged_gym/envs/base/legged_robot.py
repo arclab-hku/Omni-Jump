@@ -541,7 +541,6 @@ class LeggedRobot(BaseTask):
                             self.motor_offsets[env_id][i] = rand_motor_offset
                             self.motor_strengths[env_id][i] = rand_motor_strength
 
-                            print("***********", self.motor_offsets, self.motor_strengths)
                         else:
                             self.p_gains[env_id][i] = self.cfg.control.stiffness[dof_name] * rand_motor_strength
                             self.d_gains[env_id][i] = self.cfg.control.damping[dof_name] * rand_motor_strength
