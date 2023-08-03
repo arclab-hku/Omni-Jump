@@ -500,33 +500,6 @@ class LeggedRobot(BaseTask):
 
 
 
-        #
-        # if self.cfg.control.control_type == "POSE":
-        #     # ! set gym's PD controller
-        #     for i in range(self.num_dof):
-        #         name = self.dof_names[i]
-        #
-        #         for dof_name in self.cfg.control.stiffness.keys():
-        #             if dof_name in name:
-        #                 props['driveMode'][i] = gymapi.DOF_MODE_POS
-        #                 props['stiffness'][i] = self.cfg.control.stiffness[dof_name]  # self.Kp
-        #                 props['damping'][i] = self.cfg.control.damping[dof_name]  # self.Kd
-        #
-        #     if self.cfg.domain_rand.randomize_motor_strength:
-        #         motor_strength = []
-        #         for i in range(self.num_dofs):
-        #             rand_motor_strength = np.random.uniform(self.cfg.domain_rand.added_motor_strength[0],
-        #                                                     self.cfg.domain_rand.added_motor_strength[1])
-        #             props['stiffness'][i] *= rand_motor_strength
-        #             props['damping'][i] *= rand_motor_strength
-        #
-        #             motor_strength.append(rand_motor_strength)
-        #
-        #         if self.cfg.env.train_type == "RMA":
-        #             self._update_priv_buf(env_id=env_id, name='motor_strength', value=motor_strength,
-        #                                   lower=self.cfg.domain_rand.added_motor_strength[0],
-        #                                   upper=self.cfg.domain_rand.added_motor_strength[1])
-
         if self.cfg.domain_rand.randomize_motor_strength:
             motor_strength = []
             for i in range(self.num_dofs):
@@ -557,31 +530,7 @@ class LeggedRobot(BaseTask):
                 self._update_priv_buf(env_id=env_id, name='motor_strength', value=motor_strength,
                                       lower=self.cfg.domain_rand.added_motor_strength[0],
                                       upper=self.cfg.domain_rand.added_motor_strength[1])
-        # else:
-        #     if self.cfg.domain_rand.randomize_motor_strength:
-        #         motor_strength = []
-        #         for i in range(self.num_dofs):
-        #             name = self.dof_names[i]
-        #             found = False
-        #             rand_motor_strength = np.random.uniform(self.cfg.domain_rand.added_motor_strength[0],
-        #                                                     self.cfg.domain_rand.added_motor_strength[1])
-        #             for dof_name in self.cfg.control.stiffness.keys():
-        #                 if dof_name in name:
-        #                     self.p_gains[env_id][i] = self.cfg.control.stiffness[dof_name] * rand_motor_strength
-        #                     self.d_gains[env_id][i] = self.cfg.control.damping[dof_name] * rand_motor_strength
-        #                     found = True
-        #
-        #             if not found:
-        #                 self.p_gains[i] = 0.0
-        #                 self.d_gains[i] = 0.0
-        #                 if self.cfg.control.control_type in ["P", "V"]:
-        #                     print(f"PD gain of joint {name} were not defined, setting them to zero")
-        #             motor_strength.append(rand_motor_strength)
-        #
-        #         if self.cfg.env.train_type == "RMA":
-        #             self._update_priv_buf(env_id=env_id, name='motor_strength', value=motor_strength,
-        #                                   lower=self.cfg.domain_rand.added_motor_strength[0],
-        #                                   upper=self.cfg.domain_rand.added_motor_strength[1])
+
 
         return props
 
