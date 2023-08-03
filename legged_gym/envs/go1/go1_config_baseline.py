@@ -44,7 +44,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "POSE"
+        control_type = "P"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
