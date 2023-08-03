@@ -44,7 +44,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "P"
+        control_type = "POSE"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -87,26 +87,27 @@ class Go1BaseCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.0
+            orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
-            collision = -1.0
+            collision = -0.0
             action_rate = -0.01
             # #### motion
-            # f_hip_motion = -0.02
-            # r_hip_motion = -0.02
-            # f_thigh_motion = -0.02
-            # r_thigh_motion = -0.02
-            # f_calf_motion = -0.02
-            # r_calf_motion = -0.02
+            f_hip_motion = -0.06
+            r_hip_motion = -0.06
+            f_thigh_motion = -0.06
+            r_thigh_motion = -0.06
+            f_calf_motion = -0.06
+            r_calf_motion = -0.06
 
-            # #### smoothness
+            #### smoothness
             # dream_smoothness = -0.001
             # power_joint = -1e-4
-            # foot_clearance = -0.01
-            # foot_height = -0.01
+            foot_clearance = -0.01
+            foot_height = -0.01
+
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
