@@ -107,7 +107,8 @@ class Go1(LeggedRobot):
         return dVel
 
 
-
+    def _compute_torques(self, actions):
+        return super()._compute_torques(actions)
 
 
 
