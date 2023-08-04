@@ -42,7 +42,7 @@ import torch
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
-    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
+    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 20)
     env_cfg.terrain.num_rows = 2
     env_cfg.terrain.num_cols = 2
 
@@ -60,8 +60,8 @@ def play(args):
     env_cfg.domain_rand.randomize_limb_mass = False
 
     # fixed velocity direction evaluation (make sure the value is within the training range)
-    env_cfg.commands.ranges.lin_vel_x = [0.8, 0.8]
-    env_cfg.commands.ranges.lin_vel_y = [0.0, 0.2]
+    env_cfg.commands.ranges.lin_vel_x = [0.9, 0.9]
+    env_cfg.commands.ranges.lin_vel_y = [0.0, 0.0]
     env_cfg.commands.ranges.heading = [-0, -0]
 
     # prepare environment
@@ -81,7 +81,7 @@ def play(args):
     logger = Logger(env.dt)
     robot_index = 0 # which robot is used for logging
     joint_index = 5 # which joint is used for logging
-    stop_state_log = 300 # number of steps before plotting states
+    stop_state_log = 600 # number of steps before plotting states
     stop_rew_log = env.max_episode_length + 1 # number of steps before print average episode rewards
     camera_position = np.array(env_cfg.viewer.pos, dtype=np.float64)
     camera_vel = np.array([1., 1., 0.])

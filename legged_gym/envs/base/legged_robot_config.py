@@ -325,6 +325,7 @@ class LeggedRobotCfgPPO(BaseConfig):
         eval_baseline = False
         num_test_envs = 50
         export_policy = False
+        resume_name = ''
     class Encoder:
         priv_mlp_units = [256, 128, 8]
         decoder_mlp_units = [64, 128, 48]
