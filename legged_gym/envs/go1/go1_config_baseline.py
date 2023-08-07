@@ -26,10 +26,10 @@ class Go1BaseCfg(LeggedRobotCfg):
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.38]  # x,y,z [m]
         default_joint_angles = {  # = target angles [rad] when action = 0.0
-            "FL_hip_joint": -0.05,  # [rad]
-            "RL_hip_joint": -0.05,  # [rad]
-            "FR_hip_joint": 0.05,  # [rad]
-            "RR_hip_joint": 0.05,  # [rad]
+            "FL_hip_joint": 0.1,  # [rad]
+            "RL_hip_joint": 0.1,  # [rad]
+            "FR_hip_joint": -0.1,  # [rad]
+            "RR_hip_joint": -0.1,  # [rad]
 
             "FL_thigh_joint": 0.8,  # [rad]
             "RL_thigh_joint": 1.0,  # [rad]
@@ -44,7 +44,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "actuator_net"
+        control_type = "P"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -53,8 +53,6 @@ class Go1BaseCfg(LeggedRobotCfg):
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
-        use_actuator_network = True
-        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_go1_ground_2_400.pt"
 
     class asset(LeggedRobotCfg.asset):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
@@ -67,7 +65,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
-        added_mass_range = [-2.0, 2.0]
+        added_mass_range = [-5.0, 5.0]
 
         randomize_friction = True
         friction_range = [0.2, 1.25]
@@ -77,13 +75,6 @@ class Go1BaseCfg(LeggedRobotCfg):
 
         randomize_motor_strength = True
         added_motor_strength = [0.9, 1.1]
-
-        randomize_lag_timesteps = True   # actuator net: True
-        added_lag_timesteps = 6
-
-        randomize_Motor_Offset = True  # actuator net: True
-        added_Motor_OffsetRange = [-0.02, 0.02]
-
 
     class rewards(LeggedRobotCfg.rewards):
         base_height_target = 0.5
@@ -96,7 +87,7 @@ class Go1BaseCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.2
+            orientation = -0.0
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
@@ -104,14 +95,14 @@ class Go1BaseCfg(LeggedRobotCfg):
             collision = -1.0
             action_rate = -0.01
             # #### motion
-            f_hip_motion = -0.04
-            r_hip_motion = -0.04
-            f_thigh_motion = -0.04
-            r_thigh_motion = -0.04
-            f_calf_motion = -0.04
-            r_calf_motion = -0.04
+            # f_hip_motion = -0.02
+            # r_hip_motion = -0.02
+            # f_thigh_motion = -0.02
+            # r_thigh_motion = -0.02
+            # f_calf_motion = -0.02
+            # r_calf_motion = -0.02
 
-            #### smoothness
+            # #### smoothness
             # dream_smoothness = -0.001
             # power_joint = -1e-4
             # foot_clearance = -0.01
@@ -140,9 +131,9 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 11]
+        priv_mlp_units = [258, 128, 3]
         priv_info = False
-        priv_info_dim = 200
+        priv_info_dim = 198
         velLen = 3
         proprio_adapt = False
         checkpoint_model = None

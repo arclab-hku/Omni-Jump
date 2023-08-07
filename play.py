@@ -60,7 +60,7 @@ def play(args):
     env_cfg.domain_rand.randomize_limb_mass = False
 
     # fixed velocity direction evaluation (make sure the value is within the training range)
-    env_cfg.commands.ranges.lin_vel_x = [0.9, 0.9]
+    env_cfg.commands.ranges.lin_vel_x = [0.6, 0.6]
     env_cfg.commands.ranges.lin_vel_y = [0.0, 0.0]
     env_cfg.commands.ranges.heading = [-0, -0]
 
