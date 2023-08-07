@@ -89,7 +89,7 @@ class ProprioAdaptPolicyRunner(object):
                 'privileged_info': obs_dict['privileged_info'],
                 'proprio_hist': obs_dict['proprio_hist'].detach(),
             }
-            mu, _, _, e, e_gt = self.actor_critic._actor_critic(input_dict)
+            mu, _, _, e, e_gt,_ = self.actor_critic._actor_critic(input_dict)
 
             # cprint(f"Encoder loss: {e.shape, e_gt.shape}", 'green', attrs=['bold'])
 

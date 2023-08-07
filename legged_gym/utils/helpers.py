@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -38,9 +38,8 @@ from isaacgym import gymutil
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 
-
 def class_to_dict(obj) -> dict:
-    if not hasattr(obj, "__dict__"):
+    if not  hasattr(obj,"__dict__"):
         return obj
     result = {}
     for key in dir(obj):
@@ -56,7 +55,6 @@ def class_to_dict(obj) -> dict:
         result[key] = element
     return result
 
-
 def update_class_from_dict(obj, dict):
     for key, val in dict.items():
         attr = getattr(obj, key, None)
@@ -66,19 +64,17 @@ def update_class_from_dict(obj, dict):
             setattr(obj, key, val)
     return
 
-
 def set_seed(seed):
     if seed == -1:
         seed = np.random.randint(0, 10000)
     print("Setting seed: {}".format(seed))
-
+    
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
 
 def parse_sim_params(args, cfg):
     # code from Isaac Gym Preview 2
@@ -104,11 +100,9 @@ def parse_sim_params(args, cfg):
 
     return sim_params
 
-
 def get_load_path(root, load_run=-1, checkpoint=-1):
     try:
         runs = os.listdir(root)
-
         #TODO sort by date to handle change of month
         runs.sort()
         if 'exported' in runs: runs.remove('exported')
@@ -130,7 +124,6 @@ def get_load_path(root, load_run=-1, checkpoint=-1):
     model = checkpoint
     load_path = os.path.join(root, model)
     return load_path
-
 
 def update_cfg_from_args(env_cfg, cfg_train, args):
     # seed
@@ -154,28 +147,6 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             cfg_train.runner.load_run = args.load_run
         if args.checkpoint is not None:
             cfg_train.runner.checkpoint = args.checkpoint
-        # if (
-        #     args.alt_ckpt != ""
-        #     and os.environ.get("ISAAC_TRAIN_OR_EVAL", "EVAL") == "TRAIN"
-        # ):
-        #     if cfg_train.runner.alg == "lbc":
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("OVERRIDING TEACHER POLICY:", args.alt_ckpt)
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         cfg_train.runner.teacher_policy = args.alt_ckpt
-        #     else:
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("OVERRIDING RESUME PATH:", args.alt_ckpt)
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        #         cfg_train.runner.resume_path = args.alt_ckpt
         if args.priv_info:
             cfg_train.Encoder.priv_info = args.priv_info
         if args.proprio_adapt:
@@ -184,164 +155,44 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             env_cfg.commands.ranges.lin_vel_x = [args.lin_vel_x, args.lin_vel_x]
             env_cfg.commands.ranges.lin_vel_y = [args.lin_vel_y, args.lin_vel_y]
             env_cfg.commands.ranges.heading = [args.heading, args.heading]
+        if args.export_policy:
+            cfg_train.runner.export_policy = args.export_policy
         if args.checkpoint_model:
             cfg_train.Encoder.checkpoint_model = args.checkpoint_model
             print('ssf', args.checkpoint_model)
-        if args.export_policy:
-            cfg_train.runner.export_policy = args.export_policy
 
     return env_cfg, cfg_train
 
-
 def get_args():
     custom_parameters = [
-        {
-            "name": "--task",
-            "type": str,
-            "default": "anymal_c_flat",
-            "help": "Resume training or start testing from a checkpoint. Overrides config file if provided.",
-        },
-        {
-            "name": "--resume",
-            "action": "store_true",
-            "default": False,
-            "help": "Resume training from a checkpoint",
-        },
-        {
-            "name": "--experiment_name",
-            "type": str,
-            "help": "Name of the experiment to run or load. Overrides config file if provided.",
-        },
-        {
-            "name": "--run_name",
-            "type": str,
-            "help": "Name of the run. Overrides config file if provided.",
-        },
-        {
-            "name": "--load_run",
-            "type": str,
-            "help": "Name of the run to load when resume=True. If -1: will load the last run. Overrides config file if provided.",
-        },
-        {
-            "name": "--checkpoint",
-            "type": int,
-            "help": "Saved model checkpoint number. If -1: will load the last checkpoint. Overrides config file if provided.",
-        },
-        {
-            "name": "--headless",
-            "action": "store_true",
-            "default": False,
-            "help": "Force display off at all times",
-        },
-        # {"name": "--headless", "action": "store_true", "default": False, "help": "Force display off at all times"},
+        {"name": "--task", "type": str, "default": "anymal_c_flat", "help": "Resume training or start testing from a checkpoint. Overrides config file if provided."},
+        {"name": "--resume", "action": "store_true", "default": False,  "help": "Resume training from a checkpoint"},
+        {"name": "--experiment_name", "type": str,  "help": "Name of the experiment to run or load. Overrides config file if provided."},
+        {"name": "--run_name", "type": str,  "help": "Name of the run. Overrides config file if provided."},
+        {"name": "--load_run", "type": str,  "help": "Name of the run to load when resume=True. If -1: will load the last run. Overrides config file if provided."},
+        {"name": "--checkpoint", "type": int,  "help": "Saved model checkpoint number. If -1: will load the last checkpoint. Overrides config file if provided."},
+        
+        {"name": "--headless", "action": "store_true", "default": False, "help": "Force display off at all times"},
+        {"name": "--horovod", "action": "store_true", "default": False, "help": "Use horovod for multi-gpu training"},
+        {"name": "--rl_device", "type": str, "default": "cuda:0", "help": 'Device used by the RL algorithm, (cpu, gpu, cuda:0, cuda:1 etc..)'},
+        {"name": "--num_envs", "type": int, "help": "Number of environments to create. Overrides config file if provided."},
+        {"name": "--seed", "type": int, "help": "Random seed. Overrides config file if provided."},
+        {"name": "--max_iterations", "type": int, "help": "Maximum number of training iterations. Overrides config file if provided."},
 
-        {
-            "name": "--horovod",
-            "action": "store_true",
-            "default": False,
-            "help": "Use horovod for multi-gpu training",
-        },
-        {
-            "name": "--rl_device",
-            "type": str,
-            "default": "cuda:0",
-            "help": "Device used by the RL algorithm, (cpu, gpu, cuda:0, cuda:1 etc..)",
-        },
-        {
-            "name": "--num_envs",
-            "type": int,
-            "help": "Number of environments to create. Overrides config file if provided.",
-        },
-        {
-            "name": "--seed",
-            "type": int,
-            "help": "Random seed. Overrides config file if provided.",
-        },
-        {
-            "name": "--max_iterations",
-            "type": int,
-            "help": "Maximum number of training iterations. Overrides config file if provided.",
-        },
-
-        {
-            "name": "--episode-id",
-            "type": int,
-            "help": "Episode ID, default of -1.",
-            "default": -1,
-        },
-        {
-            "name": "--map",
-            "type": str,
-            "help": "Map png path for nav.",
-            "default": "resources/maps/map1.png",
-        },
-        {
-            "name": "--alt-ckpt",
-            "type": str,
-            "help": "Alternative path to a checkpoint.",
-            "default": "",
-        },
-        {
-            "name": "--eval-dir",
-            "type": str,
-            "help": "Path to where evaluations are saved.",
-            "default": "evaluation_metrics",
-        },
-        {
-            "name": "--block",
-            "type": str,
-            "help": "Range of heights blocks can be.",
-            "default": "0.14_0.15",
-        },
-        {
-            "name": "--no-blocks",
-            "action": "store_true",
-            "help": "Disables the addition of blocks to the nav map.",
-        },
-        {
-            "name": "--no-rnn",
-            "action": "store_true",
-            "help": "Use an MLP not an RNN.",
-        },
-        {
-            "name": "--no-write",
-            "action": "store_true",
-            "help": "Don't write jsons for evaluation of nav.",
-        },
-        {
-            "name": "--wall-scale",
-            "type": float,
-            "help": "Scale factor for wall height.",
-            "default": -1,
-        },
-        {
-            "name": "--hor-scale",
-            "type": float,
-            "help": "Scale factor for horizontal axes.",
-            "default": -1,
-        },
-        {
-            "name": "--blind",
-            "action": "store_true",
-            "help": "Don't vision or a map.",
-        },
-
-        # ! RMA
+        # !
         {"name": "--output_name", "type": str, "default": "debug", "help": "where you save and load the nn policy"},
         {"name": "--test", "action": "store_true", "default": False, "help": "whether or not test the policy"},
-        {"name": "--algo", "type": str, "default": "PPO",
-         "help": "which algorithm used to train the policy, PPO or padapt"},
+        {"name": "--algo", "type": str, "default": "PPO", "help": "which algorithm used to train the policy, PPO or padapt"},
         {"name": "--checkpoint_model", "type": str, "default": None, "help": "which policy model to load from"},
-        {"name": "--priv_info", "action": "store_true", "default": False,
-         "help": "whether or not pass the privilege information as input."},
-        {"name": "--proprio_adapt", "action": "store_true", "default": False,
-         "help": "whether or not use proprio state to do adaptation."},
-
+        {"name": "--priv_info", "action": "store_true", "default": False, "help": "whether or not pass the privilege information as input."},
+        {"name": "--proprio_adapt", "action": "store_true", "default": False, "help": "whether or not use proprio state to do adaptation."},
 
         # test policy
         {"name": "--lin_vel_x", "type": float, "help": "linear velocity x."},
         {"name": "--lin_vel_y", "type": float, "help": "linear velocity y."},
         {"name": "--heading", "type": float, "help": "heading."},
+        {"name": "--fault", "type": float, "help": "fault by how many percentage."},
+        {"name": "--fault_transitions", "action": "append", "help": "<Required> Set flag"},
         {"name": "--s_flag", "type": str, "1": None, "help": "stage 1 or stage 2 model"},
 
         # export policy for usage in C++
@@ -350,30 +201,25 @@ def get_args():
     ]
     # parse arguments
     args = gymutil.parse_arguments(
-        description="RL Policy", custom_parameters=custom_parameters
-    )
-
-    # Environ hacks
-    # os.environ["ISAAC_NO_RNN"] = "True" if args.no_rnn else "False"
-    # os.environ["ISAAC_BLIND"] = "True" if args.blind else "False"
+        description="RL Policy",
+        custom_parameters=custom_parameters)
 
     # name allignment
     args.sim_device_id = args.compute_device_id
     args.sim_device = args.sim_device_type
-    if args.sim_device == "cuda":
+    if args.sim_device=='cuda':
         args.sim_device += f":{args.sim_device_id}"
     return args
 
-
 def export_policy_as_jit(actor_critic, path):
-    if hasattr(actor_critic, "memory_a"):
+    if hasattr(actor_critic, 'memory_a'):
         # assumes LSTM: TODO add GRU
         exporter = PolicyExporterLSTM(actor_critic)
         exporter.export(path)
-    else:
+    else: 
         os.makedirs(path, exist_ok=True)
-        path = os.path.join(path, "policy_1.pt")
-        model = copy.deepcopy(actor_critic.actor).to("cpu")
+        path = os.path.join(path, 'policy_1.pt')
+        model = copy.deepcopy(actor_critic.actor).to('cpu')
         traced_script_module = torch.jit.script(model)
         traced_script_module.save(path)
 
@@ -385,14 +231,8 @@ class PolicyExporterLSTM(torch.nn.Module):
         self.is_recurrent = actor_critic.is_recurrent
         self.memory = copy.deepcopy(actor_critic.memory_a.rnn)
         self.memory.cpu()
-        self.register_buffer(
-            f"hidden_state",
-            torch.zeros(self.memory.num_layers, 1, self.memory.hidden_size),
-        )
-        self.register_buffer(
-            f"cell_state",
-            torch.zeros(self.memory.num_layers, 1, self.memory.hidden_size),
-        )
+        self.register_buffer(f'hidden_state', torch.zeros(self.memory.num_layers, 1, self.memory.hidden_size))
+        self.register_buffer(f'cell_state', torch.zeros(self.memory.num_layers, 1, self.memory.hidden_size))
 
     def forward(self, x):
         out, (h, c) = self.memory(x.unsqueeze(0), (self.hidden_state, self.cell_state))
@@ -402,12 +242,14 @@ class PolicyExporterLSTM(torch.nn.Module):
 
     @torch.jit.export
     def reset_memory(self):
-        self.hidden_state[:] = 0.0
-        self.cell_state[:] = 0.0
-
+        self.hidden_state[:] = 0.
+        self.cell_state[:] = 0.
+ 
     def export(self, path):
         os.makedirs(path, exist_ok=True)
-        path = os.path.join(path, "policy_lstm_1.pt")
-        self.to("cpu")
+        path = os.path.join(path, 'policy_lstm_1.pt')
+        self.to('cpu')
         traced_script_module = torch.jit.script(self)
         traced_script_module.save(path)
+
+    

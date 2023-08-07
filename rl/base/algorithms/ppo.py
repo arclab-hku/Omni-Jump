@@ -195,5 +195,3 @@ class PPO:
         self.storage.clear()
 
         return mean_value_loss, mean_surrogate_loss
-
-

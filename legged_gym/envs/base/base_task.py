@@ -29,16 +29,20 @@
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 
 import sys
+from termcolor import cprint
+
 from isaacgym import gymapi
 from isaacgym import gymutil
 import numpy as np
 import torch
-from torch import nn
-from termcolor import cprint
+
 import gym
 from gym import spaces
+
+
 # Base class for RL tasks
-class BaseTask:
+class BaseTask():
+
     def __init__(self, cfg, sim_params, physics_engine, sim_device, headless):
         self.gym = gymapi.acquire_gym()
 
@@ -49,10 +53,10 @@ class BaseTask:
         self.headless = headless
 
         # env device is GPU only if sim is on GPU and use_gpu_pipeline=True, otherwise returned tensors are copied to CPU by physX.
-        if sim_device_type == "cuda" and sim_params.use_gpu_pipeline:
+        if sim_device_type=='cuda' and sim_params.use_gpu_pipeline:
             self.device = self.sim_device
         else:
-            self.device = "cpu"
+            self.device = 'cpu'
 
         # graphics device for rendering, -1 for no rendering
         self.graphics_device_id = self.sim_device_id
@@ -65,7 +69,6 @@ class BaseTask:
         self.num_obs = cfg.env.num_observations
         self.num_privileged_obs = cfg.env.num_privileged_obs
         self.num_histroy_obs = cfg.env.num_histroy_obs
-
 
         # optimization flags for pytorch JIT
         torch._C._jit_set_profiling_mode(False)
@@ -86,22 +89,9 @@ class BaseTask:
             )
         else:
             self.privileged_obs_buf = None
-
-
-        if cfg.env.train_type == "lbc":
-            self.image_buf = torch.zeros(
-                self.num_envs,
-                cfg.env.camera_res[1],  # rows = height
-                cfg.env.camera_res[0],  # cols = width
-                device=self.device,
-                dtype=torch.float,
-            )
-        else:
-            self.image_buf = None
         self.extras = {}
 
-        self._allocate_buffers() # his specific buffers
-
+        self._allocate_buffers()  # his specific buffers
         # create envs, sim and viewer
         self.create_sim()
         self.gym.prepare_sim(self.sim)
@@ -112,30 +102,22 @@ class BaseTask:
 
         # if running with a viewer, set up keyboard shortcuts and camera
         if self.headless == False:
-            # subscribe to keyboard shortcuts
             cprint('Enable Visualization', 'green', attrs=['bold'])
-
-            self.viewer = self.gym.create_viewer(self.sim, gymapi.CameraProperties())
+            # subscribe to keyboard shortcuts
+            self.viewer = self.gym.create_viewer(
+                self.sim, gymapi.CameraProperties())
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_ESCAPE, "QUIT"
-            )
+                self.viewer, gymapi.KEY_ESCAPE, "QUIT")
             self.gym.subscribe_viewer_keyboard_event(
-                self.viewer, gymapi.KEY_V, "toggle_viewer_sync"
-            )
+                self.viewer, gymapi.KEY_V, "toggle_viewer_sync")
 
-        self.obs_space = spaces.Box(np.ones(self.num_obs, dtype=np.float32) * -np.Inf,
-                                    np.ones(self.num_obs, dtype=np.float32) * np.Inf)
-        self.act_space = spaces.Box(np.ones(self.num_actions, dtype=np.float32) * -1.,
-                                    np.ones(self.num_actions, dtype=np.float32) * 1.)
-
+        self.obs_space = spaces.Box(np.ones(self.num_obs, dtype=np.float32) * -np.Inf, np.ones(self.num_obs, dtype=np.float32) * np.Inf)
+        self.act_space = spaces.Box(np.ones(self.num_actions, dtype=np.float32) * -1., np.ones(self.num_actions, dtype=np.float32) * 1.)
         self.clip_obs = cfg.normalization.clip_observations
         self.obs_dict = {}
 
     def get_observations(self):
         return self.obs_dict
-
-    def get_privileged_observations(self):
-        return self.privileged_obs_buf
 
     def reset_idx(self, env_ids):
         """Reset selected robots"""
@@ -155,11 +137,11 @@ class BaseTask:
         if self.num_privileged_obs is not None:
             self.obs_dict['privileged_info'] = torch.clip(self.privileged_obs_buf, -self.clip_obs, self.clip_obs)
 
-
         return self.obs_dict
 
     def step(self, actions):
         raise NotImplementedError
+
 
 
     def _allocate_buffers(self):
@@ -180,9 +162,6 @@ class BaseTask:
         return self.act_space
 
     def render(self, sync_frame_time=True):
-        if self.cfg.env.camera_res is not None:
-            self.gym.render_all_camera_sensors(self.sim)
-
         if self.viewer:
             # check for window closed
             if self.gym.query_viewer_has_closed(self.viewer):
@@ -195,15 +174,13 @@ class BaseTask:
                 elif evt.action == "toggle_viewer_sync" and evt.value > 0:
                     self.enable_viewer_sync = not self.enable_viewer_sync
 
-        if self.cfg.env.camera_res is not None or self.viewer:
             # fetch results
-            if self.device != "cpu":
+            if self.device != 'cpu':
                 self.gym.fetch_results(self.sim, True)
-            self.gym.step_graphics(self.sim)
 
-        if self.viewer:
             # step graphics
             if self.enable_viewer_sync:
+                self.gym.step_graphics(self.sim)
                 self.gym.draw_viewer(self.viewer, self.sim, True)
                 if sync_frame_time:
                     self.gym.sync_frame_time(self.sim)

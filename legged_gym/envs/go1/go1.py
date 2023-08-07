@@ -19,102 +19,93 @@ LEG_DOF = 3
 LEN_HIST = 5
 MODEL_IN_SIZE = 2 * LEG_DOF * LEN_HIST
 
-class Go1CameraMixin:
-    def __init__(self, *args, **kwargs):
-        self.follow_cam = None
-        self.floating_cam = None
-        super().__init__(*args, **kwargs)
+class UniNet(nn.Module):
+    def __init__(self, model):
+        super(UniNet, self).__init__()
+        self.core_model = model
 
-    def init_aux_cameras(self, follow_cam=False, float_cam=False):
-        if follow_cam:
-            self.follow_cam, follow_trans = self.make_handle_trans(
-                1920, 1080, 0, (1.0, -1.0, 0.0), (0.0, 0.0, 3 * 3.14 / 4)
-            )
-            body_handle = self.gym.find_actor_rigid_body_handle(
-                self.envs[0], self.actor_handles[0], "base"
-            )
-            self.gym.attach_camera_to_body(
-                self.follow_cam,  # camera_handle,
-                self.envs[0],
-                body_handle,
-                follow_trans,
-                gymapi.FOLLOW_POSITION,
-            )
+    def forward(self, x): # x: 4 * MODEL_IN_SIZE;
+        # x: q_err_hip_1, dq_hip_1, q_err_thigh_1, dq_thigh_1, q_err_calf_1, dq_calf_1 (30)
+        #    q_err_hip_2, dq_hip_2, q_err_thigh_2, dq_thigh_2, q_err_calf_2, dq_calf_2 (30)
+        out = torch.tensor(()).to(x.device)
+        for i in range(LEG_NUM):
+            sub_in = x[:, MODEL_IN_SIZE*i:MODEL_IN_SIZE*(i+1)]
+            sub_out = self.core_model(sub_in)
+            out = torch.cat((out, sub_out), 1)
+        return out
 
-        if float_cam:
-            self.floating_cam, _ = self.make_handle_trans(
-                # 1280, 720, 0, (0, 0, 0), (0, 0, 0), hfov=50
-                1920, 1080, 0, (0, 0, 0), (0, 0, 0)
-            )
-            camera_position = gymapi.Vec3(5, 5, 5)
-            camera_target = gymapi.Vec3(0, 0, 0)
-            self.gym.set_camera_location(
-                self.floating_cam, self.envs[0], camera_position, camera_target
-            )
-
-    def make_handle_trans(self, width, height, env_idx, trans, rot, hfov=None):
-        camera_props = gymapi.CameraProperties()
-        camera_props.width = width
-        camera_props.height = height
-        camera_props.enable_tensors = True
-        if hfov is not None:
-            camera_props.horizontal_fov = hfov
-        camera_handle = self.gym.create_camera_sensor(self.envs[env_idx], camera_props)
-        local_transform = gymapi.Transform()
-        local_transform.p = gymapi.Vec3(*trans)
-        local_transform.r = gymapi.Quat.from_euler_zyx(*rot)
-        return camera_handle, local_transform
-
-
-class Go1(Go1CameraMixin, LeggedRobot):
+class Go1(LeggedRobot):
     cfg: Go1BaseCfg
-    def __init__(
-        self, cfg, sim_params, physics_engine, sim_device, headless, record=False
-    ):
+
+    def __init__(self, cfg, sim_params, physics_engine, sim_device, headless):
         super().__init__(cfg, sim_params, physics_engine, sim_device, headless)
-        self.camera_handles = []
-        print("GO1 INIT")
-        self.init_aux_cameras(cfg.env.follow_cam, cfg.env.float_cam)
+
+        # load actuator network
+        if self.cfg.control.use_actuator_network:
+            actuator_network_path = self.cfg.control.actuator_net_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
+            sub_model = torch.jit.load(actuator_network_path).to(self.device)
+            self.actuator_network = UniNet(sub_model)
+
+        # get mean and std of input and output from data
+        self.pos_err_mean = torch.tile(torch.tensor([0.00036437, 0.01540757, -0.00972657]), (LEG_NUM, )).to(self.device)
+        self.pos_err_std = torch.tile(torch.tensor([0.11722939, 0.19275887, 0.28700321]), (LEG_NUM, )).to(self.device)
+        self.vel_mean = torch.tile(torch.tensor([-0.00017714, -0.00024455,  0.0005956 ]), (LEG_NUM, )).to(self.device)
+        self.vel_std = torch.tile(torch.tensor([2.31517027, 3.84613839, 5.52599008]), (LEG_NUM, )).to(self.device)
 
 
     def reset_idx(self, env_ids):
         super().reset_idx(env_ids)
-        # Additionaly empty actuator network hidden states
-        self.sea_hidden_state_per_env[:, env_ids] = 0.0
-        self.sea_cell_state_per_env[:, env_ids] = 0.0
+
     def _init_buffers(self):
         super()._init_buffers()
         # Additionally initialize actuator network hidden state tensors
-        self.sea_input = torch.zeros(
-            self.num_envs * self.num_actions,
-            1,
-            2,
-            device=self.device,
-            requires_grad=False,
-        )
-        self.sea_hidden_state = torch.zeros(
-            2,
-            self.num_envs * self.num_actions,
-            8,
-            device=self.device,
-            requires_grad=False,
-        )
-        self.sea_cell_state = torch.zeros(
-            2,
-            self.num_envs * self.num_actions,
-            8,
-            device=self.device,
-            requires_grad=False,
-        )
-        self.sea_hidden_state_per_env = self.sea_hidden_state.view(
-            2, self.num_envs, self.num_actions, 8
-        )
-        self.sea_cell_state_per_env = self.sea_cell_state.view(
-            2, self.num_envs, self.num_actions, 8
-        )
+        self.model_ins = torch.zeros(self.num_envs, MODEL_IN_SIZE * LEG_NUM, device=self.device, requires_grad=False) # [all envs * all legs, model-in-DOF]
 
-    def _compute_torques(self, actions):
-        return super()._compute_torques(actions)
+        # init pos err and vel buffer(12 DOF)
+        self.pos_err_buffs = np.zeros((self.num_envs, self.num_actions, LEN_HIST))
+        self.vel_buffs = np.zeros((self.num_envs, self.num_actions, LEN_HIST))
+
+    def _compute_poses(self, actions):
+        # Choose between pd controller and actuator network
+        if self.cfg.control.use_actuator_network:
+            dVel = self.actuator_advance(actions)
+
+            return super()._compute_poses(actions)
+        else:
+            # pd controller
+            return super()._compute_poses(actions)
+
+    # TODO: actuator model buffer and forward
+    def actuator_advance(self, actions):
+        # scale pos_err and vel TODO: clip
+        pos_err = actions - self.dof_pos
+        pos_err_s = (pos_err - self.pos_err_mean) / self.pos_err_std
+        vel_s = (self.dof_vel - self.vel_mean) / self.vel_std
+
+        # TODO: note that the pos_err is of 12-dim, but real model_in is od=f 3-dim
+        model_in = np.array([])
+        for i in range(self.num_actions):
+            # fill buffers with scaled data [t-h, ... , t-0]
+            # hist can be different for each joint
+            pos_err_temp = np.delete(self.pos_err_buffs[:, i, :], 0, axis=1)  # need to be numpy,
+            self.pos_err_buffs[:, i, :] = np.append(pos_err_temp, pos_err_s[:, i].unsqueeze(-1).cpu().numpy(), axis=1)
+
+            vel_temp = np.delete(self.vel_buffs[:, i, :], 0, axis=1)
+            self.vel_buffs[:, i, :] = np.append(vel_temp, vel_s[:, i].unsqueeze(-1).cpu().numpy(), axis=1)
+
+            # fill actuator model input vector
+            self.model_ins[:, 2 * i * LEN_HIST:(2 * i + 1) * LEN_HIST] = torch.from_numpy(self.pos_err_buffs[:, i, :])
+            self.model_ins[:, (2 * i + 1) * LEN_HIST:(2 * i + 2) * LEN_HIST] = torch.from_numpy(self.vel_buffs[:, i, :])
+
+        with torch.inference_mode():
+            # advance actuator mlp
+            dVel = self.actuator_network(self.model_ins)
+
+            # upscale mlp output(the dVel mean is counteracted)
+            dVel *= self.vel_std
+
+        return dVel
+
 
 
 

@@ -17,6 +17,7 @@ class DmEncoder(nn.Module):
             nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1]),
             nn.ReLU(),
             nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]),
+            nn.Tanh(),
         )
 
     def forward(self, dm):
@@ -217,9 +218,9 @@ class ActorCritic(nn.Module):
 
             else:
 
-                extrin_en = self.env_mlp(obs_priv)
+                extrin = self.env_mlp(obs_priv)
 
-                extrin = torch.tanh(extrin_en)
+                # extrin = torch.tanh(extrin_en)
 
                 actor_obs = torch.cat([obs, extrin], dim=-1)
 

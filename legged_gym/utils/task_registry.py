@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) 2021 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
-#
+# 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
@@ -31,59 +31,54 @@
 import os
 from datetime import datetime
 from typing import Tuple
-from rl.lbc.lbc_runner import LbcRunner
+import torch
+import numpy as np
 
-from rl.base.env import VecEnv
-# from rl.base.runners import OnPolicyRunner
+from rl.RMA.env import VecEnv
+
 
 from rl.base.runners import OnPolicyRunner
 from rl.RMA.runners import PPOPolicyRunner
 from rl.RMA.runners import ProprioAdaptPolicyRunner
 from rl.EST.runners import ESTPolicyRunner
+from rl.EST_rough.runners import ESTRoughPolicyRunner
+
 from rl.Dream.runners import DreamPolicyRunner
-from rl.Our.runners import OurPolicyRunner
+
+from rl.Gen.runners import GenPolicyRunner
+from rl.Gen_base.runners import GenBasePolicyRunner
 
 
-from legged_gym import LEGGED_GYM_ROOT_DIR
-from .helpers import (
-    get_args,
-    update_cfg_from_args,
-    class_to_dict,
-    get_load_path,
-    set_seed,
-    parse_sim_params,
-)
+
+
+from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
+from .helpers import get_args, update_cfg_from_args, class_to_dict, get_load_path, set_seed, parse_sim_params
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
+from shutil import copyfile
 
-class TaskRegistry:
+class TaskRegistry():
     def __init__(self):
         self.task_classes = {}
         self.env_cfgs = {}
         self.train_cfgs = {}
-
-    def register(
-        self,
-        name: str,
-        task_class: VecEnv,
-        env_cfg: LeggedRobotCfg,
-        train_cfg: LeggedRobotCfgPPO,
-    ):
+    
+    def register(self, name: str, task_class: VecEnv, env_cfg: LeggedRobotCfg, train_cfg: LeggedRobotCfgPPO):
         self.task_classes[name] = task_class
         self.env_cfgs[name] = env_cfg
         self.train_cfgs[name] = train_cfg
-
+    
     def get_task_class(self, name: str) -> VecEnv:
         return self.task_classes[name]
-
+    
     def get_cfgs(self, name) -> Tuple[LeggedRobotCfg, LeggedRobotCfgPPO]:
         train_cfg = self.train_cfgs[name]
         env_cfg = self.env_cfgs[name]
         # copy seed
         env_cfg.seed = train_cfg.seed
         return env_cfg, train_cfg
-
-    def make_env(self, name, args=None, env_cfg=None, record=False) -> Tuple[VecEnv, LeggedRobotCfg]:
+    
+    def make_env(self, name, args=None, env_cfg=None) -> Tuple[VecEnv, LeggedRobotCfg]:
         """ Creates an environment either from a registered namme or from the provided config file.
 
         Args:
@@ -115,19 +110,14 @@ class TaskRegistry:
         # parse sim params (convert to dict first)
         sim_params = {"sim": class_to_dict(env_cfg.sim)}
         sim_params = parse_sim_params(args, sim_params)
-        env = task_class(
-            cfg=env_cfg,
-            sim_params=sim_params,
-            physics_engine=args.physics_engine,
-            sim_device=args.sim_device,
-            headless=args.headless,
-            record=record
-        )
+        env = task_class(   cfg=env_cfg,
+                            sim_params=sim_params,
+                            physics_engine=args.physics_engine,
+                            sim_device=args.sim_device,
+                            headless=args.headless)
         return env, env_cfg
 
-    # def make_alg_runner( self, env, name=None, args=None, train_cfg=None, log_root="default" ) -> Tuple[OnPolicyRunner, LeggedRobotCfgPPO]:
     def make_alg_runner(self, env, name=None, args=None, train_cfg=None, log_root="default"):
-
         """ Creates the training algorithm  either from a registered namme or from the provided config file.
 
         Args:
@@ -161,15 +151,13 @@ class TaskRegistry:
         # override cfg from args (if specified)
         _, train_cfg = update_cfg_from_args(None, train_cfg, args)
 
-        if log_root == "default":
-            log_root = os.path.join(LEGGED_GYM_ROOT_DIR,  'outputs')
+        if log_root=="default":
+            log_root = os.path.join(LEGGED_GYM_ROOT_DIR, 'outputs')
             log_dir = os.path.join(log_root, args.output_name)
-
         elif log_root is None:
             log_dir = None
         else:
             log_dir = os.path.join(log_root, args.output_name)
-
 
         if not train_cfg.runner.resume:
             # check whether execute train by mistake:
@@ -183,10 +171,17 @@ class TaskRegistry:
                 if user_input != 'yes':
                     exit()
 
+            os.makedirs(log_dir, exist_ok=True)
+            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
+            # copyfile(save_item, log_dir + '/train_cfg_general.py')
+
+            save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', name,
+                                     name + '_config_baseline.py')
+            copyfile(save_item, log_dir + '/train_cfg_robot.py')
+
         train_cfg_dict = class_to_dict(train_cfg)
         runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)
         print("**************** RUNNER ", runner)
-
 
         #save resume path before creating a new log_dir
         resume = train_cfg.runner.resume
@@ -194,6 +189,8 @@ class TaskRegistry:
             # load previously trained model
             # resume_path = get_load_path(log_root, load_run=train_cfg.runner.load_run, checkpoint=train_cfg.runner.checkpoint)
             resume_path = get_load_path(os.path.join(log_dir, "stage1_nn" if args.s_flag == "1" else "stage2_nn"), checkpoint=args.checkpoint_model)
+
+            print(f"Loading model from: {log_dir, resume_path}")
             runner.load(resume_path)
         return runner, train_cfg
 
