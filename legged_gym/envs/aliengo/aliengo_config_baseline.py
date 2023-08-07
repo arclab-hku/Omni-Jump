@@ -93,7 +93,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         decimation = 4
 
     class asset(LeggedRobotCfg.asset):
-        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_ye/urdf/aliengo.urdf"
+        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
         name = "aliengo"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]

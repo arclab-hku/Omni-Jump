@@ -54,8 +54,12 @@ class GenPolicyRunner:
 
         # Log
         self.log_dir = log_dir
-        self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
-        self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
+        if self.cfg["resume"]:
+            self.nn_dir = os.path.join(self.log_dir, self.cfg["resume_name"])
+            self.tb_dir = os.path.join(self.log_dir, self.cfg["resume_name"])
+        else:
+            self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
+            self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
         os.makedirs(self.nn_dir, exist_ok=True)
         os.makedirs(self.tb_dir, exist_ok=True)
         self.writer = SummaryWriter(log_dir=self.tb_dir, flush_secs=10)
