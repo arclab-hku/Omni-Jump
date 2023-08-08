@@ -325,7 +325,7 @@ class LeggedRobot(BaseTask):
             noise_vec[12:24] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
             noise_vec[24:36] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
             noise_vec[36:48] = 0.  # previous actions
-        elif self.cfg.env.train_type == "RMA" or "EST" or "Dream" or "Our":
+        else:
             noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
             noise_vec[3:6] = noise_scales.gravity * noise_level
             noise_vec[6:9] = 0.  # commands
@@ -345,8 +345,6 @@ class LeggedRobot(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
-
-
         if self.cfg.env.train_type == "standard":
             self.obs_buf = torch.cat((self.base_lin_vel * self.obs_scales.lin_vel,
                                       self.base_ang_vel * self.obs_scales.ang_vel,
@@ -358,7 +356,7 @@ class LeggedRobot(BaseTask):
                                       ), dim=-1)
 
 
-        elif self.cfg.env.train_type == "RMA" or "EST" or "Dream" or "Our":
+        else:
             self.obs_buf = torch.cat((self.base_ang_vel * self.obs_scales.ang_vel,
                                       self.projected_gravity,
                                       self.commands[:, :3] * self.commands_scale,
@@ -394,7 +392,7 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
             self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_noise_vel
 
-        if self.cfg.env.train_type == "Dream" or "RMA":
+        if self.cfg.env.train_type == "Dream" or "RMA" or "GenHis":
             # deal with normal observation, do sliding window
             prev_obs_buf = self.obs_buf_lag_history[:, 1:].clone()
             # concatenate to get full history
@@ -439,11 +437,11 @@ class LeggedRobot(BaseTask):
 
     # ------------- Callbacks --------------
     def _process_rigid_body_props(self, props, env_id):
-        # randomize base mass
+        # randomize Base mass
         if self.cfg.domain_rand.randomize_base_mass:
             rng = self.cfg.domain_rand.added_mass_range
             props[0].mass += np.random.uniform(rng[0], rng[1])
-            if self.cfg.env.train_type == "RMA":
+            if self.cfg.env.train_type == "RMA" or "GenHis":
                 self._update_priv_buf(env_id=env_id, name='base_mass', value=props[0].mass,
                                       lower=rng[0], upper=rng[1])
         return props
@@ -684,12 +682,12 @@ class LeggedRobot(BaseTask):
 
     def _reset_root_states(self, env_ids):
         """ Resets ROOT states position and velocities of selected environmments
-            Sets base position based on the curriculum
-            Selects randomized base velocities within -0.5:0.5 [m/s, rad/s]
+            Sets Base position based on the curriculum
+            Selects randomized Base velocities within -0.5:0.5 [m/s, rad/s]
         Args:
             env_ids (List[int]): Environemnt ids
         """
-        # base position
+        # Base position
         if self.custom_origins:
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
@@ -699,7 +697,7 @@ class LeggedRobot(BaseTask):
         else:
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
-        # base velocities
+        # Base velocities
         self.root_states[env_ids, 7:13] = torch_rand_float(-0.5, 0.5, (len(env_ids), 6),
                                                            device=self.device)  # [7:10]: lin vel, [10:13]: ang vel
         env_ids_int32 = env_ids.to(dtype=torch.int32)
@@ -709,7 +707,7 @@ class LeggedRobot(BaseTask):
                                                      len(env_ids_int32))
 
     def _push_robots(self):
-        """ Random pushes the robots. Emulates an impulse by setting a randomized base velocity.
+        """ Random pushes the robots. Emulates an impulse by setting a randomized Base velocity.
         """
         max_vel = self.cfg.domain_rand.max_push_vel_xy
         self.root_states[:, 7:9] = torch_rand_float(-max_vel, max_vel, (self.num_envs, 2),
@@ -1197,7 +1195,7 @@ class LeggedRobot(BaseTask):
         contact_geom = gymutil.WireframeSphereGeometry(0.03, 32, 32, None, color=(0, 0, 1))
         cop_geom = gymutil.WireframeSphereGeometry(0.03, 32, 32, None, color=(0.85, 0.5, 0.1))
         for i in range(self.num_envs):
-            # draw COM(= base pose) and its projection
+            # draw COM(= Base pose) and its projection
             base_pos = (self.root_states[i, :3]).cpu().numpy()
             com = self.coms[i] + base_pos
             com_pose = gymapi.Transform(gymapi.Vec3(com[0], com[1], com[2]), r=None)
@@ -1259,7 +1257,7 @@ class LeggedRobot(BaseTask):
                 polygon_starts = polygon_ends
 
     def _init_height_points(self):
-        """ Returns points at which the height measurments are sampled (in base frame)
+        """ Returns points at which the height measurments are sampled (in Base frame)
         Returns:
             [torch.Tensor]: Tensor of shape (num_envs, self.num_height_points, 3)
         """
@@ -1275,7 +1273,7 @@ class LeggedRobot(BaseTask):
 
     def _get_heights(self, env_ids=None):
         """ Samples heights of the terrain at required points around each robot.
-            The points are offset by the base's position and rotated by the base's yaw
+            The points are offset by the Base's position and rotated by the Base's yaw
         Args:
             env_ids (List[int], optional): Subset of environments for which to return the heights. Defaults to None.
         Raises:
@@ -1314,19 +1312,19 @@ class LeggedRobot(BaseTask):
 
     # ------------ reward functions----------------
     def _reward_lin_vel_z(self):
-        # Penalize z axis base linear velocity
+        # Penalize z axis Base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
 
     def _reward_ang_vel_xy(self):
-        # Penalize xy axes base angular velocity
+        # Penalize xy axes Base angular velocity
         return torch.sum(torch.square(self.base_ang_vel[:, :2]), dim=1)
 
     def _reward_orientation(self):
-        # Penalize non flat base orientation
+        # Penalize non flat Base orientation
         return torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1)
 
     def _reward_base_height(self):
-        # Penalize base height away from target
+        # Penalize Base height away from target
         # print('sdfswwf',self.root_states[:, 2].unsqueeze(1).shape, self.measured_heights.shape, (self.root_states[:, 2].unsqueeze(1) - self.measured_heights).shape)
 
         base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
@@ -1499,6 +1497,7 @@ class LeggedRobot(BaseTask):
         super().reset()
         self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
         self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device)
+
         return self.obs_dict
 
 
@@ -1524,13 +1523,6 @@ class LeggedRobot(BaseTask):
             self.priv_info_buf[env_id, s:e] = 0
 
 
-    # def _allocate_task_buffer(self, num_envs):
-        # # extra buffers for observe randomized params
-        # self.prop_hist_len = self.cfg.RMA.adaptor.propHistoryLen
-        # self.num_env_factors = self.cfg.RMA.adaptor.privInfoDim
-        # self.priv_info_buf = torch.zeros((num_envs, self.num_env_factors), device=self.device, dtype=torch.float)
-        # self.proprio_hist_buf = torch.zeros((num_envs, self.prop_hist_len, self.num_obs), device=self.device,
-        #                                     dtype=torch.float)
 
     def _allocate_task_buffer(self, num_envs):
         # extra buffers for observe randomized params

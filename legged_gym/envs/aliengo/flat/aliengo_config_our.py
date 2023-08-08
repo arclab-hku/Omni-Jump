@@ -97,7 +97,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         name = "aliengo"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip"]
+        terminate_after_contacts_on = ["Base", "trunk", "hip"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
 
     class domain_rand(LeggedRobotCfg.domain_rand):

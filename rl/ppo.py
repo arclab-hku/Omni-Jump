@@ -32,8 +32,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from termcolor import cprint
-from rl.base.modules import ActorCritic
-from rl.base.storage import RolloutStorage
+from rl.Base.modules import ActorCritic
+from rl.Base.storage import RolloutStorage
 import numpy as np
 class PPO:
     actor_critic: ActorCritic

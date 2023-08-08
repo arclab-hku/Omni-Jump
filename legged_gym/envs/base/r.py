@@ -540,7 +540,7 @@ class LeggedRobot(BaseTask):
     # ------------- Callbacks --------------
 
     def _process_rigid_body_props(self, props, env_id):
-        # randomize base mass
+        # randomize Base mass
         if self.cfg.domain_rand.randomize_base_mass:
             rng = self.cfg.domain_rand.added_mass_range
             props[0].mass += np.random.uniform(rng[0], rng[1])
@@ -780,12 +780,12 @@ class LeggedRobot(BaseTask):
 
     def _reset_root_states(self, env_ids):
         """Resets ROOT states position and velocities of selected environmments
-            Sets base position based on the curriculum
-            Selects randomized base velocities within -0.5:0.5 [m/s, rad/s]
+            Sets Base position based on the curriculum
+            Selects randomized Base velocities within -0.5:0.5 [m/s, rad/s]
         Args:
             env_ids (List[int]): Environemnt ids
         """
-        # base position
+        # Base position
         if self.custom_origins:
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
@@ -795,7 +795,7 @@ class LeggedRobot(BaseTask):
         else:
             self.root_states[env_ids] = self.base_init_state
             self.root_states[env_ids, :3] += self.env_origins[env_ids]
-        # base velocities
+        # Base velocities
         self.root_states[env_ids, 7:13] = torch_rand_float(
             -0.5, 0.5, (len(env_ids), 6), device=self.device
         )  # [7:10]: lin vel, [10:13]: ang vel
@@ -808,7 +808,7 @@ class LeggedRobot(BaseTask):
         )
 
     def _push_robots(self):
-        """Random pushes the robots. Emulates an impulse by setting a randomized base velocity."""
+        """Random pushes the robots. Emulates an impulse by setting a randomized Base velocity."""
         max_vel = self.cfg.domain_rand.max_push_vel_xy
         self.root_states[:, 7:9] = torch_rand_float(-max_vel, max_vel, (self.num_envs, 2),
                                                     device=self.device)  # lin vel x/y
@@ -1369,7 +1369,7 @@ class LeggedRobot(BaseTask):
                 )
 
     def _init_height_points(self):
-        """Returns points at which the height measurments are sampled (in base frame)
+        """Returns points at which the height measurments are sampled (in Base frame)
 
         Returns:
             [torch.Tensor]: Tensor of shape (num_envs, self.num_height_points, 3)
@@ -1396,7 +1396,7 @@ class LeggedRobot(BaseTask):
 
     def _get_heights(self, env_ids=None):
         """Samples heights of the terrain at required points around each robot.
-            The points are offset by the base's position and rotated by the base's yaw
+            The points are offset by the Base's position and rotated by the Base's yaw
 
         Args:
             env_ids (List[int], optional): Subset of environments for which to return the heights. Defaults to None.
@@ -1493,19 +1493,19 @@ class LeggedRobot(BaseTask):
 
     # ------------ reward functions----------------
     def _reward_lin_vel_z(self):
-        # Penalize z axis base linear velocity
+        # Penalize z axis Base linear velocity
         return torch.square(self.base_lin_vel[:, 2])
 
     def _reward_ang_vel_xy(self):
-        # Penalize xy axes base angular velocity
+        # Penalize xy axes Base angular velocity
         return torch.sum(torch.square(self.base_ang_vel[:, :2]), dim=1)
 
     def _reward_orientation(self):
-        # Penalize non flat base orientation
+        # Penalize non flat Base orientation
         return torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1)
 
     def _reward_base_height(self):
-        # Penalize base height away from target
+        # Penalize Base height away from target
         base_height = torch.mean(
             self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1
         )

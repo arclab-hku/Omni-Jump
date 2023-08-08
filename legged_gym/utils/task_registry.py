@@ -36,7 +36,7 @@ import numpy as np
 
 from rl.RMA.env import VecEnv
 
-from rl.base.runners import OnPolicyRunner
+from rl.Base.runners import OnPolicyRunner
 from rl.RMA.runners import PPOPolicyRunner
 from rl.RMA.runners import ProprioAdaptPolicyRunner
 from rl.EST.runners import ESTPolicyRunner
@@ -46,6 +46,8 @@ from rl.Dream.runners import DreamPolicyRunner
 
 from rl.Gen.runners import GenPolicyRunner
 from rl.Gen_base.runners import GenBasePolicyRunner
+from rl.Gen_his.runners import GenHisPolicyRunner
+from rl.Gen_his_base.runners import GenHisPPOPolicyRunner
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 from .helpers import get_args, update_cfg_from_args, class_to_dict, get_load_path, set_seed, parse_sim_params
@@ -160,7 +162,7 @@ class TaskRegistry():
             # check whether execute train by mistake:
             last_ckpt_path = os.path.join(
                 log_dir,
-                'stage1_nn' if args.algo == 'PPO' or "On" or 'EST' or 'Dream' else 'stage2_nn', 'last.pth'
+                'stage1_nn' if args.algo == 'PPO' or "On" or 'EST' or 'Dream' or 'GenHis' or 'Gen' or 'GenBase' or 'GenHisPPO' else 'stage2_nn', 'last.pth'
             )
             if os.path.exists(last_ckpt_path):
                 user_input = input(
@@ -169,7 +171,7 @@ class TaskRegistry():
                     exit()
 
             os.makedirs(log_dir, exist_ok=True)
-            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'base', 'legged_robot_config.py')
+            # save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', 'Base', 'legged_robot_config.py')
             # copyfile(save_item, log_dir + '/train_cfg_general.py')
 
             save_item = os.path.join(LEGGED_GYM_ROOT_DIR, 'legged_gym', 'envs', name,
