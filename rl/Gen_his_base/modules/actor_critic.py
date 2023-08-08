@@ -59,7 +59,7 @@ class ActorCritic(nn.Module):
 
         self.velLen = kwargs['velLen']
 
-        num_actor_input = num_obs + self.proprio_adapt_output
+        num_actor_input = num_obs
 
         num_critic_input = num_obs  + self.priv_info_dim  ##### 45 + 3 + 187
 
@@ -168,20 +168,19 @@ class ActorCritic(nn.Module):
         obs_priv_info = obs_dict['priv_info']
         obs_proprio_hist = obs_dict['proprio_hist']
 
+        extrin_gt = obs_dict['privileged_info'][:, 0:11]
+
         # print('sfsfsa',obs.shape, obs_priv_info.shape, obs_proprio_hist.shape, obs_priv_info )
 
-        extrin_gt = obs_dict['priv_info'][:, 0:11]
-
         extrin_en = self.dm_encoder(obs)
+
+        extrin_gt = torch.tanh(extrin_gt)
 
         actor_obs = torch.cat([obs], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
-
-        extrin = torch.tanh(extrin_en)
-        extrin_gt = torch.tanh(extrin_gt)
 
         return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 
