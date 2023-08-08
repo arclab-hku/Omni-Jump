@@ -232,7 +232,6 @@ class RolloutStorage:
                 priv_info_batch = priv_info[batch_idx]
                 proprio_hist_batch = proprio_hist[batch_idx]
 
-
                 yield (obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch,
                        returns_batch, old_actions_log_prob_batch, old_mu_batch, old_sigma_batch,
                        (None, None), None, privileged_info_batch, priv_info_batch, proprio_hist_batch,

@@ -19,7 +19,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
-        num_histroy_obs = 1
+        num_histroy_obs = 5
 
 
     class terrain(LeggedRobotCfg.terrain):
@@ -152,5 +152,5 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         proprio_adapt_out_dim = 11
 
 
-        HistoryLen = 1
+        HistoryLen = 5
         Hist_info_dim = 45 * HistoryLen

@@ -45,7 +45,7 @@ class GenHisPolicyRunner:
                                                        self.env.num_actions,
                                                        **self.policy_cfg,
                                                        **self.encoder_cfg).to(self.device)
-        dm_encoder = DmEncoder(self.env.num_obs, self.encoder_mlp)
+        dm_encoder = DmEncoder(self.Hist_info_shape, self.encoder_mlp)
         alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.alg: PPO = alg_class(actor_critic,
                                   dm_encoder,
