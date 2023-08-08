@@ -325,7 +325,7 @@ class LeggedRobot(BaseTask):
             noise_vec[12:24] = noise_scales.dof_pos * noise_level * self.obs_scales.dof_pos
             noise_vec[24:36] = noise_scales.dof_vel * noise_level * self.obs_scales.dof_vel
             noise_vec[36:48] = 0.  # previous actions
-        elif self.cfg.env.train_type == "RMA" or "EST" or "Dream" or "Our":
+        else:
             noise_vec[:3] = noise_scales.ang_vel * noise_level * self.obs_scales.ang_vel
             noise_vec[3:6] = noise_scales.gravity * noise_level
             noise_vec[6:9] = 0.  # commands
@@ -394,7 +394,7 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
             self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_noise_vel
 
-        if self.cfg.env.train_type == "Dream" or "RMA":
+        if self.cfg.env.train_type == "Dream" or "RMA" or "GenHis":
             # deal with normal observation, do sliding window
             prev_obs_buf = self.obs_buf_lag_history[:, 1:].clone()
             # concatenate to get full history
@@ -1499,6 +1499,7 @@ class LeggedRobot(BaseTask):
         super().reset()
         self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
         self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device)
+
         return self.obs_dict
 
 
@@ -1524,13 +1525,6 @@ class LeggedRobot(BaseTask):
             self.priv_info_buf[env_id, s:e] = 0
 
 
-    # def _allocate_task_buffer(self, num_envs):
-        # # extra buffers for observe randomized params
-        # self.prop_hist_len = self.cfg.RMA.adaptor.propHistoryLen
-        # self.num_env_factors = self.cfg.RMA.adaptor.privInfoDim
-        # self.priv_info_buf = torch.zeros((num_envs, self.num_env_factors), device=self.device, dtype=torch.float)
-        # self.proprio_hist_buf = torch.zeros((num_envs, self.prop_hist_len, self.num_obs), device=self.device,
-        #                                     dtype=torch.float)
 
     def _allocate_task_buffer(self, num_envs):
         # extra buffers for observe randomized params

@@ -42,7 +42,7 @@ import torch
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
-    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 20)
+    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
     env_cfg.terrain.num_rows = 2
     env_cfg.terrain.num_cols = 2
 
@@ -60,7 +60,7 @@ def play(args):
     env_cfg.domain_rand.randomize_limb_mass = False
 
     # fixed velocity direction evaluation (make sure the value is within the training range)
-    env_cfg.commands.ranges.lin_vel_x = [0.6, 0.6]
+    env_cfg.commands.ranges.lin_vel_x = [0.9, 0.9]
     env_cfg.commands.ranges.lin_vel_y = [0.0, 0.0]
     env_cfg.commands.ranges.heading = [-0, -0]
 
