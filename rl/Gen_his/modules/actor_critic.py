@@ -172,7 +172,6 @@ class ActorCritic(nn.Module):
         # obs_priv_info = obs_dict['priv_info']
         obs_proprio_hist = obs_dict['proprio_hist'].flatten(1)
 
-
         extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
         extrin_en = self.dm_encoder(obs_proprio_hist)
@@ -182,8 +181,6 @@ class ActorCritic(nn.Module):
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
-
-
 
         return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 
