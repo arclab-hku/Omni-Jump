@@ -17,6 +17,7 @@ class DmEncoder(nn.Module):
             nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1]),
             nn.ReLU(),
             nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]),
+            nn.Tanh(),
         )
 
     def forward(self, dm):
@@ -168,18 +169,13 @@ class ActorCritic(nn.Module):
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
         obs_hight = obs_dict['privileged_info'][:, 3:200]
-        obs_priv_info = obs_dict['priv_info']
+        # obs_priv_info = obs_dict['priv_info']
         obs_proprio_hist = obs_dict['proprio_hist'].flatten(1)
 
 
-        extrin_gt = obs_dict['priv_info'][:, 0:11]
-
-
+        extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
         extrin_en = self.dm_encoder(obs_proprio_hist)
-
-        # print('sfsfsa',obs.shape, obs_priv_info.shape, obs_proprio_hist.shape, extrin_en.shape )
-
 
         actor_obs = torch.cat([obs, extrin_en], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 245
@@ -187,8 +183,7 @@ class ActorCritic(nn.Module):
         value = self.critic(critic_obs)
         sigma = self.std
 
-        extrin = torch.tanh(extrin_en)
-        extrin_gt = torch.tanh(extrin_gt)
+
 
         return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 
