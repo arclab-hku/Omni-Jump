@@ -34,6 +34,12 @@ class GenHisPolicyRunner:
 
         self.device = device
         self.env = env
+
+        self.HistoryLen = train_cfg["Encoder"]['HistoryLen']
+        self.proprio_adapt_output = train_cfg["Encoder"]['proprio_adapt_out_dim']
+        self.Hist_info_shape = train_cfg["Encoder"]['Hist_info_dim']
+
+
         actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
         actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
                                                        self.env.num_actions,
@@ -50,7 +56,7 @@ class GenHisPolicyRunner:
 
         # init storage and model
         self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
-                              [self.env.num_privileged_obs], [self.env.num_actions])
+                              [self.env.num_privileged_obs], [self.env.num_actions], [self.Hist_info_shape])
 
         # Log
         self.log_dir = log_dir

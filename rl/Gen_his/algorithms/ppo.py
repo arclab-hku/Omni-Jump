@@ -91,9 +91,10 @@ class PPO:
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
 
-    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape):
-        # print("**********  priv_info_shape  ", action_shape)
-        self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, self.device)
+    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape,  Hist_info_shape):
+        print("**********  Hist_info_shape  ", Hist_info_shape)
+        self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape,
+                                      action_shape, Hist_info_shape, self.device)
 
     def test_mode(self):
         self.actor_critic.test()
@@ -117,11 +118,15 @@ class PPO:
 
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
-        # self.transition.critic_observations = obs_dict['obs']
 
-        # privileged_info: need to record / update the vel info
+        # privileged_info: need to record / update the unknow info in the real world
         self.transition.privileged_info = obs_dict['privileged_info']
 
+        # privileged_info: need to record / update the unknow info in the real world
+        self.transition.priv_info = obs_dict['priv_info']
+
+        # privileged_info: need to record / update the his of the obs
+        self.transition.proprio_hist = obs_dict['proprio_hist'].flatten(1)
 
         return self.transition.actions
     
@@ -154,11 +159,12 @@ class PPO:
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, privileged_info_batch, extrin_loss, extrin_gt_loss  in generator:
+            old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, privileged_info_batch, priv_info_batch, proprio_hist_batch, extrin_loss, extrin_gt_loss  in generator:
 
                 obs_dict_batch = {
                     'obs': obs_batch,
-                    # 'priv_info': priv_info_batch,
+                    'priv_info': priv_info_batch,
+                    'proprio_hist': proprio_hist_batch,
                     'privileged_info': privileged_info_batch,
                 }
                 self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])

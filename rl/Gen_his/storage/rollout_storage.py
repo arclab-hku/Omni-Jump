@@ -46,14 +46,17 @@ class RolloutStorage:
             self.action_mean = None
             self.action_sigma = None
             self.hidden_states = None
-            self.privileged_info = None  # vel fixed value
-            self.extrin_loss = None  # RMA fixed value
-            self.extrin_gt_loss = None  # vel fixed value
+            self.privileged_info = None  # unknow value in the real world
+            self.priv_info = None  # physical fixed value
+            self.proprio_hist = None  # His of the obs
+
+            self.extrin_loss = None  # MLP fixed feature
+            self.extrin_gt_loss = None  # real fixed feature
 
         def clear(self):
             self.__init__()
 
-    def __init__(self, num_envs, num_transitions_per_env, obs_shape, privileged_obs_shape, actions_shape, device='cpu'):
+    def __init__(self, num_envs, num_transitions_per_env, obs_shape, privileged_obs_shape, actions_shape, Hist_info_shape, device='cpu'):
         self.device = device
 
         self.obs_shape = obs_shape
@@ -86,6 +89,13 @@ class RolloutStorage:
         # For privileged_info
         self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 200, device=self.device)
 
+        # For priv_info
+        self.priv_info = torch.zeros(num_transitions_per_env, num_envs, 17, device=self.device)
+
+        # For hist
+        self.proprio_hist = torch.zeros(num_transitions_per_env, num_envs, Hist_info_shape[0], device=self.device)
+
+
         self.num_transitions_per_env = num_transitions_per_env
         self.num_envs = num_envs
 
@@ -111,6 +121,12 @@ class RolloutStorage:
 
         # For privileged_info
         self.privileged_info[self.step].copy_(transition.privileged_info)
+
+        # For priv_info
+        self.priv_info[self.step].copy_(transition.priv_info)
+
+        # For His
+        self.proprio_hist[self.step].copy_(transition.proprio_hist)
 
         # For extrin_loss
         self.extrin_loss[self.step].copy_(transition.extrin_loss)
@@ -185,6 +201,12 @@ class RolloutStorage:
         # For privileged_info
         privileged_info = self.privileged_info.flatten(0, 1)
 
+        # For priv_info
+        priv_info = self.priv_info.flatten(0, 1)
+
+        # For history
+        proprio_hist = self.proprio_hist.flatten(0, 1)
+
         # For Loss
         extrin_loss = self.extrin_loss.flatten(0, 1)
         extrin_gt_loss = self.extrin_gt_loss.flatten(0, 1)
@@ -207,11 +229,14 @@ class RolloutStorage:
                 old_sigma_batch = old_sigma[batch_idx]
 
                 privileged_info_batch = privileged_info[batch_idx]
+                priv_info_batch = priv_info[batch_idx]
+                proprio_hist_batch = proprio_hist[batch_idx]
 
 
-                yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
-                      old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, privileged_info_batch, \
-                      extrin_loss, extrin_gt_loss
+                yield (obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch,
+                       returns_batch, old_actions_log_prob_batch, old_mu_batch, old_sigma_batch,
+                       (None, None), None, privileged_info_batch, priv_info_batch, proprio_hist_batch,
+                       extrin_loss, extrin_gt_loss)
 
     # for RNNs only
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):

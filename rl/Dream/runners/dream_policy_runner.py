@@ -58,7 +58,6 @@ class DreamPolicyRunner:
         self.save_interval = self.cfg["save_interval"]
 
         # init storage and model
-        print('sff', self.encoder_cfg["Hist_info_dim"])
         self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
                               [self.env.num_privileged_obs], [self.env.num_actions], [self.encoder_cfg["Hist_info_dim"]])
 
