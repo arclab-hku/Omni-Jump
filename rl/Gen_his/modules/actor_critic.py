@@ -168,7 +168,7 @@ class ActorCritic(nn.Module):
         obs_priv_info = obs_dict['priv_info']
         obs_proprio_hist = obs_dict['proprio_hist']
 
-        print('sfsfsa',obs.shape, obs_priv_info.shape, obs_proprio_hist.shape, obs_priv_info )
+        # print('sfsfsa',obs.shape, obs_priv_info.shape, obs_proprio_hist.shape, obs_priv_info )
 
         extrin_gt = obs_dict['priv_info'][:, 0:11]
 

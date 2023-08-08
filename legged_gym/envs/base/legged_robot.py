@@ -441,7 +441,7 @@ class LeggedRobot(BaseTask):
         if self.cfg.domain_rand.randomize_base_mass:
             rng = self.cfg.domain_rand.added_mass_range
             props[0].mass += np.random.uniform(rng[0], rng[1])
-            if self.cfg.env.train_type == "RMA":
+            if self.cfg.env.train_type == "RMA" or "GenHis":
                 self._update_priv_buf(env_id=env_id, name='base_mass', value=props[0].mass,
                                       lower=rng[0], upper=rng[1])
         return props
