@@ -96,32 +96,32 @@ class Logger:
         if log["dof_vel_target"]: a.plot(time, log["dof_vel_target"], label='target')
         a.set(xlabel='time [s]', ylabel='Velocity [rad/s]', title='Joint Velocity')
         a.legend()
-        # plot base vel x
+        # plot Base vel x
         a = axs[0, 0]
         if log["base_vel_x"]: a.plot(time, log["base_vel_x"], label='measured')
         if log["command_x"]: a.plot(time, log["command_x"], label='commanded')
         if self.benchmark_gazebo_obs and self.gazebo_obs_idx == 0:
             a.plot(np.linspace(0.3, 6.3, self.gazebo_obs.shape[0]), self.gazebo_obs, label='gazebo')
-        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity x')
+        a.set(xlabel='time [s]', ylabel='Base lin vel [m/s]', title='Base velocity x')
         a.legend()
-        # plot base vel y
+        # plot Base vel y
         a = axs[0, 1]
         if log["base_vel_y"]: a.plot(time, log["base_vel_y"], label='measured')
         if log["command_y"]: a.plot(time, log["command_y"], label='commanded')
         if self.benchmark_gazebo_obs and self.gazebo_obs_idx == 1:
             a.plot(np.linspace(0., 5.8, self.gazebo_obs.shape[0]), self.gazebo_obs, label='gazebo')
-        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity y')
+        a.set(xlabel='time [s]', ylabel='Base lin vel [m/s]', title='Base velocity y')
         a.legend()
-        # plot base vel yaw
+        # plot Base vel yaw
         a = axs[0, 2]
         if log["base_vel_yaw"]: a.plot(time, log["base_vel_yaw"], label='measured')
         if log["command_yaw"]: a.plot(time, log["command_yaw"], label='commanded')
-        a.set(xlabel='time [s]', ylabel='base ang vel [rad/s]', title='Base velocity yaw')
+        a.set(xlabel='time [s]', ylabel='Base ang vel [rad/s]', title='Base velocity yaw')
         a.legend()
-        # plot base vel z
+        # plot Base vel z
         a = axs[1, 2]
         if log["base_vel_z"]: a.plot(time, log["base_vel_z"], label='measured')
-        a.set(xlabel='time [s]', ylabel='base lin vel [m/s]', title='Base velocity z')
+        a.set(xlabel='time [s]', ylabel='Base lin vel [m/s]', title='Base velocity z')
         a.legend()
         # plot contact forces
         a = axs[2, 0]

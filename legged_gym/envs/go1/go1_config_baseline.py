@@ -53,19 +53,21 @@ class Go1BaseCfg(LeggedRobotCfg):
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
+        use_actuator_network = True
+        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_go1_ground_2_400.pt"
 
     class asset(LeggedRobotCfg.asset):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip"]
+        terminate_after_contacts_on = ["Base", "trunk", "hip"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
         # flip_visual_attachments = False  # Some .obj meshes must be flipped from y-up to z-up
 
     class domain_rand(LeggedRobotCfg.domain_rand):
         randomize_base_mass = True
-        added_mass_range = [-5.0, 5.0]
+        added_mass_range = [-2.0, 2.0]
 
         randomize_friction = True
         friction_range = [0.2, 1.25]
@@ -75,6 +77,13 @@ class Go1BaseCfg(LeggedRobotCfg):
 
         randomize_motor_strength = True
         added_motor_strength = [0.9, 1.1]
+
+        randomize_lag_timesteps = True   # actuator net: True
+        added_lag_timesteps = 6
+
+        randomize_Motor_Offset = True  # actuator net: True
+        added_Motor_OffsetRange = [-0.02, 0.02]
+
 
     class rewards(LeggedRobotCfg.rewards):
         base_height_target = 0.5
@@ -87,26 +96,27 @@ class Go1BaseCfg(LeggedRobotCfg):
             tracking_ang_vel = 0.5
             lin_vel_z = -2.0
             ang_vel_xy = -0.05
-            orientation = -0.0
+            orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
-            collision = -1.0
+            collision = -0.0
             action_rate = -0.01
             # #### motion
-            # f_hip_motion = -0.02
-            # r_hip_motion = -0.02
-            # f_thigh_motion = -0.02
-            # r_thigh_motion = -0.02
-            # f_calf_motion = -0.02
-            # r_calf_motion = -0.02
+            f_hip_motion = -0.02
+            r_hip_motion = -0.02
+            f_thigh_motion = -0.02
+            r_thigh_motion = -0.02
+            f_calf_motion = -0.02
+            r_calf_motion = -0.02
 
-            # #### smoothness
+            #### smoothness
             # dream_smoothness = -0.001
             # power_joint = -1e-4
-            # foot_clearance = -0.01
-            # foot_height = -0.01
+            foot_clearance = -0.001
+            foot_height = -0.01
+
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
