@@ -49,9 +49,8 @@ class RolloutStorage:
             self.privileged_info = None  # unknow value in the real world
             self.priv_info = None  # physical fixed value
             self.proprio_hist = None  # His of the obs
-
-            self.extrin_loss = None  # MLP fixed feature
-            self.extrin_gt_loss = None  # real fixed feature
+            self.extrin_loss = None  # RMA fixed value
+            self.extrin_gt_loss = None  # vel fixed value
 
         def clear(self):
             self.__init__()
@@ -83,7 +82,7 @@ class RolloutStorage:
 
 
         # For entrin loss
-        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
+        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 3, device=self.device)
         self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
 
         # For privileged_info
@@ -94,7 +93,6 @@ class RolloutStorage:
 
         # For hist
         self.proprio_hist = torch.zeros(num_transitions_per_env, num_envs, Hist_info_shape[0], device=self.device)
-
 
         self.num_transitions_per_env = num_transitions_per_env
         self.num_envs = num_envs
@@ -232,10 +230,10 @@ class RolloutStorage:
                 priv_info_batch = priv_info[batch_idx]
                 proprio_hist_batch = proprio_hist[batch_idx]
 
-                yield (obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch,
-                       returns_batch, old_actions_log_prob_batch, old_mu_batch, old_sigma_batch,
-                       (None, None), None, privileged_info_batch, priv_info_batch, proprio_hist_batch,
-                       extrin_loss, extrin_gt_loss)
+
+                yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
+                      old_actions_log_prob_batch, old_mu_batch, old_sigma_batch, (None, None), None, privileged_info_batch, priv_info_batch, proprio_hist_batch, \
+                      extrin_loss, extrin_gt_loss
 
     # for RNNs only
     def reccurent_mini_batch_generator(self, num_mini_batches, num_epochs=8):

@@ -46,7 +46,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "POSE"
+        control_type = "P"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -106,12 +106,12 @@ class Go1BaseCfg(LeggedRobotCfg):
             collision = -0.0
             action_rate = -0.01
             # #### motion
-            f_hip_motion = -0.02
-            r_hip_motion = -0.02
-            f_thigh_motion = -0.02
-            r_thigh_motion = -0.02
-            f_calf_motion = -0.02
-            r_calf_motion = -0.02
+            f_hip_motion = -0.06
+            r_hip_motion = -0.06
+            f_thigh_motion = -0.06
+            r_thigh_motion = -0.06
+            f_calf_motion = -0.06
+            r_calf_motion = -0.06
 
             #### smoothness
             # dream_smoothness = -0.001
@@ -143,9 +143,9 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 11]
+        priv_mlp_units = [258, 128, 3]
         priv_info = False
-        priv_info_dim = 200
+        priv_info_dim = 198
         velLen = 3
         proprio_adapt = False
         checkpoint_model = None
