@@ -12,14 +12,14 @@ class Go1BaseCfg(LeggedRobotCfg):
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
         num_privileged_obs = 200  # 187
-        train_type = "GenHis"  # standard, priv, lbc, standard, RMA, EST, Dream, GenHis
+        train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream, GenHis
 
         follow_cam = False
         float_cam = False
 
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
-        num_histroy_obs = 5
+        num_histroy_obs = 30
 
 
     class terrain(LeggedRobotCfg.terrain):
@@ -46,7 +46,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "actuator_net"
+        control_type = "P"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -143,7 +143,7 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 3]
+        priv_mlp_units = [258, 128, 11]
         priv_info = False
         priv_info_dim = 200
         velLen = 3
@@ -152,5 +152,5 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         proprio_adapt_out_dim = 11
 
 
-        HistoryLen = 5
+        HistoryLen = 30
         Hist_info_dim = 45 * HistoryLen
