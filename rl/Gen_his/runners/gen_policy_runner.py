@@ -34,10 +34,9 @@ class GenHisPolicyRunner:
 
         self.device = device
         self.env = env
-
         self.HistoryLen = train_cfg["Encoder"]['HistoryLen']
-        self.proprio_adapt_output = train_cfg["Encoder"]['proprio_adapt_out_dim']
-        self.Hist_info_shape = train_cfg["Encoder"]['Hist_info_dim']
+        self.num_encoder_input = self.env.num_obs * self.HistoryLen
+
 
 
         actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
@@ -45,7 +44,7 @@ class GenHisPolicyRunner:
                                                        self.env.num_actions,
                                                        **self.policy_cfg,
                                                        **self.encoder_cfg).to(self.device)
-        dm_encoder = DmEncoder(self.env.num_obs, self.encoder_mlp)
+        dm_encoder = DmEncoder(self.num_encoder_input, self.encoder_mlp)
         alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.alg: PPO = alg_class(actor_critic,
                                   dm_encoder,
@@ -56,7 +55,7 @@ class GenHisPolicyRunner:
 
         # init storage and model
         self.alg.init_storage(self.env.num_envs, self.num_steps_per_env, [self.env.num_obs],
-                              [self.env.num_privileged_obs], [self.env.num_actions], [self.Hist_info_shape])
+                              [self.env.num_privileged_obs], [self.env.num_actions], [self.num_encoder_input])
 
         # Log
         self.log_dir = log_dir
@@ -95,10 +94,22 @@ class GenHisPolicyRunner:
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
                     actions = self.alg.act(obs_dict)
-                    obs_dict, rewards, dones, infos = self.env.step(actions)
-                    rewards, dones = rewards.to(self.device), dones.to(self.device)
-                    self.alg.process_env_step(rewards, dones, infos)
 
+                    # cprint(f"[alg] transition hist before step: {self.alg.transition.proprio_hist}", 'red',
+                    #        attrs=['bold'])
+                    # cprint(f"[alg] transition obs before step: {self.alg.transition.observations}", 'red',
+                    #        attrs=['bold'])
+
+                    obs_dict, rewards, dones, infos = self.env.step(actions)
+
+                    # cprint(f"[alg] transition hist after step: {self.alg.transition.proprio_hist}", 'red',
+                    #        attrs=['bold'])
+                    # cprint(f"[alg] transition obs after step: {self.alg.transition.observations}", 'red',
+                    #        attrs=['bold'])
+
+                    rewards, dones = rewards.to(self.device), dones.to(self.device)
+
+                    self.alg.process_env_step(rewards, dones, infos)
                     if self.log_dir is not None:
                         # Book keeping
                         if 'episode' in infos:

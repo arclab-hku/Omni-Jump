@@ -149,7 +149,8 @@ class LeggedRobot(BaseTask):
         self.obs_dict['obs'] = self.obs_buf
         self.obs_dict['privileged_info'] = self.privileged_obs_buf.to(self.device)
         self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
-        self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device)
+        # self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
+        self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
         return self.obs_dict, self.rew_buf, self.reset_buf, self.extras
 
     def post_physics_step(self):
@@ -197,7 +198,6 @@ class LeggedRobot(BaseTask):
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         self.reset_idx(env_ids)
 
-        # self.update_history()  # update the history first, push the history state to the front
         self.compute_observations()  # in some cases a simulation step might be required to refresh some obs (for example body positions)
 
         self.last_actions_2[:] = self.last_actions[:]
@@ -271,7 +271,7 @@ class LeggedRobot(BaseTask):
             self.extras["time_outs"] = self.time_out_buf
 
         # RMA related reset buffer
-        self.proprio_hist_buf[env_ids] = 0
+        # self.proprio_hist_buf[env_ids] = 0
 
     def compute_reward(self):
         """ Compute rewards
@@ -345,6 +345,8 @@ class LeggedRobot(BaseTask):
     def compute_observations(self):
         """ Computes observations
         """
+
+
         if self.cfg.env.train_type == "standard":
             self.obs_buf = torch.cat((self.base_lin_vel * self.obs_scales.lin_vel,
                                       self.base_ang_vel * self.obs_scales.ang_vel,
@@ -392,18 +394,25 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
             self.privileged_obs_buf += (2 * torch.rand_like(self.privileged_obs_buf) - 1) * self.noise_noise_vel
 
+
         if self.cfg.env.train_type == "Dream" or "RMA" or "GenHis":
             # deal with normal observation, do sliding window
             prev_obs_buf = self.obs_buf_lag_history[:, 1:].clone()
+
+
             # concatenate to get full history
             cur_obs_buf = self.obs_buf.clone().unsqueeze(1)
+
             self.obs_buf_lag_history[:] = torch.cat([prev_obs_buf, cur_obs_buf], dim=1)
+
             # refill the initialized buffers
             # if reset, then the history buffer are all filled with the current observation
             at_reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
             self.obs_buf_lag_history[at_reset_env_ids, :, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1)
 
-            self.proprio_hist_buf[:] = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
+            self.proprio_hist_buf = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
+
+
 
     def create_sim(self):
         """Creates simulation, terrain and evironments"""
@@ -1495,9 +1504,8 @@ class LeggedRobot(BaseTask):
     # ************************ RMA specific ************************
     def reset(self):
         super().reset()
-        self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
-        self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device)
-
+        # self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
+        # self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
         return self.obs_dict
 
 
@@ -1526,11 +1534,13 @@ class LeggedRobot(BaseTask):
 
     def _allocate_task_buffer(self, num_envs):
         # extra buffers for observe randomized params
-        self.prop_hist_len = self.cfg.env.num_histroy_obs
-        self.num_env_priv_obs = self.cfg.env.num_env_priv_obs
-        self.priv_info_buf = torch.zeros((num_envs, self.num_env_priv_obs), device=self.device, dtype=torch.float)
-        self.proprio_hist_buf = torch.zeros((num_envs, self.prop_hist_len, self.num_obs), device=self.device,
-                                            dtype=torch.float)
+        # self.prop_hist_len = self.cfg.env.num_histroy_obs
+        # self.num_env_priv_obs = self.cfg.env.num_env_priv_obs
+        # self.priv_info_buf = torch.zeros((num_envs, self.num_env_priv_obs), device=self.device, dtype=torch.float)
+        # self.proprio_hist_buf = torch.zeros((num_envs, self.prop_hist_len, self.num_obs), device=self.device,
+        #                                     dtype=torch.float)
+        super()._allocate_task_buffer(num_envs)
+
     ############## Dream ########
     def _reward_power_joint(self):
         a = torch.norm(self.torques[:, ], p=1, dim=1)
@@ -1547,7 +1557,6 @@ class LeggedRobot(BaseTask):
 
         c = torch.var(r, dim=1)
         d = torch.sum(torch.abs(r), dim=1)
-        # cprint(f"reward: {self.torques.shape, r.shape, d.shape,c, d, c.shape}", 'green', attrs=['bold'])
         return d
 
         # return d
@@ -1561,7 +1570,6 @@ class LeggedRobot(BaseTask):
             self.re_foot[:, i] = torch.mul(torch.square(real_foot_height - self.cfg.rewards.foot_height_target), c)
 
         foot_reward = torch.sum(self.re_foot, dim=1)
-        # cprint(f"foot: { self.re_foot,  foot_reward}", 'green', attrs=['bold'])
 
         return foot_reward
 

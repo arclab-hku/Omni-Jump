@@ -17,6 +17,7 @@ class DmEncoder(nn.Module):
             nn.Linear(encoder_hidden_dims[0], encoder_hidden_dims[1]),
             nn.ReLU(),
             nn.Linear(encoder_hidden_dims[1], encoder_hidden_dims[2]),
+            nn.Tanh(),
         )
 
     def forward(self, dm):
@@ -49,7 +50,7 @@ class ActorCritic(nn.Module):
 
 
         # ---- Priv Info ----
-        self.priv_mlp = kwargs['priv_mlp_units']
+
         self.priv_info = kwargs['priv_info']
         self.priv_info_dim = kwargs['priv_info_dim']
         self.priv_info_stage2 = kwargs['proprio_adapt']
@@ -58,12 +59,17 @@ class ActorCritic(nn.Module):
         self.proprio_adapt_output = kwargs['proprio_adapt_out_dim']
 
         self.velLen = kwargs['velLen']
+        self.HistoryLen = kwargs['HistoryLen']
+        self.Hist_info_shape = kwargs['Hist_info_dim']
 
-        num_actor_input = num_obs + self.proprio_adapt_output
+        num_actor_input = num_obs + self.velLen
+        num_critic_input = num_obs + self.priv_info_dim  ##### 45 + 3 + 187
 
-        num_critic_input = num_obs  + self.priv_info_dim  ##### 45 + 3 + 187
+        num_encoder_input = num_obs * self.HistoryLen
+        self.encoder_mlp = kwargs['priv_mlp_units']
 
-        self.dm_encoder = DmEncoder(num_obs, self.priv_mlp)
+
+        self.dm_encoder = DmEncoder(num_encoder_input,  self.encoder_mlp)
         cprint(f"Encoder MLP: {self.dm_encoder}", 'green', attrs=['bold'])
 
 
@@ -165,25 +171,28 @@ class ActorCritic(nn.Module):
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
         obs_hight = obs_dict['privileged_info'][:, 3:200]
-        obs_priv_info = obs_dict['priv_info']
         obs_proprio_hist = obs_dict['proprio_hist']
+        obs_his = obs_proprio_hist
+        extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
-        # print('sfsfsa',obs.shape, obs_priv_info.shape, obs_proprio_hist.shape, obs_priv_info )
+        # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs-obs_his}", 'green', attrs=['bold'])
 
-        extrin_gt = obs_dict['priv_info'][:, 0:11]
+        # print('obs_proprio_hist', obs_proprio_hist.shape, obs_proprio_hist)
 
-        extrin_en = self.dm_encoder(obs)
+        # cprint(f"obs_his: {obs_his.shape, obs_his}", 'red', attrs=['bold'])
+
+        extrin_en = self.dm_encoder(obs_his)
 
 
+        # # extrin = torch.tanh(extrin_en)
+        extrin_gt = torch.tanh(extrin_gt)
 
-        actor_obs = torch.cat([obs, extrin_en], dim=-1)  ## 45 + 11
+        actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 11
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
 
-        extrin = torch.tanh(extrin_en)
-        extrin_gt = torch.tanh(extrin_gt)
 
         return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 
@@ -196,7 +205,7 @@ def get_activation(act_name):
     elif act_name == "relu":
         return nn.ReLU()
     elif act_name == "crelu":
-        return nn.CELU()
+        return nn.ReLU()
     elif act_name == "lrelu":
         return nn.LeakyReLU()
     elif act_name == "tanh":
