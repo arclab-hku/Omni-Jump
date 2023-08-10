@@ -42,6 +42,7 @@ import torch.nn.functional as F
 class PPO:
     actor_critic: ActorCritic
     dm_encoder: DmEncoder
+
     def __init__(self,
                  actor_critic,
                  dm_encoder,
@@ -90,11 +91,11 @@ class PPO:
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
 
+
     def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, Hist_info_shape):
         print("**********  Hist_info_shape  ", Hist_info_shape)
         self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape,
                                       action_shape, Hist_info_shape, self.device)
-
 
     def test_mode(self):
         self.actor_critic.test()
@@ -128,21 +129,15 @@ class PPO:
         # proprio_hist: need to record / update the his of the obs
         self.transition.proprio_hist = obs_dict['proprio_hist']
 
-
         return self.transition.actions
 
     def process_env_step(self, rewards, dones, infos):
         self.transition.rewards = rewards.clone()
         self.transition.dones = dones
-        # self.transition.next_observations = next_observations['obs']
-        # proprio_hist: need to record / update the his of the obs
-        # self.transition.proprio_hist = next_observations['proprio_hist']
-
         # Bootstrapping on time outs
         if 'time_outs' in infos:
             self.transition.rewards += self.gamma * torch.squeeze(
                 self.transition.values * infos['time_outs'].unsqueeze(1).to(self.device), 1)
-
 
         # Record the transition
         self.storage.add_transitions(self.transition)
@@ -165,8 +160,7 @@ class PPO:
         else:
             generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         for obs_batch, critic_obs_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, old_actions_log_prob_batch, \
-                old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch,  privileged_info_batch, priv_info_batch, proprio_hist_batch, \
-                extrin_loss, extrin_gt_loss in generator:
+                old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, privileged_info_batch, priv_info_batch, proprio_hist_batch, extrin_loss, extrin_gt_loss in generator:
 
             obs_dict_batch = {
                 'obs': obs_batch,

@@ -50,7 +50,7 @@ class ActorCritic(nn.Module):
 
 
         # ---- Priv Info ----
-
+        self.priv_mlp = kwargs['priv_mlp_units']
         self.priv_info = kwargs['priv_info']
         self.priv_info_dim = kwargs['priv_info_dim']
         self.priv_info_stage2 = kwargs['proprio_adapt']
@@ -60,16 +60,16 @@ class ActorCritic(nn.Module):
 
         self.velLen = kwargs['velLen']
         self.HistoryLen = kwargs['HistoryLen']
-        self.Hist_info_shape = kwargs['Hist_info_dim']
 
         num_actor_input = num_obs + self.velLen
+
         num_critic_input = num_obs + self.priv_info_dim  ##### 45 + 3 + 187
 
         num_encoder_input = num_obs * self.HistoryLen
         self.encoder_mlp = kwargs['priv_mlp_units']
 
-
         self.dm_encoder = DmEncoder(num_encoder_input,  self.encoder_mlp)
+
         cprint(f"Encoder MLP: {self.dm_encoder}", 'green', attrs=['bold'])
 
 
@@ -175,11 +175,12 @@ class ActorCritic(nn.Module):
         obs_his = obs_proprio_hist
         extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
-        # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs-obs_his}", 'green', attrs=['bold'])
+        # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs, obs_his}", 'green', attrs=['bold'])
 
         # print('obs_proprio_hist', obs_proprio_hist.shape, obs_proprio_hist)
 
         # cprint(f"obs_his: {obs_his.shape, obs_his}", 'red', attrs=['bold'])
+
 
         extrin_en = self.dm_encoder(obs_his)
 
@@ -187,7 +188,7 @@ class ActorCritic(nn.Module):
         # # extrin = torch.tanh(extrin_en)
         extrin_gt = torch.tanh(extrin_gt)
 
-        actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 11
+        actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 3
         critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
