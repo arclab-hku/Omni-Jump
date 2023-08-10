@@ -47,7 +47,6 @@ from rl.Dream.runners import DreamPolicyRunner
 from rl.Gen.runners import GenPolicyRunner
 from rl.Gen_base.runners import GenBasePolicyRunner
 from rl.Gen_his.runners import GenHisPolicyRunner
-from rl.Gen_his_base.runners import GenHisPPOPolicyRunner
 
 from legged_gym import LEGGED_GYM_ROOT_DIR, LEGGED_GYM_ENVS_DIR
 from .helpers import get_args, update_cfg_from_args, class_to_dict, get_load_path, set_seed, parse_sim_params
@@ -162,7 +161,7 @@ class TaskRegistry():
             # check whether execute train by mistake:
             last_ckpt_path = os.path.join(
                 log_dir,
-                'stage1_nn' if args.algo == 'PPO' or "On" or 'EST' or 'Dream' or 'GenHis' or 'Gen' or 'GenBase' or 'GenHisPPO' else 'stage2_nn', 'last.pth'
+                'stage1_nn' if args.algo == 'PPO' or "On" or 'EST' or 'Dream' or 'GenHis' or 'Gen' or 'GenBase'  else 'stage2_nn', 'last.pth'
             )
             if os.path.exists(last_ckpt_path):
                 user_input = input(

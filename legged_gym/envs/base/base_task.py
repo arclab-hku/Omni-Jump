@@ -148,7 +148,7 @@ class BaseTask():
 
     def _allocate_buffers(self):
         # additional buffer
-        self.obs_buf_lag_history = torch.zeros((self.num_envs, 8, self.num_obs), device=self.device, dtype=torch.float)
+        self.obs_buf_lag_history = torch.zeros((self.num_envs, self.num_histroy_obs, self.num_obs), device=self.device, dtype=torch.float)
         self._allocate_task_buffer(self.num_envs)
     def _allocate_task_buffer(self, num_envs):
         self.prop_hist_len = self.cfg.env.num_histroy_obs
