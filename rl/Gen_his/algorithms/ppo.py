@@ -126,17 +126,26 @@ class PPO:
         self.transition.priv_info = obs_dict['priv_info']
 
         # proprio_hist: need to record / update the his of the obs
-        self.transition.proprio_hist = obs_dict['proprio_hist'].flatten(1)
+        self.transition.proprio_hist = obs_dict['proprio_hist']
+
 
         return self.transition.actions
 
     def process_env_step(self, rewards, dones, infos):
         self.transition.rewards = rewards.clone()
         self.transition.dones = dones
+        # self.transition.next_observations = next_observations['obs']
+        # proprio_hist: need to record / update the his of the obs
+        # self.transition.proprio_hist = next_observations['proprio_hist']
+
+
+        # cprint(f"run_obs_hist_ppo: {self.transition.proprio_hist}", 'red',
+        #        attrs=['bold'])
         # Bootstrapping on time outs
         if 'time_outs' in infos:
             self.transition.rewards += self.gamma * torch.squeeze(
                 self.transition.values * infos['time_outs'].unsqueeze(1).to(self.device), 1)
+
 
         # Record the transition
         self.storage.add_transitions(self.transition)
@@ -165,8 +174,8 @@ class PPO:
             obs_dict_batch = {
                 'obs': obs_batch,
                 'priv_info': priv_info_batch,
-                'proprio_hist': proprio_hist_batch,
                 'privileged_info': privileged_info_batch,
+                'proprio_hist': proprio_hist_batch,
             }
             self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
             actions_log_prob_batch = self.actor_critic.get_actions_log_prob(actions_batch)

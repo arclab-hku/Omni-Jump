@@ -62,7 +62,7 @@ class BaseTask():
         self.graphics_device_id = self.sim_device_id
         if self.headless == True:
             self.graphics_device_id = -1
-
+        self.cfg = cfg
         self.num_envs = cfg.env.num_envs
         self.num_actions = cfg.env.num_actions
 
@@ -136,7 +136,9 @@ class BaseTask():
         self.obs_dict['obs'] = torch.clip(self.obs_buf, -self.clip_obs, self.clip_obs)
         if self.num_privileged_obs is not None:
             self.obs_dict['privileged_info'] = torch.clip(self.privileged_obs_buf, -self.clip_obs, self.clip_obs)
-
+        self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
+        self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
+        # self.obs_dict['proprio_hist'] = torch.clip(self.obs_buf, -self.clip_obs, self.clip_obs)
         return self.obs_dict
 
     def step(self, actions):
@@ -146,10 +148,14 @@ class BaseTask():
 
     def _allocate_buffers(self):
         # additional buffer
-        self.obs_buf_lag_history = torch.zeros((self.num_envs, 80, self.num_obs), device=self.device, dtype=torch.float)
+        self.obs_buf_lag_history = torch.zeros((self.num_envs, 8, self.num_obs), device=self.device, dtype=torch.float)
         self._allocate_task_buffer(self.num_envs)
     def _allocate_task_buffer(self, num_envs):
-        pass
+        self.prop_hist_len = self.cfg.env.num_histroy_obs
+        self.num_env_priv_obs = self.cfg.env.num_env_priv_obs
+        self.priv_info_buf = torch.zeros((num_envs, self.num_env_priv_obs), device=self.device, dtype=torch.float)
+        self.proprio_hist_buf = torch.zeros((num_envs, self.prop_hist_len, self.num_obs), device=self.device,
+                                            dtype=torch.float)
 
     @property
     def observation_space(self) -> gym.Space:

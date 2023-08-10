@@ -170,12 +170,16 @@ class ActorCritic(nn.Module):
 
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
-        obs_hight = obs_dict['privileged_info'][:, 3:198]
-        # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
+        obs_hight = obs_dict['privileged_info'][:, 3:200]
         obs_proprio_hist = obs_dict['proprio_hist']
-        obs_his = obs_proprio_hist.flatten(1)
+        obs_his = obs_proprio_hist
         extrin_gt = obs_dict['privileged_info'][:, 0:11]
 
+        # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs-obs_his}", 'green', attrs=['bold'])
+
+        # print('obs_proprio_hist', obs_proprio_hist.shape, obs_proprio_hist)
+
+        # cprint(f"obs_his: {obs_his.shape, obs_his}", 'red', attrs=['bold'])
 
         extrin_en = self.dm_encoder(obs_his)
 

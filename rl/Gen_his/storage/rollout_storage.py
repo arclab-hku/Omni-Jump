@@ -32,7 +32,7 @@ import torch
 import numpy as np
 
 from rl.Gen_his.utils import split_and_pad_trajectories
-
+from termcolor import cprint
 class RolloutStorage:
     class Transition:
         def __init__(self):
@@ -85,7 +85,7 @@ class RolloutStorage:
         self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 3, device=self.device)
         self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
 
-        # For privileged_info
+        # For privileged info
         self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 200, device=self.device)
 
         # For priv_info
@@ -117,7 +117,7 @@ class RolloutStorage:
         self._save_hidden_states(transition.hidden_states)
 
 
-        # For privileged_info
+        # For privileged info
         self.privileged_info[self.step].copy_(transition.privileged_info)
 
         # For priv_info
@@ -125,6 +125,8 @@ class RolloutStorage:
 
         # For His
         self.proprio_hist[self.step].copy_(transition.proprio_hist)
+
+        # cprint(f"batch_idx: { self.observations[self.step]-self.proprio_hist[self.step-1]}", 'green', attrs=['bold'])
 
         # For extrin_loss
         self.extrin_loss[self.step].copy_(transition.extrin_loss)
@@ -196,7 +198,7 @@ class RolloutStorage:
         old_sigma = self.sigma.flatten(0, 1)
 
 
-        # For privileged_info
+        # For privileged info
         privileged_info = self.privileged_info.flatten(0, 1)
 
         # For priv_info
@@ -204,6 +206,9 @@ class RolloutStorage:
 
         # For history
         proprio_hist = self.proprio_hist.flatten(0, 1)
+
+
+
 
         # For Loss
         extrin_loss = self.extrin_loss.flatten(0, 1)
@@ -229,6 +234,7 @@ class RolloutStorage:
                 privileged_info_batch = privileged_info[batch_idx]
                 priv_info_batch = priv_info[batch_idx]
                 proprio_hist_batch = proprio_hist[batch_idx]
+                # cprint(f"batch_idx: {i, start, end, proprio_hist_batch - obs_batch}", 'green', attrs=['bold'])
 
 
                 yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \
