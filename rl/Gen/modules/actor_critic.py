@@ -165,7 +165,7 @@ class ActorCritic(nn.Module):
 
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
-        obs_hight = obs_dict['privileged_info'][:, 3:200]
+        obs_hight = obs_dict['privileged_info'][:, 3:198]
         # obs_contact = obs_dict['priv_vel_info'][:, 7:11]
 
         extrin_gt = obs_dict['privileged_info'][:, 0:11]

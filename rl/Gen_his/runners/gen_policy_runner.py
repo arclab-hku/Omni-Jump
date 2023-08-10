@@ -7,7 +7,7 @@ import statistics
 from termcolor import cprint
 
 from torch.utils.tensorboard import SummaryWriter
-from rl.Gen_his.utils.utils import export_policy_as_jit
+from rl.EST.utils.utils import export_policy_as_jit
 import torch
 
 from rl.Gen_his.algorithms import PPO
@@ -34,9 +34,9 @@ class GenHisPolicyRunner:
 
         self.device = device
         self.env = env
+
         self.HistoryLen = train_cfg["Encoder"]['HistoryLen']
         self.num_encoder_input = self.env.num_obs * self.HistoryLen
-
 
 
         actor_critic_class = eval(self.cfg["policy_class_name"])  # ActorCritic
@@ -94,22 +94,10 @@ class GenHisPolicyRunner:
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
                     actions = self.alg.act(obs_dict)
-
-                    # cprint(f"[alg] transition hist before step: {self.alg.transition.proprio_hist}", 'red',
-                    #        attrs=['bold'])
-                    # cprint(f"[alg] transition obs before step: {self.alg.transition.observations}", 'red',
-                    #        attrs=['bold'])
-
                     obs_dict, rewards, dones, infos = self.env.step(actions)
-
-                    # cprint(f"[alg] transition hist after step: {self.alg.transition.proprio_hist}", 'red',
-                    #        attrs=['bold'])
-                    # cprint(f"[alg] transition obs after step: {self.alg.transition.observations}", 'red',
-                    #        attrs=['bold'])
-
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
-
                     self.alg.process_env_step(rewards, dones, infos)
+
                     if self.log_dir is not None:
                         # Book keeping
                         if 'episode' in infos:
