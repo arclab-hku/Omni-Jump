@@ -126,8 +126,6 @@ class RolloutStorage:
         # For His
         self.proprio_hist[self.step].copy_(transition.proprio_hist)
 
-        # cprint(f"batch_idx: { self.observations[self.step]-self.proprio_hist[self.step-1]}", 'green', attrs=['bold'])
-
         # For extrin_loss
         self.extrin_loss[self.step].copy_(transition.extrin_loss)
         self.extrin_gt_loss[self.step].copy_(transition.extrin_gt_loss)
@@ -234,7 +232,6 @@ class RolloutStorage:
                 privileged_info_batch = privileged_info[batch_idx]
                 priv_info_batch = priv_info[batch_idx]
                 proprio_hist_batch = proprio_hist[batch_idx]
-                # cprint(f"batch_idx: {i, start, end, proprio_hist_batch - obs_batch}", 'green', attrs=['bold'])
 
 
                 yield obs_batch, critic_observations_batch, actions_batch, target_values_batch, advantages_batch, returns_batch, \

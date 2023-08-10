@@ -94,26 +94,23 @@ class GenHisPolicyRunner:
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
                     actions = self.alg.act(obs_dict)
-                    # cprint(f"[alg] transition priv before step: {self.alg.transition.privileged_info}", 'red',
+
+                    # cprint(f"[alg] transition hist before step: {self.alg.transition.proprio_hist}", 'red',
                     #        attrs=['bold'])
-                    cprint(f"[alg] transition hist before step: {self.alg.transition.proprio_hist}", 'red',
-                           attrs=['bold'])
-                    cprint(f"[alg] transition obs before step: {self.alg.transition.observations}", 'red',
-                           attrs=['bold'])
-                    a = self.alg.transition.proprio_hist.clone()
-                    nex_obs_dict, rewards, dones, infos = self.env.step(actions)
-                    # cprint(f"[alg] transition priv after step: {self.alg.transition.privileged_info}", 'red',
+                    # cprint(f"[alg] transition obs before step: {self.alg.transition.observations}", 'red',
                     #        attrs=['bold'])
-                    # self.alg.transition.proprio_hist = a
-                    cprint(f"[alg] transition hist after step: {self.alg.transition.proprio_hist}", 'red',
-                           attrs=['bold'])
-                    cprint(f"[alg] transition obs after step: {self.alg.transition.observations}", 'red',
-                           attrs=['bold'])
+
+                    obs_dict, rewards, dones, infos = self.env.step(actions)
+
+                    # cprint(f"[alg] transition hist after step: {self.alg.transition.proprio_hist}", 'red',
+                    #        attrs=['bold'])
+                    # cprint(f"[alg] transition obs after step: {self.alg.transition.observations}", 'red',
+                    #        attrs=['bold'])
 
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
 
                     self.alg.process_env_step(rewards, dones, infos)
-                    obs_dict = nex_obs_dict
+
 
 
                     cprint( f"****************************************************", 'red', attrs=['bold'])

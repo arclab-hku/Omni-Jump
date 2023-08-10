@@ -138,9 +138,6 @@ class PPO:
         # proprio_hist: need to record / update the his of the obs
         # self.transition.proprio_hist = next_observations['proprio_hist']
 
-
-        # cprint(f"run_obs_hist_ppo: {self.transition.proprio_hist}", 'red',
-        #        attrs=['bold'])
         # Bootstrapping on time outs
         if 'time_outs' in infos:
             self.transition.rewards += self.gamma * torch.squeeze(

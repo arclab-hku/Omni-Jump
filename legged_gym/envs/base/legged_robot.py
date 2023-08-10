@@ -151,10 +151,6 @@ class LeggedRobot(BaseTask):
         self.obs_dict['priv_info'] = self.priv_info_buf.to(self.device)
         # self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
         self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
-
-
-        # cprint(f"[env] obs - hist: { self.obs_dict['obs']-self.obs_dict['proprio_hist']}", 'green', attrs=['bold'])
-
         return self.obs_dict, self.rew_buf, self.reset_buf, self.extras
 
     def post_physics_step(self):
@@ -202,11 +198,6 @@ class LeggedRobot(BaseTask):
         env_ids = self.reset_buf.nonzero(as_tuple=False).flatten()
         self.reset_idx(env_ids)
 
-        # self.update_history()  # update the history first, push the history state to the front
-        cprint(f"[env] hist before compute: {self.proprio_hist_buf.shape, self.proprio_hist_buf}", 'blue',
-               attrs=['bold'])
-        cprint(f"[env] obs before compute: {self.obs_buf.shape, self.obs_buf}", 'blue',
-               attrs=['bold'])
         self.compute_observations()  # in some cases a simulation step might be required to refresh some obs (for example body positions)
 
         self.last_actions_2[:] = self.last_actions[:]
@@ -412,11 +403,7 @@ class LeggedRobot(BaseTask):
             # concatenate to get full history
             cur_obs_buf = self.obs_buf.clone().unsqueeze(1)
 
-            # cprint(f"cur_obs_buf: {cur_obs_buf.shape, cur_obs_buf}", 'red', attrs=['bold'])
-
-
             self.obs_buf_lag_history[:] = torch.cat([prev_obs_buf, cur_obs_buf], dim=1)
-            # cprint(f"obs_buf_lag_history: {self.obs_buf_lag_history.shape, self.obs_buf_lag_history}", 'green', attrs=['bold'])
 
             # refill the initialized buffers
             # if reset, then the history buffer are all filled with the current observation
@@ -424,10 +411,7 @@ class LeggedRobot(BaseTask):
             self.obs_buf_lag_history[at_reset_env_ids, :, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1)
 
             self.proprio_hist_buf = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
-            cprint(f"[env] hist after compute: {self.proprio_hist_buf.shape, self.proprio_hist_buf}", 'blue',
-                           attrs=['bold'])
-            cprint(f"[env] obs after compute: {self.obs_buf.shape, self.obs_buf}", 'blue',
-                   attrs=['bold'])
+
 
 
     def create_sim(self):
@@ -1573,7 +1557,6 @@ class LeggedRobot(BaseTask):
 
         c = torch.var(r, dim=1)
         d = torch.sum(torch.abs(r), dim=1)
-        # cprint(f"reward: {self.torques.shape, r.shape, d.shape,c, d, c.shape}", 'green', attrs=['bold'])
         return d
 
         # return d
@@ -1587,7 +1570,6 @@ class LeggedRobot(BaseTask):
             self.re_foot[:, i] = torch.mul(torch.square(real_foot_height - self.cfg.rewards.foot_height_target), c)
 
         foot_reward = torch.sum(self.re_foot, dim=1)
-        # cprint(f"foot: { self.re_foot,  foot_reward}", 'green', attrs=['bold'])
 
         return foot_reward
 
