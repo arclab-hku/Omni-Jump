@@ -110,11 +110,6 @@ class GenHisPolicyRunner:
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
 
                     self.alg.process_env_step(rewards, dones, infos)
-
-
-
-                    cprint( f"****************************************************", 'red', attrs=['bold'])
-
                     if self.log_dir is not None:
                         # Book keeping
                         if 'episode' in infos:
