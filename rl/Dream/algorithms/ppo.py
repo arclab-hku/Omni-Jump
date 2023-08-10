@@ -91,11 +91,11 @@ class PPO:
         self.max_grad_norm = max_grad_norm
         self.use_clipped_value_loss = use_clipped_value_loss
 
-    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape,
-                     Hist_info_shape):
+    def init_storage(self, num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape, action_shape, Hist_info_shape):
         print("**********  Hist_info_shape  ", Hist_info_shape)
         self.storage = RolloutStorage(num_envs, num_transitions_per_env, actor_obs_shape, critic_obs_shape,
                                       action_shape, Hist_info_shape, self.device)
+
 
     def test_mode(self):
         self.actor_critic.test()
@@ -121,8 +121,12 @@ class PPO:
 
         # need to record obs before env.step()
         self.transition.observations = obs_dict['obs']
+
+        # privileged_info: need to record / update the vel info
         self.transition.privileged_info = obs_dict['privileged_info']
-        self.transition.proprio_hist = obs_dict['proprio_hist'].flatten(1)
+
+        # proprio_hist: need to record / update the his of the obs
+        self.transition.proprio_hist = obs_dict['proprio_hist']
 
         return self.transition.actions
 
@@ -161,8 +165,8 @@ class PPO:
 
             obs_dict_batch = {
                 'obs': obs_batch,
-                'proprio_hist': proprio_hist_batch,
                 'privileged_info': privileged_info_batch,
+                'proprio_hist': proprio_hist_batch,
             }
 
             self.actor_critic.act(obs_dict_batch, masks=masks_batch, hidden_states=hid_states_batch[0])
@@ -170,8 +174,6 @@ class PPO:
             value_batch = self.actor_critic.evaluate(obs_dict_batch, masks=masks_batch,
                                                      hidden_states=hid_states_batch[1])
 
-
-            # extrin_gt_batch = torch.tanh(priv_vel_info_batch[:, 0:11])
 
             mu_batch = self.actor_critic.action_mean
             sigma_batch = self.actor_critic.action_std
@@ -224,11 +226,11 @@ class PPO:
                                                                hidden_states=hid_states_batch[1])
 
             real_vel = torch.tanh(privileged_info_batch[:, 0:3])
-            pre_vel = pre_feature[:, 0:3]
+            pre_vel =  torch.tanh(pre_feature[:, 0:3])
             vel_loss = F.mse_loss(pre_vel, real_vel.detach())
 
             real_next_obs = torch.tanh(torch.cat([next_obs_batch[: -1, ], privileged_info_batch[1:, 0:3]], dim=-1))
-            pre_next_obs_ = pre_next_obs[:-1, ]
+            pre_next_obs_ =  torch.tanh(pre_next_obs[:-1, ])
             vae_loss = F.mse_loss(pre_next_obs_, real_next_obs.detach())
 
             loss_encoder = vel_loss + vae_loss + 0.1 * kl_loss

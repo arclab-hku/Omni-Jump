@@ -29,18 +29,6 @@ class DmEncoder(nn.Module):
         return self.encoder(dm)
 
 
-class MLP(nn.Module):
-    def __init__(self, units, input_size):
-        super(MLP, self).__init__()
-        layers = []
-        for output_size in units:
-            layers.append(nn.Linear(input_size, output_size))
-            layers.append(nn.ELU())
-            input_size = output_size
-        self.mlp = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.mlp(x)
 
 
 class ProprioAdaptTConv(nn.Module):
@@ -211,7 +199,7 @@ class ActorCritic(nn.Module):
 
                 extrin_gt = self.env_mlp(obs_priv) if 'priv_info' in obs_dict else extrin
 
-                extrin_gt = torch.tanh(extrin_gt)
+                # extrin_gt = torch.tanh(extrin_gt)
                 extrin = torch.tanh(extrin)
 
                 actor_obs = torch.cat([obs, extrin], dim=-1)
@@ -220,7 +208,6 @@ class ActorCritic(nn.Module):
 
                 extrin = self.env_mlp(obs_priv)
 
-                # extrin = torch.tanh(extrin_en)
 
                 actor_obs = torch.cat([obs, extrin], dim=-1)
 

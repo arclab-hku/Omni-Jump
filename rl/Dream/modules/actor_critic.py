@@ -159,12 +159,9 @@ class ActorCritic(nn.Module):
 
 
         # ---- Priv Info ----
-        # self.priv_mlp = kwargs['priv_mlp_units']
-
-        self.encoder_mlp = kwargs['priv_mlp_units']
+        self.encoder_mlp = kwargs['encoder_mlp_units']
         self.decoder_mlp = kwargs['decoder_mlp_units']
 
-        self.priv_info = kwargs['priv_info']
         self.priv_info_dim = kwargs['priv_info_dim']
         self.priv_info_stage2 = kwargs['proprio_adapt']
 
@@ -291,17 +288,17 @@ class ActorCritic(nn.Module):
         obs = obs_dict['obs']
         obs_vel = obs_dict['privileged_info'][:, 0:3]
         obs_hight = obs_dict['privileged_info'][:, 11:198]
-        obs_his = obs_dict['proprio_hist']
-        obs_his = obs_his.flatten(1)
+        obs_proprio_hist = obs_dict['proprio_hist']
+        obs_his = obs_proprio_hist
         obs_force = obs_dict['privileged_info'][:,  198:200]
 
-        # cprint(f"Force: {obs_dict['priv_vel_info'][:, 198:200]}", 'green', attrs=['bold'])
+        # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs-obs_his}", 'green', attrs=['bold'])
 
         next_obs_feature, z_feature,  mu_z, logvar_z = self.encoder_decoder(obs_his)
         kl_loss = self.encoder_decoder.loss_function(mu_z, logvar_z)
-        extrin = torch.tanh(z_feature)
+        extrin = z_feature
 
-        extrin_gt = torch.tanh(next_obs_feature)
+        extrin_gt = next_obs_feature
 
         actor_obs = torch.cat([obs, z_feature], dim=-1)  #### 45 + 19 = 64
 
