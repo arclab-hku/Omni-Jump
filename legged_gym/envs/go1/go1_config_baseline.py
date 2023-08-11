@@ -19,7 +19,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
-        num_histroy_obs = 30
+        num_histroy_obs = 5
 
 
     class terrain(LeggedRobotCfg.terrain):
@@ -28,10 +28,10 @@ class Go1BaseCfg(LeggedRobotCfg):
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.38]  # x,y,z [m]
         default_joint_angles = {  # = target angles [rad] when action = 0.0
-            "FL_hip_joint": 0.1,  # [rad]
-            "RL_hip_joint": 0.1,  # [rad]
-            "FR_hip_joint": -0.1,  # [rad]
-            "RR_hip_joint": -0.1,  # [rad]
+            "FL_hip_joint": -0.05,  # [rad]
+            "RL_hip_joint": -0.05,  # [rad]
+            "FR_hip_joint": 0.05,  # [rad]
+            "RR_hip_joint": 0.05,  # [rad]
 
             "FL_thigh_joint": 0.8,  # [rad]
             "RL_thigh_joint": 1.0,  # [rad]
@@ -46,7 +46,7 @@ class Go1BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "P"
+        control_type = "actuator_net"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 30.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -56,14 +56,14 @@ class Go1BaseCfg(LeggedRobotCfg):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
         use_actuator_network = True
-        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_go1_ground_2_400.pt"
+        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_go1_join_brick_stairs_it550.pt"
 
     class asset(LeggedRobotCfg.asset):
         file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/go1_description/urdf/go1.urdf'
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["Base", "trunk", "hip"]
+        terminate_after_contacts_on = ["base", "trunk", "hip"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
         # flip_visual_attachments = False  # Some .obj meshes must be flipped from y-up to z-up
 
@@ -103,15 +103,15 @@ class Go1BaseCfg(LeggedRobotCfg):
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
-            collision = -0.0
+            collision = -1.0
             action_rate = -0.01
             # #### motion
-            # f_hip_motion = -0.06
-            # r_hip_motion = -0.06
-            # f_thigh_motion = -0.06
-            # r_thigh_motion = -0.06
-            # f_calf_motion = -0.06
-            # r_calf_motion = -0.06
+            f_hip_motion = -0.08
+            r_hip_motion = -0.08
+            f_thigh_motion = -0.04
+            r_thigh_motion = -0.04
+            f_calf_motion = -0.04
+            r_calf_motion = -0.04
 
             #### smoothness
             # dream_smoothness = -0.001
@@ -136,14 +136,14 @@ class Go1BaseCfg(LeggedRobotCfg):
 class Go1BaseCfgPPO(LeggedRobotCfgPPO):
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
-        max_iterations = 3000  # number of policy updates
+        max_iterations = 4000  # number of policy updates
         resume = False
         save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'go1'
         export_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 11]
+        priv_mlp_units = [258, 128, 3]
         priv_info = False
         priv_info_dim = 200
         velLen = 3
@@ -152,5 +152,5 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         proprio_adapt_out_dim = 11
 
 
-        HistoryLen = 30
+        HistoryLen = 5
         Hist_info_dim = 45 * HistoryLen

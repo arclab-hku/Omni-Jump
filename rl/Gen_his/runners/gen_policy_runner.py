@@ -59,12 +59,8 @@ class GenHisPolicyRunner:
 
         # Log
         self.log_dir = log_dir
-        if self.cfg["resume"]:
-            self.nn_dir = os.path.join(self.log_dir, self.cfg["resume_name"])
-            self.tb_dir = os.path.join(self.log_dir, self.cfg["resume_name"])
-        else:
-            self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
-            self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
+        self.nn_dir = os.path.join(self.log_dir, 'stage1_nn')
+        self.tb_dir = os.path.join(self.log_dir, 'stage1_tb')
         os.makedirs(self.nn_dir, exist_ok=True)
         os.makedirs(self.tb_dir, exist_ok=True)
         self.writer = SummaryWriter(log_dir=self.tb_dir, flush_secs=10)
@@ -75,6 +71,9 @@ class GenHisPolicyRunner:
         _ = self.env.reset()
 
     def learn(self, num_learning_iterations, init_at_random_ep_len=False):
+        # restore the training
+        self.restore_train(self.encoder_cfg['checkpoint_model'])
+
         if init_at_random_ep_len:
             self.env.episode_length_buf = torch.randint_like(self.env.episode_length_buf,
                                                              high=int(self.env.max_episode_length))
@@ -238,3 +237,13 @@ class GenHisPolicyRunner:
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference
+
+    def restore_train(self, path):  # fine tune
+        if not path:
+            cprint('[Learning from scratch] Start training stage 1 Policy', 'green', attrs=['bold'])
+            return
+        cprint(f'[Fine Tune] Loading pre-trained model from: {path}', 'green', attrs=['bold'])
+        loaded_dict = torch.load(path)
+        # only load the actor state, encoder state is not needed
+        self.alg.actor_critic.load_state_dict(loaded_dict['actor_state_dict'])
+        self.alg.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
