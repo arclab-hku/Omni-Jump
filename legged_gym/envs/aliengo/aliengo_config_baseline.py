@@ -45,7 +45,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "POSE"
+        control_type = "actuator_net"
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 40.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -104,8 +104,8 @@ class AliengoBaseCfg(LeggedRobotCfg):
             collision = -1.0
             action_rate = -0.01
             # #### motion
-            f_hip_motion = -0.08
-            r_hip_motion = -0.08
+            f_hip_motion = -0.06
+            r_hip_motion = -0.06
             f_thigh_motion = -0.04
             r_thigh_motion = -0.04
             f_calf_motion = -0.04
