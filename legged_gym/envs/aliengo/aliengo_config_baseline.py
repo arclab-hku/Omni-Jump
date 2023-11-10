@@ -140,6 +140,7 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
         save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'aliengo'
         export_policy = False
+        export_onnx_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
         priv_mlp_units = [258, 128, 3]

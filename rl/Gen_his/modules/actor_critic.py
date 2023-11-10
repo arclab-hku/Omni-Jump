@@ -61,14 +61,14 @@ class ActorCritic(nn.Module):
         self.velLen = kwargs['velLen']
         self.HistoryLen = kwargs['HistoryLen']
 
-        num_actor_input = num_obs + self.velLen
+        self.num_actor_input = num_obs + self.velLen
 
         num_critic_input = num_obs + self.priv_info_dim  ##### 45 + 3 + 187
 
-        num_encoder_input = num_obs * self.HistoryLen
+        self.num_encoder_input = num_obs * self.HistoryLen
         self.encoder_mlp = kwargs['priv_mlp_units']
 
-        self.dm_encoder = DmEncoder(num_encoder_input,  self.encoder_mlp)
+        self.dm_encoder = DmEncoder(self.num_encoder_input,  self.encoder_mlp)
 
         cprint(f"Encoder MLP: {self.dm_encoder}", 'green', attrs=['bold'])
 
@@ -77,7 +77,7 @@ class ActorCritic(nn.Module):
 
         # Policy
         actor_layers = []
-        actor_layers.append(nn.Linear(num_actor_input, actor_hidden_dims[0]))
+        actor_layers.append(nn.Linear(self.num_actor_input, actor_hidden_dims[0]))
         actor_layers.append(activation)
         for l in range(len(actor_hidden_dims)):
             if l == len(actor_hidden_dims) - 1:

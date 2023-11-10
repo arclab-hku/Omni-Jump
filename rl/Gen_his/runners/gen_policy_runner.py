@@ -7,7 +7,7 @@ import statistics
 from termcolor import cprint
 
 from torch.utils.tensorboard import SummaryWriter
-from rl.EST.utils.utils import export_policy_as_jit
+from rl.EST.utils.utils import export_policy_as_jit, export_policy_as_onnx
 import torch
 
 from rl.Gen_his.algorithms import PPO
@@ -228,8 +228,23 @@ class GenHisPolicyRunner:
             jit_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_s1')
             export_policy_as_jit(self.alg.actor_critic.actor, jit_save_path, 'actor.pt')
             export_policy_as_jit(self.alg.actor_critic.dm_encoder, jit_save_path, 'encoder.pt')
-            print(f"actor: {self.alg.actor_critic.actor}")
-            print(f"encoder: {self.alg.actor_critic.dm_encoder}")
+            print(f"exported jit actor: {self.alg.actor_critic.actor}")
+            print(f"exported jit encoder: {self.alg.actor_critic.dm_encoder}")
+        if self.cfg['export_onnx_policy']:
+            cprint('Exporting policy to onnx module(C++)', 'red', attrs=['bold'])
+            onnx_save_path = os.path.join(os.path.dirname(os.path.dirname(path)), 'exported_onnx_s1')
+            # calculate input size and save as onnx model
+            export_policy_as_onnx(self.alg.actor_critic.actor,
+                                  self.alg.actor_critic.num_actor_input,
+                                  onnx_save_path,
+                                  'actor.onnx')
+            export_policy_as_onnx(self.alg.actor_critic.dm_encoder,
+                                  self.alg.actor_critic.num_encoder_input,
+                                  onnx_save_path,
+                                  'encoder.onnx')
+            print(f"exported onnx actor: {self.alg.actor_critic.actor}")
+            print(f"exported onnx encoder: {self.alg.actor_critic.dm_encoder}")
+
         return loaded_dict['infos']
 
     def get_inference_policy(self, device=None):

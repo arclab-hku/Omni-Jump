@@ -163,6 +163,8 @@ def update_cfg_from_args(env_cfg, cfg_train, args):
             env_cfg.commands.ranges.heading = [args.heading, args.heading]
         if args.export_policy:
             cfg_train.runner.export_policy = args.export_policy
+        if args.export_onnx_policy:
+            cfg_train.runner.export_onnx_policy = args.export_onnx_policy
         if args.checkpoint_model:
             cfg_train.Encoder.checkpoint_model = args.checkpoint_model
             print('load model', args.checkpoint_model)
@@ -220,6 +222,8 @@ def get_args():
         # export policy for usage in C++
         {"name": "--export_policy", "action": "store_true", "default": False,
          "help": "whether or not convert the network to jit(C++)."},
+        {"name": "--export_onnx_policy", "action": "store_true", "default": False,
+         "help": "whether or not convert the network to onnx(C++)."},
     ]
     # parse arguments
     args = gymutil.parse_arguments(
