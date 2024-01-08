@@ -55,7 +55,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
         use_actuator_network = True
-        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_aliengo_renet_aggre_it800.pt"
+        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_aliengo_2rd_f100_it4000_ly2_mlp_dec27_dec28.pt"
 
     class asset(LeggedRobotCfg.asset):
         file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
@@ -79,7 +79,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
         added_motor_strength = [0.9, 1.1]
 
         randomize_lag_timesteps = True   # actuator net: True
-        added_lag_timesteps = 6
+        added_lag_timesteps = 4
 
         randomize_Motor_Offset = True  # actuator net: True
         added_Motor_OffsetRange = [-0.02, 0.02]
