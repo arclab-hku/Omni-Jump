@@ -47,10 +47,12 @@ class LeggedRobotCfg(BaseConfig):
         num_env_priv_obs = None  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
 
     class terrain:
-        mesh_type = 'plane'  # "heightfield" # none, plane, heightfield or trimesh
+        mesh_type = 'plane'# 'plane'  # "heightfield" # none, plane, heightfield or trimesh
+        if mesh_type == 'QRC' or 'plane':
+            obj_path = ['~/research/2024icraQRC/extreme-parkour/stepover_1.obj', '~/research/2024icraQRC/extreme-parkour/stepover_2.obj']        
         horizontal_scale = 0.1  # [m]
         vertical_scale = 0.005  # [m]
-        border_size = 25  # [m]
+        border_size = 0.5  # [m]
         curriculum = True   # curriculum training set to True, testing set to False
         static_friction = 1.0
         dynamic_friction = 1.0
@@ -66,17 +68,19 @@ class LeggedRobotCfg(BaseConfig):
         selected = False  # select a unique terrain type and pass all arguments
         terrain_kwargs = None  # Dict of arguments for selected terrain
         max_init_terrain_level = 5  # starting curriculum state
-        terrain_length = 8.
-        terrain_width = 8.
+        terrain_length = 12.
+        terrain_width = 12.
         num_rows = 10  # number of terrain rows (levels)
         num_cols = 20  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75  # slopes above this threshold will be corrected to vertical surfaces
+        origin_zero_z = None
+        num_goals = 8
 
     class commands:
-        curriculum = False
+        curriculum = True
         max_curriculum = 1.
         num_commands = 4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 10.  # time before command are changed[s]
@@ -311,15 +315,15 @@ class LeggedRobotCfgPPO(BaseConfig):
         policy_class_name = 'ActorCritic'
         algorithm_class_name = 'PPO'
         num_steps_per_env = 24  # per iteration
-        max_iterations = 2000  # number of policy updates
+        max_iterations = 3000  # number of policy updates
 
         # logging
         save_interval = 250  # check for potential saves every this many iterations
         experiment_name = 'test'
         run_name = ''
         # load and resume
-        resume = False
-        load_run = -1  # -1 = last run
+        resume = True#False
+        load_run = 'pose_normal1'  # -1 = last run
         checkpoint = -1  # -1 = last saved model
         resume_path = None  # updated from load_run and chkpt
         eval_baseline = False

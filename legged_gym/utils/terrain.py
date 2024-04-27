@@ -35,6 +35,7 @@ from scipy import interpolate
 
 from isaacgym import terrain_utils
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg
+from .create_trimesh import QRC_trimesh
 
 
 class Terrain:
@@ -45,6 +46,11 @@ class Terrain:
         self.type = cfg.mesh_type
         if self.type in ["none", 'plane']:
             return
+        if self.type == "parkour" or "QRC":
+            self.terrain_type = np.zeros((cfg.num_rows, cfg.num_cols))
+            # self.env_slope_vec = np.zeros((cfg.num_rows, cfg.num_cols, 3))
+            self.num_goals = cfg.num_goals
+            self.goals = np.zeros((cfg.num_rows, cfg.num_cols, cfg.num_goals, 3))
         self.env_length = cfg.terrain_length
         self.env_width = cfg.terrain_width
         self.proportions = [np.sum(cfg.terrain_proportions[:i + 1]) for i in range(len(cfg.terrain_proportions))]
@@ -89,6 +95,59 @@ class Terrain:
                                                                                          self.cfg.horizontal_scale,
                                                                                          self.cfg.vertical_scale,
                                                                                          self.cfg.slope_treshold)
+            
+        if self.type == "QRC":
+            self.vertices_ground, self.triangles_ground = terrain_utils.convert_heightfield_to_trimesh(self.height_field_raw,
+                                                                                            self.cfg.horizontal_scale,
+                                                                                            self.cfg.vertical_scale,
+                                                                                            self.cfg.slope_treshold)
+            self.vertices = self.vertices_ground
+            self.triangles= self.triangles_ground
+
+            goals = self.goals # num_row, num_cols, num_goals, 3
+            goals[:,:,:,0] = goals[:,:,:,0] + 2
+            self.QRC_vertices, self.QRC_triangles = self.get_QRC_trimeshes(cfg.obj_path, goals) # 
+            #print('QRC vertices shape are:',len(self.QRC_vertices))
+            #print('QRC triangles shape are:',len(self.QRC_triangles))
+            for i in range(len(self.QRC_vertices)):
+                # add increment of the triangles
+                self.QRC_triangles[i] = self.QRC_triangles[i] + self.vertices.shape[0]
+                self.vertices = np.concatenate((self.vertices, self.QRC_vertices[i]), axis=0)
+                self.triangles = np.concatenate((self.triangles, self.QRC_triangles[i]), axis=0)
+            #print('all_vertices are:',self.vertices)
+            #print('all triangles are:',self.triangles)
+            print("Created {} vertices (including QRC) ".format(self.vertices.shape[0]))
+            print("Created {} triangles (including QRC) ".format(self.triangles.shape[0]))
+
+    def get_QRC_trimeshes(self,obj_path, center_position): # goals: [rows, cols, goals, 3]
+        # create mulitple frame trimesh
+        frame_vertices, frame_triangles = [], []
+
+        for i in range(self.cfg.num_rows):
+            for j in range(self.cfg.num_cols):
+                for k in range(4): #
+                    cp = center_position[i, j, k] + np.array([self.cfg.border_size, self.cfg.border_size, 0])
+                    frame_vertices_cur, frame_triangles_cur = QRC_trimesh(cp.astype(np.float32),
+                                                                          obj_path[0]
+                                                                           )
+                    # frame_vertices_cur, frame_triangles_cur = box_trimesh(size=np.array([10.1, 10.6, 10.6]),
+                    #                                                         center_position=center_position.astype(np.float32)
+                    #                                                         )
+                    frame_vertices.append(frame_vertices_cur)
+                    frame_triangles.append(frame_triangles_cur)
+                for k in range(4,self.cfg.num_goals):
+                    cp = center_position[i, j, k] + np.array([self.cfg.border_size, self.cfg.border_size, 0])
+                    frame_vertices_cur, frame_triangles_cur = QRC_trimesh(cp.astype(np.float32),
+                                                                          obj_path[1]
+                                                                           )
+                    # frame_vertices_cur, frame_triangles_cur = box_trimesh(size=np.array([10.1, 10.6, 10.6]),
+                    #                                                         center_position=center_position.astype(np.float32)
+                    #                                                         )
+                    frame_vertices.append(frame_vertices_cur)
+                    frame_triangles.append(frame_triangles_cur)
+
+        return frame_vertices, frame_triangles
+                                                                                    
     def randomized_terrain(self):
         for k in range(self.cfg.num_sub_terrains):
             # Env coordinates in the world
@@ -232,6 +291,19 @@ class Terrain:
             else:
                 pit_terrain(terrain, depth=pit_depth, platform_size=4.0)
 
+        elif self.type == "QRC":
+            QRC_terrain(terrain,
+                           platform_len=2.5,
+                           platform_height=0.,
+                           num_stones=self.num_goals-2,
+                           #x_range=[1.0, 3.0],
+                           #y_range=self.cfg.y_range,
+                           #frame_height = self.cfg.frame_height,
+                           #hurdle_height_range=self.cfg.center_position_z,
+                           )
+            idx = 0
+            terrain.idx = idx        
+
         else:
             if choice < self.proportions[0]:
                 if choice < self.proportions[0] / 2:
@@ -269,6 +341,7 @@ class Terrain:
                 gap_terrain(terrain, gap_size=gap_size, platform_size=3.)
             else:
                 pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+        
 
         return terrain
 
@@ -285,14 +358,29 @@ class Terrain:
         end_y = self.border + (j + 1) * self.width_per_env_pixels
         self.height_field_raw[start_x: end_x, start_y:end_y] = terrain.height_field_raw
 
-        env_origin_x = (i + 0.5) * self.env_length
-        env_origin_y = (j + 0.5) * self.env_width
-        x1 = int((self.env_length / 2. - 1) / terrain.horizontal_scale)
-        x2 = int((self.env_length / 2. + 1) / terrain.horizontal_scale)
-        y1 = int((self.env_width / 2. - 1) / terrain.horizontal_scale)
-        y2 = int((self.env_width / 2. + 1) / terrain.horizontal_scale)
-        env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
-        self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
+        if self.type == "QRC":
+            env_origin_x = i * self.env_length + 1.0
+            env_origin_y = (j + 0.5) * self.env_width
+            x1 = int((self.env_length / 2. - 0.5) / terrain.horizontal_scale)  # within 1 meter square range
+            x2 = int((self.env_length / 2. + 0.5) / terrain.horizontal_scale)
+            y1 = int((self.env_width / 2. - 0.5) / terrain.horizontal_scale)
+            y2 = int((self.env_width / 2. + 0.5) / terrain.horizontal_scale)
+            if self.cfg.origin_zero_z:
+                env_origin_z = 0
+            else:
+                env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
+            self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
+            self.terrain_type[i, j] = terrain.idx
+            self.goals[i, j, :, :] = terrain.goals + [i * self.env_length, j * self.env_width, 0]
+        else:
+            env_origin_x = (i + 0.5) * self.env_length
+            env_origin_y = (j + 0.5) * self.env_width
+            x1 = int((self.env_length / 2. - 1) / terrain.horizontal_scale)
+            x2 = int((self.env_length / 2. + 1) / terrain.horizontal_scale)
+            y1 = int((self.env_width / 2. - 1) / terrain.horizontal_scale)
+            y2 = int((self.env_width / 2. + 1) / terrain.horizontal_scale)
+            env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
+            self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
 
 
 def gap_terrain(terrain, gap_size, platform_size=1.):
@@ -319,4 +407,93 @@ def pit_terrain(terrain, depth, platform_size=1.):
     y2 = terrain.width // 2 + platform_size
     terrain.height_field_raw[x1:x2, y1:y2] = -depth
 
+def QRC_terrain(terrain,
+                           platform_len=4.0,
+                           platform_height=0.,
+                           num_stones=6, # goals -2
+                           x_range=[1.2, 1.4],
+                           y_range=[0.0, 0.02],
+                           frame_height=0,
+                           hurdle_height_range=[0.1, 0.14],
+                           ):
+    goals = np.zeros((num_stones+2, 3))  # (num_goals, 2); 2 for x-y
+    #reward_point = np.zeros((num_stones, 3))
+    # terrain.height_field_raw[:] = -200
+    mid_y = terrain.length // 2  # length is actually y width
 
+    dis_x_min = round(x_range[0] / terrain.horizontal_scale)
+    dis_x_max = round(x_range[1] / terrain.horizontal_scale)
+    #dis_y_min = round(y_range[0] / terrain.horizontal_scale)
+    #dis_y_max = round(y_range[1] / terrain.horizontal_scale)
+    rand_y = (y_range[0] / terrain.horizontal_scale + y_range[1] / terrain.horizontal_scale)/2
+
+    hurdle_height_max = round(hurdle_height_range[1] / terrain.vertical_scale)
+    hurdle_height_min = round(hurdle_height_range[0] / terrain.vertical_scale)
+
+    platform_len = round(platform_len / terrain.horizontal_scale)
+    platform_height = round(platform_height / terrain.vertical_scale)
+    terrain.height_field_raw[0:platform_len, :] = platform_height
+
+    #steps = (hurdle_height_max-hurdle_height_min)/num_stones
+    #hurdle_height_list = np.arange(hurdle_height_min, hurdle_height_max, steps)
+
+    wall_width=4
+    start2center=0.7
+    max_height=np.random.randint(20, 30)
+    wall_width_int = max(int(wall_width / terrain.horizontal_scale), 1)
+    max_height_int = int(max_height / terrain.vertical_scale)
+
+    terrain_length = terrain.length
+    height2width_ratio = max_height_int / wall_width_int
+
+    dis_x = platform_len
+    goals[0] = [platform_len - 1, mid_y, hurdle_height_min]
+    reward_point = np.zeros((num_stones, 3))
+
+    # second lateral and diagonal:
+    for i in range(6):
+        #hurdle_height = hurdle_height_list[i]
+        hurdle_height = np.random.randint(hurdle_height_min, hurdle_height_max)
+        rand_x = np.random.randint(dis_x_min, dis_x_max)
+        #rand_y = np.random.randint(dis_y_min, dis_y_max)
+        dis_x += rand_x
+
+        goals[i+1] = [dis_x, mid_y + rand_y,hurdle_height]
+        reward_point[i] = [dis_x, mid_y+rand_y, 2 * hurdle_height]
+
+    for i in range(6, num_stones):
+        rand_x = np.random.randint(dis_x_min, dis_x_max)
+        dis_x += rand_x
+        slope_start = int(dis_x-rand_x//2)
+        xs = dis_x+rand_x//2
+        heights = (height2width_ratio * (xs - slope_start)).clip(max=max_height_int).astype(np.int16)
+        terrain.height_field_raw[slope_start:xs, :] = 20#heights[:, None]
+        terrain.slope_vector = np.array([wall_width_int*terrain.horizontal_scale, 0., max_height]).astype(np.float32)
+        terrain.slope_vector /= np.linalg.norm(terrain.slope_vector)
+
+
+
+        hurdle_height = max_height/2
+        rand_x = np.random.randint(dis_x_min, dis_x_max)
+        #rand_y = np.random.randint(dis_y_min, dis_y_max)
+        dis_x += rand_x
+
+        goals[i+1] = [dis_x, mid_y + rand_y,hurdle_height]
+        reward_point[i] = [dis_x, mid_y+rand_y, 2 * hurdle_height]
+
+    final_dis_x = dis_x + np.random.randint(dis_x_min, dis_x_max)
+    # import ipdb; ipdb.set_trace()
+    if final_dis_x > terrain.width:
+        final_dis_x = terrain.width - 0.5 // terrain.horizontal_scale
+    goals[-1] = [final_dis_x, mid_y,hurdle_height_min]
+
+    goals[:,0:2] *= terrain.horizontal_scale
+    goals[:,2] *= terrain.vertical_scale
+    terrain.goals = goals
+    reward_point[:,0:2] *= terrain.horizontal_scale
+    reward_point[:,2] *= terrain.vertical_scale
+    terrain.reward_point = reward_point
+
+    # max_height = terrain.height_field_raw.max()
+    # top_mask = terrain.height_field_raw > max_height - 0.05
+    # terrain.height_field_raw[top_mask] = max_height

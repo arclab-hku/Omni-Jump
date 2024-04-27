@@ -182,15 +182,7 @@ class TaskRegistry():
         resume = train_cfg.runner.resume
         if resume:
             runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)
-        else:
-            runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)
 
-        print("**************** RUNNER ", runner)
-
-        # save resume path before creating a new log_dir
-        resume = train_cfg.runner.resume
-        if resume:
-            # load previously trained model
             model_dir = None
             if args.s_flag == "1" :
                 model_dir = "stage1_nn"
@@ -204,6 +196,16 @@ class TaskRegistry():
 
             print(f"Loading model from: {log_dir,model_dir, resume_path}")
             runner.load(resume_path)
+            print('**************** start loading model from:**************** ', resume_path)
+
+        else:
+            runner = eval(args.algo + "PolicyRunner")(env, train_cfg_dict, log_dir, device=args.rl_device)
+
+        print("**************** RUNNER ", runner)
+
+        # save resume path before creating a new log_dir
+            # load previously trained model
+
         return runner, train_cfg
 
 
