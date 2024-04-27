@@ -52,7 +52,7 @@ class LeggedRobotCfg(BaseConfig):
             obj_path = ['~/research/2024icraQRC/extreme-parkour/stepover_1.obj', '~/research/2024icraQRC/extreme-parkour/stepover_2.obj']        
         horizontal_scale = 0.1  # [m]
         vertical_scale = 0.005  # [m]
-        border_size = 0.5  # [m]
+        border_size = 0.2  # [m]
         curriculum = True   # curriculum training set to True, testing set to False
         static_friction = 1.0
         dynamic_friction = 1.0
@@ -68,9 +68,9 @@ class LeggedRobotCfg(BaseConfig):
         selected = False  # select a unique terrain type and pass all arguments
         terrain_kwargs = None  # Dict of arguments for selected terrain
         max_init_terrain_level = 5  # starting curriculum state
-        terrain_length = 12.
-        terrain_width = 12.
-        num_rows = 10  # number of terrain rows (levels)
+        terrain_length = 14.
+        terrain_width = 14.
+        num_rows = 40  # number of terrain rows (levels)
         num_cols = 20  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]

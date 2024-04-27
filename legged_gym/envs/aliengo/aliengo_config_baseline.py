@@ -22,7 +22,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
 
     class terrain(LeggedRobotCfg.terrain):
-        mesh_type = 'QRC'#'trimesh'
+        mesh_type = 'QRC'#'stone'#'QRC'#'trimesh'
 
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.42]  # x,y,z [m]

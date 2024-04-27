@@ -424,7 +424,7 @@ class LeggedRobot(BaseTask):
             self.sim_params,
         )
         mesh_type = self.cfg.terrain.mesh_type
-        if mesh_type in ["heightfield", "trimesh", "QRC"]:
+        if mesh_type in ["heightfield", "trimesh", "QRC","obs_stone","stone"]:
             self.terrain = Terrain(self.cfg.terrain, self.num_envs)
         if mesh_type == "plane":
             self._create_ground_plane()
@@ -433,7 +433,11 @@ class LeggedRobot(BaseTask):
         elif mesh_type == "trimesh":
             self._create_trimesh()
         elif mesh_type == "QRC":
-            self._create_trimesh()        
+            self._create_trimesh()    
+        elif mesh_type == "obs_stone":
+            self._create_trimesh()      
+        elif mesh_type == "stone":
+            self._create_trimesh()       
         elif mesh_type is not None:
             raise ValueError(
                 "Terrain mesh type not recognised. Allowed types are [None, plane, heightfield, trimesh]"

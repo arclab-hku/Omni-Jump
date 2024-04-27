@@ -50,7 +50,7 @@ class Terrain:
             self.terrain_type = np.zeros((cfg.num_rows, cfg.num_cols))
             # self.env_slope_vec = np.zeros((cfg.num_rows, cfg.num_cols, 3))
             self.num_goals = cfg.num_goals
-            self.goals = np.zeros((cfg.num_rows, cfg.num_cols, cfg.num_goals, 3))
+            self.goals = np.zeros((cfg.num_rows, cfg.num_cols, cfg.num_goals*9, 3))
         self.env_length = cfg.terrain_length
         self.env_width = cfg.terrain_width
         self.proportions = [np.sum(cfg.terrain_proportions[:i + 1]) for i in range(len(cfg.terrain_proportions))]
@@ -95,7 +95,12 @@ class Terrain:
                                                                                          self.cfg.horizontal_scale,
                                                                                          self.cfg.vertical_scale,
                                                                                          self.cfg.slope_treshold)
-            
+        if self.type == "obs_stone":
+            self.vertices, self.triangles = terrain_utils.convert_heightfield_to_trimesh(self.height_field_raw,
+                                                                                         self.cfg.horizontal_scale,
+                                                                                         self.cfg.vertical_scale,
+                                                                                         self.cfg.slope_treshold)
+
         if self.type == "QRC":
             self.vertices_ground, self.triangles_ground = terrain_utils.convert_heightfield_to_trimesh(self.height_field_raw,
                                                                                             self.cfg.horizontal_scale,
@@ -125,7 +130,7 @@ class Terrain:
 
         for i in range(self.cfg.num_rows):
             for j in range(self.cfg.num_cols):
-                for k in range(4): #
+                for k in range(4*9): #
                     cp = center_position[i, j, k] + np.array([self.cfg.border_size, self.cfg.border_size, 0])
                     frame_vertices_cur, frame_triangles_cur = QRC_trimesh(cp.astype(np.float32),
                                                                           obj_path[0]
@@ -135,7 +140,7 @@ class Terrain:
                     #                                                         )
                     frame_vertices.append(frame_vertices_cur)
                     frame_triangles.append(frame_triangles_cur)
-                for k in range(4,self.cfg.num_goals):
+                for k in range(4*9,self.cfg.num_goals*9):
                     cp = center_position[i, j, k] + np.array([self.cfg.border_size, self.cfg.border_size, 0])
                     frame_vertices_cur, frame_triangles_cur = QRC_trimesh(cp.astype(np.float32),
                                                                           obj_path[1]
@@ -290,7 +295,72 @@ class Terrain:
                 gap_terrain(terrain, gap_size=gap_size, platform_size=3.0)
             else:
                 pit_terrain(terrain, depth=pit_depth, platform_size=4.0)
+        elif self.type == "obs_stone":
+            if choice < self.proportions[0]:
+                if choice < self.proportions[0] / 2:
+                    slope *= -1
+                terrain_utils.pyramid_sloped_terrain(
+                    terrain, slope=slope, platform_size=3.0
+                )
+            elif choice < self.proportions[1]:
+                terrain_utils.pyramid_sloped_terrain(
+                    terrain, slope=slope, platform_size=3.0
+                )
+                terrain_utils.random_uniform_terrain(
+                    terrain,
+                    min_height=-0.05,
+                    max_height=0.05,
+                    step=0.005,
+                    downsampled_scale=0.2,
+                )
+            elif choice < self.proportions[3]:
+                if choice < self.proportions[2]:
+                    step_height *= -1
+                terrain_utils.pyramid_stairs_terrain(
+                    terrain, step_width=0.31, step_height=step_height, platform_size=3.0
+                )
+            elif choice < self.proportions[4]:
+                num_rectangles = 20
+                rectangle_min_size = 1.0
+                rectangle_max_size = 2.0
+                terrain_utils.discrete_obstacles_terrain(
+                    terrain,
+                    discrete_obstacles_height,
+                    rectangle_min_size,
+                    rectangle_max_size,
+                    num_rectangles,
+                    platform_size=3.0,
+                )
+            # elif choice < self.proportions[5]:
+            #     # print("MAKING TERRAIN HERE")
+            #     num_rectangles = int(200 * difficulty)
+            #     # num_rectangles = 0
+            #     rectangle_min_size = 2 * obs_scale
+            #     rectangle_max_size = 5 * obs_scale
+            #     add_terrain_utils.discrete_obstacles_terrain_cells(
+            #         terrain,
+            #         0.14,
+            #         0.15,
+            #         rectangle_min_size,
+            #         rectangle_max_size,
+            #         num_rectangles,
+            #         platform_size=3.0,
+            #         width=2 * obs_scale
+            #     )
+            # elif choice < self.proportions[6]:
+                terrain_utils.stepping_stones_terrain(
+                    terrain,
+                    stone_size=stepping_stones_size,
+                    stone_distance=stone_distance,
+                    max_height=0.0,
+                    platform_size=4.0,
+                )
+            elif choice < self.proportions[7]:
+                gap_terrain(terrain, gap_size=gap_size, platform_size=3.0)
+            else:
+                pit_terrain(terrain, depth=pit_depth, platform_size=4.0)
 
+        
         elif self.type == "QRC":
             QRC_terrain(terrain,
                            platform_len=2.5,
@@ -416,7 +486,8 @@ def QRC_terrain(terrain,
                            frame_height=0,
                            hurdle_height_range=[0.1, 0.14],
                            ):
-    goals = np.zeros((num_stones+2, 3))  # (num_goals, 2); 2 for x-y
+    #goals = np.zeros((num_stones+2, 3))  # (num_goals, 2); 2 for x-y
+    goals = np.zeros((9*(num_stones+2), 3))
     #reward_point = np.zeros((num_stones, 3))
     # terrain.height_field_raw[:] = -200
     mid_y = terrain.length // 2  # length is actually y width
@@ -437,17 +508,27 @@ def QRC_terrain(terrain,
     #steps = (hurdle_height_max-hurdle_height_min)/num_stones
     #hurdle_height_list = np.arange(hurdle_height_min, hurdle_height_max, steps)
 
-    wall_width=4
-    start2center=0.7
-    max_height=np.random.randint(20, 30)
-    wall_width_int = max(int(wall_width / terrain.horizontal_scale), 1)
-    max_height_int = int(max_height / terrain.vertical_scale)
+    # wall_width=4
+    # start2center=0.7
+    # max_height=np.random.randint(20, 30)
+    # wall_width_int = max(int(wall_width / terrain.horizontal_scale), 1)
+    # max_height_int = int(max_height / terrain.vertical_scale)
 
-    terrain_length = terrain.length
-    height2width_ratio = max_height_int / wall_width_int
+    # terrain_length = terrain.length
+    # height2width_ratio = max_height_int / wall_width_int
 
     dis_x = platform_len
     goals[0] = [platform_len - 1, mid_y, hurdle_height_min]
+    goals[1] = [platform_len - 1, mid_y+mid_y/4, hurdle_height_min]
+    goals[2] = [platform_len - 1, mid_y-mid_y/4, hurdle_height_min]
+    goals[3] = [platform_len - 1, mid_y+mid_y/2, hurdle_height_min]
+    goals[4] = [platform_len - 1, mid_y-mid_y/2, hurdle_height_min]
+    goals[5] = [platform_len - 1, mid_y-mid_y+7, hurdle_height_min]
+    goals[6] = [platform_len - 1, mid_y+mid_y-7, hurdle_height_min]
+    goals[7] = [platform_len - 1, mid_y-mid_y+18.5, hurdle_height_min]
+    goals[8] = [platform_len - 1, mid_y+mid_y-18.5, hurdle_height_min]
+
+
     reward_point = np.zeros((num_stones, 3))
 
     # second lateral and diagonal:
@@ -458,34 +539,62 @@ def QRC_terrain(terrain,
         #rand_y = np.random.randint(dis_y_min, dis_y_max)
         dis_x += rand_x
 
-        goals[i+1] = [dis_x, mid_y + rand_y,hurdle_height]
+        goals[9*i+9] = [dis_x, mid_y + rand_y,hurdle_height]
+        goals[9*i+10] = [dis_x, mid_y + rand_y+mid_y/2,hurdle_height]
+        goals[9*i+11] = [dis_x, mid_y + rand_y-mid_y/2,hurdle_height]
+        goals[9*i+12] = [dis_x, mid_y + rand_y+mid_y/4,hurdle_height]
+        goals[9*i+13] = [dis_x, mid_y + rand_y-mid_y/4,hurdle_height]
+        goals[9*i+14] = [dis_x, mid_y + mid_y-7,hurdle_height]
+        goals[9*i+15] = [dis_x, mid_y -mid_y+7,hurdle_height]
+        goals[9*i+16] = [dis_x, mid_y + mid_y-18.5,hurdle_height]
+        goals[9*i+17] = [dis_x, mid_y -mid_y+18.5,hurdle_height]
+
+
         reward_point[i] = [dis_x, mid_y+rand_y, 2 * hurdle_height]
 
     for i in range(6, num_stones):
         rand_x = np.random.randint(dis_x_min, dis_x_max)
         dis_x += rand_x
-        slope_start = int(dis_x-rand_x//2)
-        xs = dis_x+rand_x//2
-        heights = (height2width_ratio * (xs - slope_start)).clip(max=max_height_int).astype(np.int16)
-        terrain.height_field_raw[slope_start:xs, :] = 20#heights[:, None]
-        terrain.slope_vector = np.array([wall_width_int*terrain.horizontal_scale, 0., max_height]).astype(np.float32)
-        terrain.slope_vector /= np.linalg.norm(terrain.slope_vector)
+        # slope_start = int(dis_x-rand_x)
+        # xs = np.arange(slope_start, terrain_length)
+        # heights = (height2width_ratio * (xs - slope_start)).clip(max=max_height_int).astype(np.int16)
+        # terrain.height_field_raw[slope_start:xs, :] = 20#heights[:, None]
+        # terrain.slope_vector = np.array([wall_width_int*terrain.horizontal_scale, 0., max_height]).astype(np.float32)
+        # terrain.slope_vector /= np.linalg.norm(terrain.slope_vector)
 
 
 
-        hurdle_height = max_height/2
+        # hurdle_height = max_height/2
         rand_x = np.random.randint(dis_x_min, dis_x_max)
         #rand_y = np.random.randint(dis_y_min, dis_y_max)
         dis_x += rand_x
 
-        goals[i+1] = [dis_x, mid_y + rand_y,hurdle_height]
+        goals[9*i+9] = [dis_x, mid_y + rand_y,hurdle_height]
+        goals[9*i+10] = [dis_x, mid_y + rand_y+mid_y/2,hurdle_height]
+        goals[9*i+11] = [dis_x, mid_y + rand_y-mid_y/2,hurdle_height]
+        goals[9*i+12] = [dis_x, mid_y + rand_y+mid_y/4,hurdle_height]
+        goals[9*i+13] = [dis_x, mid_y + rand_y-mid_y/4,hurdle_height]
+        goals[9*i+14] = [dis_x, mid_y + mid_y-7,hurdle_height]
+        goals[9*i+15] = [dis_x, mid_y -mid_y+7,hurdle_height]
+        goals[9*i+16] = [dis_x, mid_y + mid_y-18.5,hurdle_height]
+        goals[9*i+17] = [dis_x, mid_y -mid_y+18.5,hurdle_height]
+
         reward_point[i] = [dis_x, mid_y+rand_y, 2 * hurdle_height]
 
     final_dis_x = dis_x + np.random.randint(dis_x_min, dis_x_max)
     # import ipdb; ipdb.set_trace()
     if final_dis_x > terrain.width:
         final_dis_x = terrain.width - 0.5 // terrain.horizontal_scale
-    goals[-1] = [final_dis_x, mid_y,hurdle_height_min]
+    goals[-1] = [final_dis_x, mid_y + rand_y,hurdle_height_max]
+    goals[(num_stones+2)*9-7] = [final_dis_x, mid_y+rand_y+mid_y/2,hurdle_height_max]
+    goals[(num_stones+2)*9-6] = [final_dis_x, mid_y+rand_y-mid_y/2,hurdle_height_max]
+    goals[(num_stones+2)*9-5] = [final_dis_x, mid_y+rand_y+mid_y/4,hurdle_height_max]
+    goals[(num_stones+2)*9-4] = [final_dis_x, mid_y+rand_y-mid_y/4,hurdle_height_max]
+    goals[(num_stones+2)*9-3] = [final_dis_x, mid_y-mid_y+7,hurdle_height_max]
+    goals[(num_stones+2)*9-2] = [final_dis_x, mid_y+mid_y-7,hurdle_height_max]
+    goals[(num_stones+2)*9-9] = [final_dis_x, mid_y-mid_y+18.5,hurdle_height_max]
+    goals[(num_stones+2)*9-8] = [final_dis_x, mid_y+mid_y-18.5,hurdle_height_max]
+
 
     goals[:,0:2] *= terrain.horizontal_scale
     goals[:,2] *= terrain.vertical_scale
