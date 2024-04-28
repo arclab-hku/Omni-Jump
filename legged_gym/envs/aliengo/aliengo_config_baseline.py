@@ -101,6 +101,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
+            feet_stumble = 0.#-0.5
             collision = -1.0
             action_rate = -0.01
             # #### motion
@@ -135,7 +136,7 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
 
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
-        max_iterations = 4000  # number of policy updates
+        max_iterations = 6000  # number of policy updates
         resume = False
         save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'aliengo'

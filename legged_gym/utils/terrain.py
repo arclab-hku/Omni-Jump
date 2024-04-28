@@ -162,7 +162,7 @@ class Terrain:
 
             difficulty = np.random.choice([0.5, 0.75, 0.9])
             terrain = self.make_terrain(choice, difficulty)
-            self.add_terrain_to_map(terrain, i, j)
+            self.add_terrain_to_map(terrain, i, j,choice)
 
     def curiculum(self, diff=None, obs_scale=1):
         for j in range(self.cfg.num_cols):
@@ -171,7 +171,7 @@ class Terrain:
                 choice = j / self.cfg.num_cols + 0.001
                 # choice = 0.21
                 terrain = self.make_terrain(choice, difficulty, obs_scale)
-                self.add_terrain_to_map(terrain, i, j)
+                self.add_terrain_to_map(terrain, i, j, choice)
 
 
 
@@ -362,7 +362,36 @@ class Terrain:
 
         
         elif self.type == "QRC":
-            QRC_terrain(terrain,
+            if choice < self.proportions[0]:
+                if choice < self.proportions[0] / 2:
+                    slope *= -1
+                terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+                idx = 0
+                terrain.idx = idx   
+            elif choice < self.proportions[1]:
+                terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+                terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005,
+                                                     downsampled_scale=0.2)
+                idx = 1
+                terrain.idx = idx
+
+            elif choice < self.proportions[2]:
+                num_rectangles = 20
+                rectangle_min_size = 1.
+                rectangle_max_size = 2.
+                # if self.type == "trimesh_no_stair":
+                #     pass
+                # else:
+                #     terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=2.)
+                #     terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005,
+                #                                          downsampled_scale=0.2)
+                terrain_utils.discrete_obstacles_terrain(terrain, discrete_obstacles_height, rectangle_min_size,
+                                                     rectangle_max_size, num_rectangles, platform_size=3.)
+                idx = 2
+                terrain.idx = idx 
+ 
+            elif choice < self.proportions[3]:
+                QRC_terrain(terrain,
                            platform_len=2.5,
                            platform_height=0.,
                            num_stones=self.num_goals-2,
@@ -371,8 +400,36 @@ class Terrain:
                            #frame_height = self.cfg.frame_height,
                            #hurdle_height_range=self.cfg.center_position_z,
                            )
-            idx = 0
-            terrain.idx = idx        
+                idx = 3
+                terrain.idx = idx 
+            
+            elif choice < self.proportions[4]:
+                if self.type == "trimesh_no_stair":
+                    terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+                    terrain_utils.random_uniform_terrain(terrain, min_height=-0.01, max_height=0.01, step=0.005,
+                                                         downsampled_scale=0.2)
+                else:
+                    if choice < self.proportions[4]:
+                        step_height *= -1
+                    terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height, platform_size=3.)
+                idx = 4
+                terrain.idx = idx  
+
+            elif choice < self.proportions[5]:
+                terrain_utils.stepping_stones_terrain(terrain, stone_size=stepping_stones_size,
+                                                      stone_distance=stone_distance, max_height=0., platform_size=4.)
+                idx = 5
+                terrain.idx = idx                          
+            elif choice < self.proportions[6]:
+                gap_terrain(terrain, gap_size=gap_size, platform_size=3.)
+                idx = 6
+                terrain.idx = idx 
+            else:
+                pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+                idx = 7
+                terrain.idx = idx 
+
+      
 
         else:
             if choice < self.proportions[0]:
@@ -411,6 +468,7 @@ class Terrain:
                 gap_terrain(terrain, gap_size=gap_size, platform_size=3.)
             else:
                 pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+            
         
 
         return terrain
@@ -418,7 +476,7 @@ class Terrain:
 
 
 
-    def add_terrain_to_map(self, terrain, row, col):
+    def add_terrain_to_map(self, terrain, row, col, choice):
         i = row
         j = col
         # map coordinate system
@@ -441,7 +499,8 @@ class Terrain:
                 env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
             self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
             self.terrain_type[i, j] = terrain.idx
-            self.goals[i, j, :, :] = terrain.goals + [i * self.env_length, j * self.env_width, 0]
+            if terrain.idx == 3:
+                self.goals[i, j, :, :] = terrain.goals + [i * self.env_length, j * self.env_width, 0]
         else:
             env_origin_x = (i + 0.5) * self.env_length
             env_origin_y = (j + 0.5) * self.env_width
@@ -484,7 +543,7 @@ def QRC_terrain(terrain,
                            x_range=[1.2, 1.4],
                            y_range=[0.0, 0.02],
                            frame_height=0,
-                           hurdle_height_range=[0.1, 0.14],
+                           hurdle_height_range=[0.10, 0.16], #[0.1,0.14]
                            ):
     #goals = np.zeros((num_stones+2, 3))  # (num_goals, 2); 2 for x-y
     goals = np.zeros((9*(num_stones+2), 3))
