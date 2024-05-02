@@ -3,7 +3,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 class AliengoBaseCfg(LeggedRobotCfg):
     class env(LeggedRobotCfg.env):
         # num_envs = 4096
-        num_envs = 4096  # was getting a seg fault
+        num_envs = 3012  # was getting a seg fault
         # num_envs = 100  # was getting a seg fault
         num_actions = 12
         num_observations = 45
@@ -25,6 +25,13 @@ class AliengoBaseCfg(LeggedRobotCfg):
         mesh_type = 'QRC'#'stone'#'QRC'#'trimesh'
 
     class init_state(LeggedRobotCfg.init_state):
+        # reference pose for passing QRC while walking
+        rel_foot_pos = [[0.551,0.551,-0.323,-0.323], # x
+                        [0.138,-0.138,0.138,-0.138], # y
+                        [-0.001,-0.001,-0.134,-0.134]] # z  # relative to the COM pos 
+        # rel_foot_pos = [[0.228,0.228,-0.253,-0.253], # x
+        #                 [0.138,-0.138,0.137,-0.137], # y
+        #                 [-0.465,-0.465,-0.465,-0.465]] # z  # relative to the COM pos 
         pos = [0.0, 0.0, 0.42]  # x,y,z [m]
         default_joint_angles = {  # = target angles [rad] when action = 0.0
             "FL_hip_joint": -0.05,  # [rad]
@@ -45,7 +52,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "POSE"#"actuator_net"
+        control_type = "actuator_net"#"POSE"#"actuator_net"#
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 40.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -94,13 +101,14 @@ class AliengoBaseCfg(LeggedRobotCfg):
         class scales(LeggedRobotCfg.rewards.scales):
             tracking_lin_vel = 1.0
             tracking_ang_vel = 0.5
-            lin_vel_z = -2.0
+            lin_vel_z = -1.0
             ang_vel_xy = -0.05
             orientation = -0.2
             torques = -0.00001
             dof_acc = -2.5e-7
             base_height = -0.0
             feet_air_time = 1.0
+            feet_clearance = 0 #0.65
             feet_stumble = 0.#-0.5
             collision = -1.0
             action_rate = -0.01

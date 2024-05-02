@@ -42,7 +42,7 @@ import torch
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
-    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 200)
+    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 20)
     env_cfg.terrain.num_rows = 4
     env_cfg.terrain.num_cols = 5
 
@@ -52,7 +52,7 @@ def play(args):
     # env_cfg.terrain.num_cols = 20  # number of terrain cols (types)
 
     max_init_terrain_level = 10  # starting curriculum state
-    env_cfg.terrain.curriculum = False
+    env_cfg.terrain.curriculum = True
     env_cfg.noise.add_noise = True
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False

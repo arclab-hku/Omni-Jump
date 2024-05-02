@@ -174,6 +174,7 @@ class LeggedRobot(BaseTask):
         self.base_lin_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
         self.base_ang_vel[:] = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
         self.projected_gravity[:] = quat_rotate_inverse(self.base_quat, self.gravity_vec)
+        self.feet_pos = self.rigid_body_state[:,self.feet_indices,0:3]
 
         self._post_physics_step_callback()
 
@@ -849,6 +850,7 @@ class LeggedRobot(BaseTask):
                                          requires_grad=False)
         self.base_lin_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13])
+        self.feet_pos = torch.zeros(self.num_envs, len(self.feet_indices), 3, dtype=torch.float, device=self.device, requires_grad=False)
         self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
         if self.cfg.terrain.measure_heights:
             self.height_points = self._init_height_points()
@@ -1426,6 +1428,46 @@ class LeggedRobot(BaseTask):
         rew = torch.any(torch.norm(self.contact_forces[:, self.feet_indices, :2], dim=2) >\
              4 *torch.abs(self.contact_forces[:, self.feet_indices, 2]), dim=1)
         return rew.float()
+
+    def _reward_feet_clearance(self):
+        # Reward small feet distance from body
+
+        feet_relative = self.feet_pos[:, :, :3] - self.root_states[:, :3].unsqueeze(1)
+        feet_body_frame = torch.zeros(self.num_envs, 4, 3, device=self.device, requires_grad=False)
+        for i in range(4):
+            feet_body_frame[:,i,:] = quat_rotate_inverse(self.base_quat, feet_relative[:,i,:])
+        # feet_body_frame is with size of (num_envs, 4, 3)
+        
+        feet_pos_ini = torch.tensor(self.cfg.init_state.rel_foot_pos).to(self.device).transpose(1,0).view(1,4,3)
+        feet_pos_des = feet_pos_ini.clone()
+        
+        feet_force = torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1)
+        rising_feet_mask1 = torch.zeros([self.num_envs, 4])
+        rising_feet_mask2 = torch.zeros([self.num_envs, 4])
+        #for i in range(len(self.feet_indices)):
+        rising_feet_mask1 = feet_force < 0.1
+        rising_feet_mask2 = self.feet_pos[:, :, 2]>0.1
+        #print('rising_feet_mask1:',rising_feet_mask1)
+        #print('rising_feet_mask2:',rising_feet_mask2)
+        #rising_feet_mask = rising_feet_mask1 * rising_feet_mask2 # represent that both feet_force<0.1 and feet_pos > 0.05 will be consider as rised feet.
+        rising_feet_mask = rising_feet_mask2
+
+        # mask the same as the feet_air_time:
+        contact = self.contact_forces[:, self.feet_indices, 2] > 1.0
+        contact_filt = torch.logical_or(contact, self.last_contacts)
+
+        feet_error = torch.linalg.norm(feet_body_frame - feet_pos_des, dim=-1) # let foot pos in body frame closed to the desired foot position # num_envs, 4 
+        # Only reward if legs rised
+        #
+        rew = torch.exp(-torch.square(feet_error)) # this is an error.
+        rew[~contact] = 0.0
+        return rew
+
+    def _reward_feet_trajectory(self):
+        
+
+
+        return 
 
     def _reward_feet_air_time(self):
         # Reward long steps

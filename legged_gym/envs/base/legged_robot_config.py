@@ -70,8 +70,8 @@ class LeggedRobotCfg(BaseConfig):
         max_init_terrain_level = 5  # starting curriculum state
         terrain_length = 14.
         terrain_width = 14.
-        num_rows = 30  # number of terrain rows (levels)
-        num_cols = 10  # number of terrain cols (types)
+        num_rows = 20  # number of terrain rows (levels)
+        num_cols = 20  # number of terrain cols (types)
         # terrain types: [smooth slope, rough slope, stairs up, stairs down, discrete]
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
@@ -171,6 +171,7 @@ class LeggedRobotCfg(BaseConfig):
 
             torques = 0
             base_height = -0.0
+            feet_clearance = 0.65
             feet_air_time = 0.0
             feet_air_time_base = 0.0
             feet_obs_contact = 0.0
