@@ -152,6 +152,9 @@ class PPO:
         mean_value_loss = 0
         mean_surrogate_loss = 0
         mean_vel_loss = 0
+        mean_Zheight_loss = 0 
+        #mean_mass_loss = 0
+        mean_feet_pos_loss = 0
         mean_height_loss = 0
         mean_contact_loss = 0
 
@@ -163,7 +166,7 @@ class PPO:
                 old_mu_batch, old_sigma_batch, hid_states_batch, masks_batch, privileged_info_batch, priv_info_batch, proprio_hist_batch, extrin_loss, extrin_gt_loss in generator:
 
             obs_dict_batch = {
-                'obs': obs_batch,
+                'obs': obs_batch, # 0:3 is the velocity
                 'priv_info': priv_info_batch,
                 'privileged_info': privileged_info_batch,
                 'proprio_hist': proprio_hist_batch,
@@ -195,7 +198,7 @@ class PPO:
                         param_group['lr'] = self.learning_rate
 
             # Surrogate loss
-            ratio = torch.exp(actions_log_prob_batch - torch.squeeze(old_actions_log_prob_batch))
+            ratio = torch.exp(actions_log_prob_batch - torch.squeeze(old_actions_log_prob_batch)) #r_t(theta)
             surrogate = -torch.squeeze(advantages_batch) * ratio
             surrogate_clipped = -torch.squeeze(advantages_batch) * torch.clamp(ratio, 1.0 - self.clip_param,
                                                                                1.0 + self.clip_param)
@@ -211,24 +214,56 @@ class PPO:
             else:
                 value_loss = (returns_batch - value_batch).pow(2).mean()
 
-            loss = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
+            loss_policy = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
 
             extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch,
-                                                         hidden_states=hid_states_batch[1])
-            extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11])
+                                                         hidden_states=hid_states_batch[1]) # the same as the output of actor_critic.evaluate(), encoder output
+            #extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11]) # the input for critics, real values exclude heights and disturbance_force
+            extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:13])  # the input for critics, real values exclude heights and disturbance_force
+            
+            # encoder loss: for velocity tracking
+            # real_vel = privileged_info_batch[:, 20:23]
+            # real_mass = privileged_info_batch[:, 1:5]
+            # real_ang_vel = privileged_info_batch[:, 5:8]
+            # real_Zheights = privileged_info_batch[:, 0:1] 
+            # real_feet_pos = privileged_info_batch[:, 8:20]
 
-            vel_loss = F.mse_loss(extrin_batch[:, 0:3], extrin_gt_batch[:, 0:3].detach())
+            # vel_loss = F.mse_loss(extrin_batch[:, 20:23], real_vel) #extrin_gt_batch[:, 17:20])
+            # height_loss = 0
+            # contact_loss = 0
+            # mass_loss = F.mse_loss(extrin_batch[:, 1:5], real_mass) #extrin_gt_batch[:, 1:5])
+            # ang_loss = F.mse_loss(extrin_batch[:,5:8], real_ang_vel)
+            # Zheight_loss = F.mse_loss(extrin_batch[:, 0:1], real_Zheights) #extrin_gt_batch[:, 0:1])
+            # feet_pos_loss = F.mse_loss(extrin_batch[:, 8:20], real_feet_pos) #extrin_gt_batch[:, 5:17])
+            # loss_encoder = vel_loss + mass_loss + Zheight_loss + feet_pos_loss + ang_loss
+
+            # encoder loss: for position tracking
+            real_vel = privileged_info_batch[:, 10:13]
+            #real_mass = privileged_info_batch[:, 3:7]
+            real_ang_vel = privileged_info_batch[:, 7:10]
+            #real_Zheights = privileged_info_batch[:, 0:1] 
+            real_ZXYheights = privileged_info_batch[:, 0:3] 
+            real_feet_pos = privileged_info_batch[:, 3:7]
+
+            vel_loss = F.mse_loss(extrin_batch[:, 10:13], real_vel) #extrin_gt_batch[:, 17:20])
             height_loss = 0
             contact_loss = 0
+            #mass_loss = F.mse_loss(extrin_batch[:, 3:7], real_mass) #extrin_gt_batch[:, 1:5])
+            ang_loss = F.mse_loss(extrin_batch[:,7:10], real_ang_vel)
+            ZXYheight_loss = F.mse_loss(extrin_batch[:, 0:3], real_ZXYheights) #extrin_gt_batch[:, 0:1])
+            feet_pos_loss = F.mse_loss(extrin_batch[:, 3:7], real_feet_pos) #extrin_gt_batch[:, 5:17])
+            loss_encoder = vel_loss + ZXYheight_loss + feet_pos_loss + ang_loss
 
-            loss_encoder = vel_loss
+            w1 = 1
+            w2 = 1
+            loss = w1 * loss_encoder + w2 * loss_policy
 
             # Gradient step
             self.optimizer.zero_grad()
             self.optimizer_encoder.zero_grad()
 
             loss.backward()
-            loss_encoder.backward()
+            #loss_encoder.backward()
             nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
             nn.utils.clip_grad_norm_(self.dm_encoder.parameters(), self.max_grad_norm)
             self.optimizer_encoder.step()
@@ -237,6 +272,10 @@ class PPO:
             mean_vel_loss += vel_loss.item()
             mean_height_loss += 0
             mean_contact_loss += 0
+            #mean_Zheight_loss += Zheight_loss.item()
+            mean_Zheight_loss += ZXYheight_loss.item()
+            #mean_mass_loss += mass_loss.item()
+            mean_feet_pos_loss += feet_pos_loss.item()
 
             mean_value_loss += value_loss.item()
             mean_surrogate_loss += surrogate_loss.item()
@@ -244,7 +283,12 @@ class PPO:
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
         mean_surrogate_loss /= num_updates
+        mean_vel_loss /= num_updates
+        mean_Zheight_loss /= num_updates
+        #mean_mass_loss /= num_updates
+        mean_feet_pos_loss /= num_updates       
+
 
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss
+        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss #mean_Zheight_loss, mean_mass_loss, mean_feet_pos_loss

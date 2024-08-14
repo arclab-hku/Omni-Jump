@@ -58,15 +58,15 @@ class ActorCritic(nn.Module):
         self.proprio_adapt_input = num_obs
         self.proprio_adapt_output = kwargs['proprio_adapt_out_dim']
 
-        self.velLen = kwargs['velLen']
+        self.estLen = kwargs['estLen']
         self.HistoryLen = kwargs['HistoryLen']
 
-        self.num_actor_input = num_obs + self.velLen
+        self.num_actor_input = num_obs + self.estLen #+ 197#+264 # +197 means adding the measure heights in the actor
 
-        num_critic_input = num_obs + self.priv_info_dim  ##### 45 + 3 + 187
+        num_critic_input = num_obs + self.priv_info_dim ##### 45 + 3 + 187 #  num_obs is proprio info(45), priv_info_dim is the whold compute obs dim (11*17+3+4+4+2)
 
         self.num_encoder_input = num_obs * self.HistoryLen
-        self.encoder_mlp = kwargs['priv_mlp_units']
+        self.encoder_mlp = kwargs['priv_mlp_units'] # remember to change the paras in robot_config.py.
 
         self.dm_encoder = DmEncoder(self.num_encoder_input,  self.encoder_mlp)
 
@@ -159,7 +159,7 @@ class ActorCritic(nn.Module):
     def extrin_loss(self, obs_dict, **kwargs):
         # value = self.critic(critic_observations)
         _, _, _, extrin, _ = self._actor_critic(obs_dict)
-        return extrin
+        return extrin # dim = cfg.priv_mlp_units[2]
 
     def extrin_gt_loss(self, obs_dict, **kwargs):
         # value = self.critic(critic_observations)
@@ -167,13 +167,32 @@ class ActorCritic(nn.Module):
 
         return extrin_gt
     def _actor_critic(self, obs_dict):
+        
+        # vel tracking:
+        # obs = obs_dict['obs']
+        # obs_vel = obs_dict['privileged_info'][:, 20:23]
+        # obs_feet_pos = obs_dict['privileged_info'][:, 8:20]
+        # obs_z = obs_dict['privileged_info'][:, 0:1]
+        # obs_mass = obs_dict['privileged_info'][:, 1:5]
+        # obs_ang_vel = obs_dict['privileged_info'][:, 5:8]
+        # #obs_hight = obs_dict['privileged_info'][:, 3:200]
+        # obs_hight = obs_dict['privileged_info'][:, 23:220]#+264]
+        # obs_proprio_hist = obs_dict['proprio_hist']
+        # obs_his = obs_proprio_hist
+        # extrin_gt = obs_dict['privileged_info'][:, 0:23]
 
+        # pos tracking:
         obs = obs_dict['obs']
-        obs_vel = obs_dict['privileged_info'][:, 0:3]
-        obs_hight = obs_dict['privileged_info'][:, 3:200]
+        obs_vel = obs_dict['privileged_info'][:, 10:13]
+        obs_feet_pos = obs_dict['privileged_info'][:, 3:7]
+        obs_zxy = obs_dict['privileged_info'][:, 0:3]
+        #obs_mass = obs_dict['privileged_info'][:, 3:7]
+        obs_ang_vel = obs_dict['privileged_info'][:, 7:10]
+        #obs_hight = obs_dict['privileged_info'][:, 3:200]
+        obs_hight = obs_dict['privileged_info'][:, 13:210]#+264]
         obs_proprio_hist = obs_dict['proprio_hist']
         obs_his = obs_proprio_hist
-        extrin_gt = obs_dict['privileged_info'][:, 0:11]
+        extrin_gt = obs_dict['privileged_info'][:, 0:13]        
 
         # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs, obs_his}", 'green', attrs=['bold'])
 
@@ -182,18 +201,21 @@ class ActorCritic(nn.Module):
         # cprint(f"obs_his: {obs_his.shape, obs_his}", 'red', attrs=['bold'])
 
 
-        extrin_en = self.dm_encoder(obs_his)
+        extrin_en = self.dm_encoder(obs_his) # output dim=20
 
 
         # # extrin = torch.tanh(extrin_en)
         extrin_gt = torch.tanh(extrin_gt)
 
-        actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 3
-        critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)  ## 45+3+187 = 235
+        #actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 3
+        actor_obs = torch.cat([extrin_en, obs], dim=-1)#torch.cat([ obs, extrin_en, obs_hight], dim=-1) # 45 + 3 + 197
+        #critic_obs = torch.cat([obs_z, obs_mass, obs_ang_vel, obs_feet_pos, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
+        critic_obs = torch.cat([obs_zxy, obs_feet_pos, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
+
+        # extrin_en and the input observation of critics最好一一对应
         mu = self.actor(actor_obs)
         value = self.critic(critic_obs)
         sigma = self.std
-
 
         return mu, mu * 0 + sigma, value, extrin_en, extrin_gt
 

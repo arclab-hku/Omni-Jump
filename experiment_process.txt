@@ -1,0 +1,13 @@
+1. tracking vel的策略先训练出来:
+# 先试试低高度一些的跳跃；
+
+能用手柄控制的方式，(controller 里面加点东西就行)
+空中能调整腿的姿势，（足端的轨迹？）----> 足端的高度 与时间t之间为二次曲线变化关系。 而且要在reward中设计一个feet_distance_z 与robot_zHeight之间的函数关系
+可变跳跃高度，到时候可根据障碍物高度自动调节跳跃预期高度。
+只预估足端的高度12 -> 4
+不再预估质量 OK
+ 
+然后测试实验效果（原有isaac gym能跑的那个策略就行）
+参照TRO的分析方式 （Ding Jiatao的那篇）
+
+2. tracking position的策略： 加上xy position estimation的模块

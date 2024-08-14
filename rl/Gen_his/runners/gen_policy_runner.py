@@ -43,7 +43,7 @@ class GenHisPolicyRunner:
         actor_critic: ActorCritic = actor_critic_class(self.env.num_obs,
                                                        self.env.num_actions,
                                                        **self.policy_cfg,
-                                                       **self.encoder_cfg).to(self.device)
+                                                       **self.encoder_cfg).to(self.device) # : ActorCritic 表示注释，仅起到提示作用，提示变量是属于哪个类的。
         dm_encoder = DmEncoder(self.num_encoder_input, self.encoder_mlp)
         alg_class = eval(self.cfg["algorithm_class_name"])  # PPO
         self.alg: PPO = alg_class(actor_critic,

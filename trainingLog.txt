@@ -1,0 +1,228 @@
+pose_jump_HS_upf7_onlyup: with 4.0 lin_vel_z_world, 0.01 tracking_lin_vel -----> jumping high vertically
+pose_jump_HS_upf8: with additions in upward_force reward ----> can jump up high and jump forward, but the feet positions are not good.
+pose_jump_HS_upf9_comz: (from scratch)
+pose_jump_HS_upf10_comz: (from scratch) command on vel_z and new gradually changing gesture rewards.
+pose_jump_HS_upf11_comz: command on vel_z, new gradually changing gesture rewards and set feet height reward to be zero. 
+-----> jump smoothly, but not high enough and the legs cannot 收起来 （possible reason: not trained long enough）
+
+pose_jump_HS_upf12_comz: the same as 11 ----> cannot track the forward vel and the gesture is very strange.
+pose_jump_HS_upf12_comz: add feet clearance reward, no new feet height reward,other the same as 12  -----> jumping gesture is very strange.
+pose_jump_HS_upf14_comz
+
+pose_jump_HS_upf15: without height samples, work as the comparison group to the pose_jump_NoHS_upf1
+
+pose_jump_HS_noupf: ablatation on the uf_force reward.目的：检验force reward 在这个任务中的作用 ----> 结果： upward force 貌似没什么用。
+
+pose_ref0: added the reference data to the network. : lin_vel_z and lin_vel_z_world together.
+pose_ref1: with reference data, and only lin_vel_z_world. ---> early termination
+pose_ref2: continue training based on pose_ref1
+pose_ref3: ablation on the lin_vel_xy and ang_vel and enlarge the weights of root_pos and feet_pos
+pose_ref4: no imitation_joint_angle
+pose_ref5: only imitation_feet_pos included, together with linvel_xy, lin_vel_z
+
+pose_jump_hasJGes1: has_jumped mask, flight phase pose and feet position.
+pose_jump_hasJGes2: no lin_vel and ang_vel tracking.
+pose_jump_hasJGes3: add the gait_diff penalty terms. and enlarge the default_pose to 0.15
+pose_jump_hasJGes4: no orientation reward. -----> Not good
+pose_jump_hasJGes5: ablation on the lin_vel_z. Use max_height instead. change default_pose from reward to penalty. -----> Not good at all
+pose_jump_hasJGes6: with little reward on the lin_vel_z_world.
+pose_jump_hasJGes7: change feet_distance from penalty to reward and addon the ang_vel_xy penalty.
+change lin_vel_z_world reward from 0.7 to 0.8.
+pose_jump_hasJGes8: penalty on the yaw instead of the ang_vel_xy. 
+pose_jump_hasJGes9: without any penalize on the yaw. (ablatation test) ----> model_200.pt is pretty good. can jump to track the yaw.
+pose_jump_hasJGes10: only 200+ epochs but the results are good.
+pose_jump_hasJGes11: comtinue training based on the pose_jump_hasGes10. In order to see whether it will overfit. -----> model_1000.pt is pretty good and stable.
+pose_jump_hasJGes12: use the task_max_height,  base_height_flight/stance rewards in Curriculum jumping
+pose_jump_hasJGes13: continue training on pose_jump_hasJGes12. -----> model_500.pt is good. gesture is good. 
+pose_jump_hasJGes14: add the lin_vel tracking. Training based on the 13. -----> tracking forward velocity successfully. last.pt and model_800.pt are good.
+pose_jump_hasJGes15: add the ang_vel tracking based on 14 which can already track the lin_vel. -----> cannot track the ang_vel at all.
+pose_jump_hasJGes16: change ang_vel_tracking to target_yaw_tracking. Based on 14. -----> can track the lin_vel and ang_vel together. (last.pt or model_3400.pt)
+act_jump_hasJGes16: jump reward value too large.
+act_jump_hasJGes17: the same scale as pose16.------> can jump smoothly, but cannot control yaw. the robot keep turning circle.
+act_jump_hasJGes19: train based on pose14. with lin_vel and yaw tracking.  -----> can jump smoothly but cannot control yaw, and initial pose is too low.
+
+act_jump_hasJGes20: train based on pose16. with penalty on ang_vel_xy and new intial pose. 
+act_jump_xy_vel21: train based on pose16. with also tracking y_vel and yaw. ------> 跳跃位姿不对
+act_jump_xy_vel22: train based on pose16. with also tracking y_vel and yaw. Add penalty on ang_vel. No early_contact reward.
+act_jump_xy_vel23: 
+act_jump_xy_vel24: train based on pose19 
+
+pose_jump_hasJGes17: train from scratch with the has_jumped reward(500) and termination condition.  -----> result not good, cannot jump at all
+pose_jump_hasJGes18: train from scratch. Add the root_states judgement term to the has_jumped reward and termination condition.   
+
+pose_jump_hasJGes21: train from pose14 -----> 有效，确实只跳一次，但是空中高度有问题。
+pose_jump_hasJGes22： train from scratch.
+pose_jump_hasJGes23: train from pose14 -----> 无效，能跳起来，但是会不敢落地，为了防止termination
+pose_jump_hasJGes24： equalize the termination condition and has_jumped reward. -----> not good.
+pose_jump_hasJGes25: train from scratch. Delete the termination condition and only keep the has_jumped reward. -----> results not good. The robot's gesture is very strange.
+pose_jump_hasJGes26: train based on pose13(model_500.pt). -----> reward not good. The new reward affect the robot gesture.
+pose_jump_hasJGes27: train based on pose13(model_500.pt). Set task_max_height reward from 20 to 1. has_jumped reward from 1 to 5.   ----->  result not good, the same problem as 26.
+pose_jump_hasJGes28: delete the lin_vel_z reward. Other paras the same as 12. ----->failure.
+pose_jump_hasJGes29: delete the lin_vel_z reward and add the new lin_disz_world reward. Others the same as 12.
+
+pose_jump_hasJGes32/33: add bool lin vel to the lin_vel_z_world and task_max_height  ------> results failure.
+pose_jump_hasJGes34: tracking based on the 14. Try to track the lin_vel_z only, task_max_height as original-----> failure
+pose_jump_hasJGes35: train from scratch. Only let the robot on the ground to track lin_vel_z. ------> 根本跳不起来，应该是因为一离地就能拿到1，所以趋向于选择小的跳跃以换取大reward
+pose_jump_hasJGes36： train from scratch. 加入了max_height reward 来作 trade off。 encourage robot to jump high. ——————》没有用
+pose_jump_hasJGes37: train from scratch. 在lin_vel_z 中加入了conditions 限制。-----> 失败
+pose_jump_hasJGes38: train from scratch. 相比37增大了command_vel_z的值，且扩大了has_jumped和mid_air阶段reward的scale.
+
+pose_jump_hasJQuad0: add quad to obs, but no lin_vel and ang_vel tracking.
+pose_jump_hasJQuad1: with new max_height reward.
+pose_jump_hasJQuad2: termination on roll -----> jupming and landing pose not good and the jumping height too low.
+pose_jump_hasJQuad3: tune the paras. Smaller max_height para. -----> 姿态向后倒。
+pose_jump_hasJQuad4： lower max_height reward scale and higher jump standard(0.7-0.75)
+pose_jump_hasJQuad5: 
+pose_jump_hasJQuad6: train the agent to be able to jump successfully, but it will turn circle when jumping
+pose_jump_hasJQuad7: add the lin_vel_tracking R and larger yaw_tracking R. ------> 可以侧跳 prettty good, except the back feet gestures are wired.
+pose_jump_hasJQuad8: finetune the leg gesture. -----> 1000.pt 还可以. gesture for rear legs are bad.
+pose_jump_hasJQuad9: with aditional reward on flrl and frrr. -----> 1700 is good but no yaw_tracking
+pose_jump_hasJQuad10: -----> still cannot track the yaw. Left and right side are not symmetric.
+pose_jump_hasJQuad11: -----> model_2000 is good. jumping gestrue is good. But still cannot track the yaw.
+act_jump_hasJQuad11: finetune pose11 using actuactor_net. ------> can track yaw successfully.
+
+pose_jump_hasJQuad12: train based on 11.model_2000. Add the yaw tracking and no lin_vel tracking. ----> No use!!!
+
+
+pose_jump_with_early_contact1: train based on the pose_jump_hasJQuad11. model_2000.pt with the early_contact reward.
+act_jump_with_early_contact1: trained uing actuactor net.
+
+aliengo_upwards_est0(trained directly on actuactor_net): can track yaw successfully. Add 20 dim obs input to the critic.   -----> last.pt is good
+aliengo_upwards_est1(trained directly on actuactor_net): train based on the est0. Adding lin_vel horizontal and vertical tracking term.  ----> model_400 is better than last. can track 横纵yaw
+aliengo_upwards_est2(trained directly on actuactor_net)：train based on the est0. Adding lin_vel horizontal and vertical tracking term without max_height and lin_z reward  -----> very good. It can do anything.
+
+aliengo_upwards_est3(POSE): train from scratch. base version with lin_vel_z and max_height reward.
+aliengo_upwards_est4(POSE): 3 shut doen accidentally. train based on 3. -----> model_300.pt is good. Can do anything.
+aliengo_upwards_est4_act(actuactor_net): 直接原参数训练不出来，重新加入lin_vel_z 以及max_heights训练。
+aliengo_upwards_est4_act2(actuactor_net): delete the lin_vel_z and max_heights reward. continue training based on aliengo_upwards_est4_act.
+aliengo_upwards_est4_act3(actuactor_net): continue training on act2 because act2 stop accidentally. -----> last.pt is good. It can do everything! Store this policy!!!
+aliengo_upwards_est4_act4(actuactor_net): continue training on act3.
+aliengo_upwards_est4_act5(actuactor_net): continue training on act3 with new config.
+
+aliengo_upwards_vel0： training from scratch. Training schedule: training yaw and lin_vel at the same time.
+aliengo_upwards_vel1: training yaw with max_heights rewards first; and then train without max_height reward and add lin_vel.
+aliengo_upwards_vel1_2: train based on vel1 without max_heights reward, and only track yaw   ------> last.pt is good
+aliengo_upwards_vel1_3: train based on vel1_2 without max heights reward, and track yaw, xy vel together. Add the frfl rrrl symmetrical reward -----> not good
+aliengo_upwards_vel1_4: train based on vel1_2 without max heights reward, and track yaw, xy vel together. No frfl rrrl symmetrical reward!! -----> commanded vel y is wrong.
+aliengo_upwards_vel1_5: train based on vel1_2 without max heights reward, and track yaw, xy vel together. No frfl rrrl symmetrical reward!! With correct commanded vel!
+aliengo_upwards_vel1_6: the same as 5 with smaller commanded y velocity ------> very good. model_100.pt and last.pt both are good.
+upwards_vel1_6_act: actuactorNet finetune based on the vel1_6's last.pt
+upwards_vel1_6_act1: with max_heights rewards ------> RL leggs gesture is too weird
+upwards_vel1_6_act2: with max_heights rewards and rlrr_symmetric reward ------> RL leggs gesture is too weird，不会弯曲
+upwards_vel1_6_act3: with max_heights rewards and 1阶 rlrr_symmetric reward -----> 还可以
+upwards_vel1_6_act4: use without max_height to continue finetune it. And set desired height to be 0.85 -----> fl fr 足端过于内收
+upwards_vel1_6_act5: 加大hip tracking权重
+
+pitch_track_pose0: basci upwards jumping training. -----> jump successfully 
+pitch_track_pose1: add pitch_tracking reward, pitch_vel_tracking and ang_vel to critic observation. -----> jump gesture become reasonable but cannot track the jumping gesture.
+
+distance_track_pose0: using desired distance as the input commands. No task_ori and task_pose. ----> jump successfully but cannot control yaw
+distance_track_pose3: Add pitch_tracking based on the distance_track_pose0. No task_ori and task_pose. With penalty on ang_vel.-----> I think the direct penalty on ang_vel will influence on the robot gesture.
+distance_track_pose4: with reward on the task_ori and task_pos. with pitch tracking reward. ----->failure. cannot jump at all.
+distance_track_pose5: No pitch tracking reward and target position is (0,0,0)  -----> failure
+distance_track_pose6: add orientation penalty other the same as distance_pose5 ----> one time jump and then walk with thigh.
+distance_track_pose7: delete the task_ori reward. ------> single jump and then comtinue to struggling on the ground
+distance_track_pose8: delete the ang_vel tracking reward.-----> can jump but cannot control orientation.
+distance_track_pose9： delete the single jump termination condition and add task_ori reward. ------> continuously jumping with wired flight gesture.
+distance_track_pose10: can jump successfully, but yaw will change 2pi -----> model_800.pt is good.
+distance_track_pose11: more weights on task_pos and task_ori, add track_ang_vel rewards -----> last.pt is good but also yaw change 180
+distance_track_pose12: the same as 11, but add penalty on random ang_vel.  ----> model_500.pt can be used
+distance_track_pose13: continue training on 12 model_500
+distance_track_pose14: continue training for 13
+distance_track_pose15: new task_ori and task_pos reward. continue training on 12 model_500
+distance_track_pose16: train based on 12 model_500. jump vertically continuously.
+distance_track_pose17: train from scratch. with max_heights reward ------> jump Left
+distance_track_pose18: train from scratch. with max_heights reward and track only xy vel with higher weights.------> jump a little random
+distance_track_pose19/20: with scaled task_pos reward. ------> 19 不行；20 the same situation as 19.
+distance_track_pose21: new tracking_feet_pos reward which regulates the feet position in the air. ----> 方向稳定了，不会乱偏，就是landing pose 不好
+distance_track_pose22： No new tracking_feet_pos reward. Add landing pose tracking to the feet_distance reward.
+distance_track_pose23： add desired thigh joint position in the air to the feet_distance reward. 
+distance_track_pose24： default_pose reward works on the rl and rr hips. ------> 后退膝盖着地
+distance_track_pose25: default_pose reward works on the rl and rr hips and set the in the air default_pose reward to be 0 -----> jump left
+distance_track_pose26: default_pose set to weight 5
+distance_track_pose26_2: trained based on 26 and delete max_height reward and add x desired distance to be 1m.
+
+distance_track_poseXY0
+
+distance_track_poseXY2: renew the has_jumped function. The landing_poses is new. No max_heights rewards.
+distance_track_poseXY3: nearly the same as XY2 with only changed task_pos and task_ori scales.
+
+TODO: try to track z height, so that the robot can track the desired commanded z height:
+z_feetTraj0: with predefined feet position traj reward and commmanded various desired z_height. No predicted mass.  -------> failed
+z_feetTraj1: with predefined feet position traj reward and smaller scaled commmanded various desired z_height. No predicted mass. 
+z_feetTraj2: with predefined feet position traj reward and smaller scaled commmanded various desired z_height. No predicted mass. And samller feet_pos weight and mid_air to be zero.  ------> good. can track lin_vel and ang_vel
+z_feetTraj3: trained based on Traj2 with larger desired z_height scale.
+z_feetTraj4: train from scrtach. Desired height: 0.56 ~ 0.80
+z_feetTraj5: continue training based on 4. ----->跳的非常高 无法调节高度
+
+z_feetTraj6： delete the feet_pos (x,y)，new jumping reward(只有在[desired_height, desired_height + 0.05]才有reward). desired_height scale:[0.55,0.95]
+z_feetTraj7： train based on 6 and set the max_height reward to zero. -----> 姿态挺不错的，但还是无法调节高度。(往前跳：set the ang_vel to be -0.1)
+z_feetTraj8: train based on 7, no rlrr symmetric reward. and add height termination condition. A little change to jumping reward. Desired height [0.55, 0.9] -----> can roughly choose height to jump according to the desired height. But the jumping height is not so accurate.
+z_feetTraj9: train based on 8, change is set the desired height command to be discrete value.
+z_feetTraj10: continue on 9 with larger upper bounds for desired heightz. No lin_vel_xy -----> 可控跳跃高度了！ 可以前跳后跳，就是不能侧跳
+
+#垃圾的
+z_feetTraj_hard0: train from scratch with max_height and hard lower bond.   -------> SB策略， 屁用没有。
+z_feetTraj_hard1: add hard lower bound. With zero lin_vel_xy. Train based on 10. --------> desired_height_bond too narrow. Cannot train successfully
+#牛逼的
+z_feetTraj_hard2: With narrow jumping bonds. Others the same as hard1  --------> 牛逼策略，非常屌！！除了不能横跳，就照着这个训练即可。
+z_feetTraj_hard2_2: train based on hard2 with lin_vel_xy.  ------> 跟hard2一样的牛逼策略，甚至还能横跳了。
+
+z_feetTraj_hard30: Train based on 10. Actuactor_net finetune. Penalize on the hip, trunk, thigh's touching the ground. Add orientation penalty. lin_vel_xy are both 0. ----> model_150 不错
+30_2： 先纵向 lin_vel_x[-0.8, 0.8]
+30_3: 再横向 lin_vel_y[-0.6, 0.6] -------> export model_250 can jump vertial and horizontal. 在gazebo中表现一般
+30_4: rlrr_sym reward smaller. lin_vel_xy [-0.8,0.8]&[-0.5,0.5] with new resample_commands. Only track one dimension. -----> 没法跳太高
+30_5: 与4的区别在于，换成了三级别desired_height command.  -----> 跳的挺远。model_950
+30_6: Train based on 30. Larger feet_pos reward and smaller lin_vel.  ------> 还可以。横跳的时候要加入一个反向的-0.05的yaw转动，纵向跳的没有30_5远. last.pt
+30_7：Train based on 30. Everything the same as 30_6 except larger lin_vel_xy [-1,1];[-0.65,0.65]  ------> 还不错，都还行。除了没法跳到很高。前后腿姿态比较均衡。目前最好用的部署策略。
+
+z_feetTraj_hard30_long0: （actuactor_net） Train based on 30. lower desired height[0.45, 0.8] 0.55,0.65,0.75; larger lin_vel_x command. No lin_vel_y ------> 不太行，2.0的速度都track不上
+z_feetTraj_hard30_long1:（POSE）Train based on z_feetTraj10. Change feet_pose from 0.4 to 0.5
+z_feetTraj_hard30_long1_actu: actuactor_net finetuned.
+z_feetTraj_hard30_long1_actu2
+z_feetTraj_hard30_long1_actu3: 
+z_feetTraj_hard30_long1_actu4: model_150/200都试一试。 
+
+z_feetTraj_hard31： Train based on z_feetTraj_hard2_2. Actuactor_net finetune. Penalize on the hip, trunk, thigh's touching the ground. Add orientation penalty. lin_vel_xy are both 0 with 两级高度指令. -----> 效果一般，尤其是后腿姿势不太行
+31_2: 先纵向 lin_vel_x[-0.8, 0.8]
+31_3: 再横向 lin_vel_y[-0.6, 0.6]
+
+
+z_feetTraj11: add 横向跳跃to the network -----> 可以横向跳跃了，然后也能控制高度，但是训练的不够久，还要继续训练
+z_feetTraj12： continue training on 11. -----> Can do anything: 前后左右跳跃，转向跳跃 + 可以track跳跃高度 （lin_vel_xy[-0.5,0.5] [-0.5,0.5]； desired_height_z[0.45,1.25]； 0.6 以下全是 0.55）
+
+z_feetTraj13: resample函数修改_0.45 到0.55时候到0.55. 小于0.45的映射到初值高度。Trained based on 10. lin_vel_xy 全部设计成0（resample_command里改动了）. desired_height_z = [0.35, 1.25] -----> 0.35-0.44时 会出现贴地跳跃的情况。
+z_feetTraj14: Trained based on 10. Add stick_to_ground reward and 0 mask to jumping and task_max_height. Others the same as 13. -----> the same result as 13
+
+z_feetTraj15: train from scratch. With max_height_reward and stick_to_ground. 0 mask also on tracking_ang_vel
+
+
+
+finetune the z_feetTraj12 on actuactor_net.
+z_feetTraj12_actu: finetuned based on z_feetTraj12.  -----> 高度tracking能力一般，只有两个档位0.5以及0.7。但是也能用。
+z_feetTraj_hard2_2_actu: finetune based on z_feetTraj_hard2_2
+z_feetTraj_hard2_2_actu_2/_3 : continue finetune on hard2_2_actu with lin_vel_xy [-0.5, 0.5]
+
+z_feetTraj_hard2_2_actu_v2_0: finetune based on z_feetTraj_hard2_2 with lin_vel_xy [0,0] first.  ------> 除了不能横跳，其他都很不错。
+
+z_feetTraj_hard2_2_actu_v2_1: trained based on v2_0, with lin_vel_xy [-0.5, 0.5]----------> 高度track还可以，可以做不同高度地跳跃。verstile jumping 还差点意思。 可以做height_tracking 和前后左右跳，转跳的单次跳跃实验。
+z_feetTraj_hard2_2_actu_v2_2: higher ang_vel_tracking reward and larger lin_vel_x
+z_feetTraj_hard2_2_actu_v2_3: continue on z_feetTraj_hard2_2_actu_v2_2    -------> 可以用来试试了
+z_feetTraj_hard2_2_actu_v2_4: continue on z_feetTraj_hard2_2_actu_v2_3    -------> 姿态太怪
+z_feetTraj_hard2_2_actu_v2_5： continue on 2_4 with frfl_sym and rlrr_sym   -----> 不错不错 都能来几步
+
+z_feetTraj_hard2_2_actu_v2_6：continue on v2_0, and only track x or y once a time.
+
+flip:
+1. try to train back flip with pitch_vel tracking based on the jumping scenario. -----> 
+flip3: use [3.14, 4.0] as pitch_vel to realize backflip-----> just can only 抬个头
+flip4: use bigger commanded pitch_vel [6.14, 7.14] -----> tracking pitch vel is no use
+
+2. track target pitch angle:
+flip5: use [2.62, 3.00] as desired pitch angle. Train based on the z_feetTraj7  ----> failure 
+
+2. do research on how to realize back flip with RL.
+
+actuator_net_finetuned:
+act_jump_HS_upf8: based on pose_jump_HS_upf8 
+act_jump_HS_upf15: based on pose_jump_HS_upf15, no height smaples 

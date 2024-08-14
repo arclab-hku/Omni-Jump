@@ -83,11 +83,11 @@ class RolloutStorage:
         self.sigma = torch.zeros(num_transitions_per_env, num_envs, *actions_shape, device=self.device)
 
         # For entrin loss
-        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 3, device=self.device)
-        self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 11, device=self.device)
+        self.extrin_loss = torch.zeros(num_transitions_per_env, num_envs, 3+17+3+2-4-8, device=self.device)
+        self.extrin_gt_loss = torch.zeros(num_transitions_per_env, num_envs, 20+3+2-4-8, device=self.device)
 
         # For privileged info
-        self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 200, device=self.device)
+        self.privileged_info = torch.zeros(num_transitions_per_env, num_envs, 200+17+3+2-4-8, device=self.device) #200+264
 
         # For priv_info
         self.priv_info = torch.zeros(num_transitions_per_env, num_envs, 17, device=self.device)
@@ -165,7 +165,7 @@ class RolloutStorage:
             delta = self.rewards[step] + next_is_not_terminal * gamma * next_values - self.values[step]
             advantage = delta + next_is_not_terminal * gamma * lam * advantage
 
-            self.returns[step] = advantage + self.values[step]
+            self.returns[step] = advantage + self.values[step] # Q
 
         # Compute and normalize the advantages
         self.advantages = self.returns - self.values

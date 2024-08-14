@@ -86,61 +86,17 @@ class LeggedRobotCfg(BaseConfig):
     class commands:
         curriculum = True
         max_curriculum = 1.
-        num_commands = 6#5#4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
+        num_commands = 5#4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 10.  # time before command are changed[s]
-        height_command = True
-        heading_command = False#True  # if true: compute ang vel command from heading error
+        heading_command = True  # if true: compute ang vel command from heading error
         tracking_z = True
-        desired_jumping_height = 0.85
 
         class ranges:
-            lin_vel_x = [-2.0, 3.5] # [0.3, 0.8]#[0.2, 2.0][-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0., 0.] # [-0.5, 0.6] #[-0.1, 0.1] # min max [m/s]
-            ang_vel_yaw = [-1.0, 1.0]#[-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
-            height_z = [0.45, 0.8] #[0.45, 0.99]
-
+            lin_vel_x = [-0.5, 0.5]#[0.2, 2.0][-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.05, 0.05] #[-0.1, 0.1] # min max [m/s]
+            ang_vel_yaw = [-0.01,0.01]#[-1, 1]  # min max [rad/s]
             heading = [-3.14, 3.14]#[-0.314,0.314]#[-3.14, 3.14]
-            vel_z_bool = [0,1]
- 
-        
-    # class commands():
-    #     jump_over_box = False
-    #     num_commands = 13  # default: relative x,y,z for jump and desired quaternion (euler angles use xyz notation)
-    #     # and 6 for centre of object and its dimensions.
-    #     upward_jump_probability = 0.1
-    #     curriculum = False
-    #     curriculum_type = "time-based"
-    #     randomize_commands = True
-    #     curriculum_interval = 5
-    #     max_curriculum = 1.
-
-    #     num_levels = 11
-    #     randomize_yaw = False
-    #     resampling_time = 10.
-        
-    #     class ranges(): # command disturbance. Means the jumping distance range to track
-    #         # The command distances are relative to the initial agent position and are sampled from
-    #         # the ranges below:
-
-    #         # This is the min/maximum ranges in the jump's distance curriculum (x_des = dx~pos_dx + x)
-    #         pos_dx_lim = [-0.,0.] #pos_command_variation_limits
-    #         pos_dy_lim = [-0.,0.]
-    #         pos_dz_lim = [-0.0,0.0]
-    #         # These are the starting ranges for the jump's distances (i.e. if curriculum 
-    #         # if off, these stay the same for the whole training.)
-    #         pos_dx_ini = [-0.,0.]  # pos_command_variation_ini
-    #         pos_dy_ini = [-0.,0.]
-    #         pos_dz_ini = [0.0,0.0]
-    #         # These are the steps for the jump distance changes every curriculum update.
-    #         pos_variation_increment = [0.01,0.01,0.01]
-
-    #     class distances(): # Command distance to track. If you want to pass a fixed command distance, use these values:
-    #         x = 0.
-    #         y = 0.
-    #         z = 0.
-    #         # Specify in Euler 'xyz' notation (order is important as it gets converted to quat later):
-    #         # des_angles_euler = [0.0,0.0,0.0]
-    #         des_yaw = 0.6
+            vel_z = [0,1]
             
 
     class init_state:
@@ -282,7 +238,7 @@ class LeggedRobotCfg(BaseConfig):
         clip_actions = 100.
 
     class noise:
-        add_noise = False #True
+        add_noise = True
         noise_level = 1.0  # scales other values
 
         class noise_scales:

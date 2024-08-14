@@ -156,7 +156,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
             stick_to_ground = 0.#0.5
 
             feet_distance = 0.#1.0#0.4#0.65
-            feet_pos = 0.4#0.4#0.6 # maybe need to be smaller
+            feet_pos = 0.4#0.6#1.0 # maybe need to be smaller
             early_contact = 0.#1.0
             max_height = 0.#2.5#4.#5.#1.0#10.0#1.5#0.8  # add has_jumped mask and used the simple env
             task_max_height = 20.0#20.0#20.0
