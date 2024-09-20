@@ -196,6 +196,107 @@ z_feetTraj14: Trained based on 10. Add stick_to_ground reward and 0 mask to jump
 
 z_feetTraj15: train from scratch. With max_height_reward and stick_to_ground. 0 mask also on tracking_ang_vel
 
+##########jump_over_gaps:#############
+gap_variousZ1: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the parkour_gap_terrain. gap size is 0.8*difficulty. lin_vel_x [-1,3], desired_height[0.45,0.9]   ------> failure. 机器人选择横向跳，绕开了地形
+gap_variousZ2： terrain different than 1. Add the vertical gap. lin_vel [1.0,3.0]. With desired_height [0.45, 0.9]. Gap size is 0.8*difficulty.
+gap_variousZ3: mostly similar to gap_variousZ2 except the gap size is smaller. 0.8 -> 0.7  ----> 还可以。但是reward还没有完全收敛
+gap_variousZ3_actu: actuactor_net finetune based on gap_variousZ3
+gap_variousZ3_actu2: continuously training based on gap_variousZ3_actu.
+
+gap_variousZ4： actuactor_net finetune on gap_variousZ3
+gap_variousZ4_pose: Pose training. Trained based on gap_variousZ3
+gap_variousZ4_pose_actu: finetune the gap_variousZ4_pose based on actuactor_net.
+gap_variousZ4_pose_actu2: continuously training on actu -------------> 就还行吧
+gap_variousZ4_actu: 
+
+
+###############training go2 model######################
+go2_jump0: with max_height reward
+go2_jump1: train based on go2_jump0 without max_height reward.
+
+go2_jump2: new initial pose with max_height reward and without jump_distance reward.
+go2_jump2_1:continue training on go2_jump2, --------> 不错能跳远了
+go2_jump2_1_try: continue training on go2_jump2_1 with new max_track reward only (no height_track and task_max_height rewards). -----> last 就还行，但是后腿姿势很怪
+此策略跳的倒是远，需要的改动是：加入flight phase的初值调整
+go2_jump2_1_try2: 基于try修改了feet_pose的写法 -------------> 跳的又高又远，但是jumping gesture 还是很奇怪
+
+go2_jump2_1_new: train based on go2_jump2_1 with new task_max_height reward(in which the self.has_jumped will update)
+
+go2_jump2_2:continue training on go2_jump2_1, without max_height rewards   -------> didn't converge yet. 但效果还是很不错的，尤其是前向跳跃非常远，原地跳的也很高。就是yaw有点偏。
+go2_jump2_3：2_2 shut down by accident, Continue training on go2_jump2_2. (use task_max_height reward 20.0 without max_height rewards)  -------> shut down accidentally, not converge yet.值得保存下来。 效果不错，尤其是第一次跳跃能够跳的又高又远。
+go2_jump2_4: continue training on 2_3 with similar reward ------> 存下来，可以用了。无lin_vel时，跳的很好。有lin_vel时，第一跳很完美，后面就开始不track height 了。
+此策略需要的改动：将task_max_height reward 换成有会重置刷新的max_track reward。
+go2_jump2_4_2:  with max_track reward only    --------> 還可以的POSE 策略，就是ang_vel track的略微有點不準。跳的夠遠。model_3350.pt比較好,4000之後的都是垃圾。 2.5 max_track reward
+go2_jump2_4_3:  with new task_max_height reward only  -------->還挺不錯的，跳的夠遠。last.pt就可以。只是沒有側跳
+versatile_jump:
+go2_jump2_4_4： train based on 2_4_3 with 側向速度。     -------> 訓出來了 已經能夠橫跳了。好的策略！可以保存下來,用於actuactor_net finetuned.就是沒法低跳，只能高跳。 建議換成（0.5，0.7）以及up_condition 和max_height的low condition去finetune.  
+go2_jump2_4_4_new_2: trained based on go2_jump2_4_4 with task_max_height and jumping reward, without height termination conditions. -------> last.pt非常好。能verstaile 還能track不同高度。actuator_net 在這兒finetune.
+go2_jump2_4_4_new_2_actu
+
+
+go2_jump2_4_4_new_3: replace feet_distance reward with feet_pos reward and larger orientation penalty.
+go2_jump2_4_4_new_3_actu: finetune on the new_3 last.pt
+go2_jump2_4_4_new_3_actu2: smaller max_height reward and larger default_pose and orientation penalty.
+
+go2_jump2_4_5: continue training based on 2_4_4 with different desired_height scale. ------> 不太行的策略，jumping_reward和termination條件沒有對應上
+go2_jump2_4_6: continue training based on 2_4_4 with different desired_height scale and relative jumping reward design.[兩檔的跳躍高度預期]  -----> 還湊合的策略
+go2_jump2_4_7: continue training based on 2_4_6 with different desired_height check_termination conditions.  -----> 不行
+go2_jump2_4_8: continue training based on 2_4_4 with different desired_height [兩檔的跳躍高度預期], and new task_max_height design.   ------> 不行
+go2_jump2_4_9: continue training based on 2_4_4 with different desired_height [兩檔的跳躍高度預期], and new task_max_height design; new task_max_height reward new jumping_reward and weights. ------>效果不夠好，而且空中姿態比較奇怪
+go2_jump2_4_10： continue training based on 2_4_4. Larger weights on jumping_reward and default_pose also works on mid_air condition and larger wieght(-0.14->-0.16) -----> 不太行，只能跳一次，落地之後就會趴在地上。
+go2_jump2_4_11: continue training on 2_4_10. Delete the termination conditions on the height_bound. Only use the relative reward. -----> track height 效果不佳，只有0.55 和0.6 兩種級別而且只有400.pt能用 (實在不行 就用這個model_400的策略)
+go2_jump2_4_12: continue training based on 2_4_4. New task_max_height reset value(0.->root_states). (0.55,0.7)--->(0.54,0.72). larger task_max_height weights.   ----->瘋狂reset 
+go2_jump2_4_13: lower termination conditions改成 max_heights and has_jumped 的非嚴格形式, 去掉calf termination.continue training on 2_4_4.  -------> useless.
+go2_jump2_4_14: Continue training on 2_4. Without lin_vel. -----> model_200 可以用
+go2_jump2_4_15: Continue training on go2_jump2_4_14 model_200 with lin_vel_xy.
+
+go2_jump2_4_16: no lower limits on the termination condition. Train based on the go2_jump2_4_4. Only upper height bound. -----> last.pt僅僅是可以track不同高度，無法track 3.0的lin_vel指令. model_1300只能track lin_vel
+go2_jump2_4_17: train based on the 2_4_16 last.pt. Finetune the weights of vel terms and height terms.                   -----> last.pt僅僅是可以track不同高度，無法track 3.0的lin_vel指令. 2.0的lin_vel_x又不夠遠而且不夠高
+go2_jump2_4_18: train based on the 2_4_17 last.pt. Enlarge the max_height rewards and enlarge the lin_vel_x command.
+go2_jump2_4_19: the same reward weights as 18 except smaller task_max_height reward weight. But train based on the 2_4_4
+go2_jump2_4_20: Train based on 2_4_19. Only change: task_max_height 1.0 -> 1.2    -----> 跳不高。0.5和0.7一樣的高度
+go2_jump2_4_21: Train based on 2_4_17. Larger jumping reward. ----> 就只能原地跳高
+go2_jump2_4_22: Train based on 2_4_17. Add lower_bound termination condition, lin_vel_x [1.5, 3.5]; larger jumping and task_max_height rewards. 
+go2_jump2_4_23： Only track 2.5,3.0 lin_vel_x with jumping ,height reward and termination condition as 22.
+
+go2_jump2_4_24: lower height and only (2.5,3.0) lin_vel_x. train based on go2_jump2_4. -----> 第一跳很高，後面就比較矮。而且初始位姿很奇怪。
+
+go2_jump2_4_25： train based on the 2_4_4 without height termination condition.  -----> 0.6+的高度long jump 能夠實現了。就是起跳姿勢有點奇怪。actuactor_net在這基礎上finetune. for long jump.
+go2_jump2_4_26: train based on the 2_4_25 with task_max_height in the termination condition.
+
+go2_jump2_4_27: trained based on 2_4_26 without height termination conditions. -----> model_500.pt works well. Jump long enough with two different heights! 不過跳躍姿勢還是有點怪。
+go2_jump2_4_27_actu: no lin_vel_y command, [-1.5,1.5] ang_vel command. Train based on model_700.pt ----->完全不行，有termination條件
+go2_jump2_4_27_actu2：不要lower bound termination condition       --------------> 沒啥用，主要是跳的不夠遠 落地也不夠穩。
+go2_jump2_4_27_actu3: lin_vel_x [2.3, 3.0]  --------------> 高速跳躍實現不了。完全沒學會！
+go2_jump2_4_27_actu4,5,6： 對lin_vel_x做一個curriculum的增長   --------------------> 更新lin_vel curriculum的時間可能不太合理，
+go2_jump2_4_27_actu7,8： track root_states 的 前兩維。 bigger threshold for updateing commands
+
+
+
+go2_jump3: Train from scratch. New jumping reward design against go2_jump2 series and no lin_vel commands. With low high bond termination condition, in order to get the varying-height jumping.
+
+go2_jump3: use max_height reward only, no task_max_height reward -----> 垃圾策略
+go2_jump3_2:use max_height reward only but with smaller weights. -----> 垃圾策略，屁用没有,一动不动
+
+
+go2_jump2_forward_distance: with max_height reward
+go2_jump2_forward_distance2: continue training on go2_jump2_forward_distance without max_height reward.
+
+go2_jump4_POSE: train from scratch with max_task and jumping reward, without lin_vel_xy command. ---------> model_4000.pt is good! Can track the desired height and ang_vel respetively.
+go2_jump4_POSE_2:(versatile_jump with different heights) add the lin_vel_xy command to the model.   ---------> model_650, 700就挺好的！ 基本都可以了，不同高度versatile jump. 但是forward jump不夠遠 not far enough!
+教訓總結：
+go2_jump4_POSE_2_actu: finetune based on the actuator_net. Use the same reward weights as go2_jump4_POSE_2.  -------> jumping reward增長的不夠高，所以跳躍無法track特定的高度 (Gazebo不太行)
+go2_jump4_POSE_2_actu2: 相比actu版本，減小了lin_vel and ang_vel reward的scale，3.0 -> 2.0 -------> issac gym可以track不同高度，(Gazebo不太行)
+go2_jump4_POSE_2_actu_new: 
+
+##########jumping over stairs:##########
+stair_concreteZ: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the pyramid stair terrains. Step width: 0.85, step height 0.05+0.15*difficulty （矮地形）
+stair_concreteZ2： Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the pyramid stair terrains. Step width: 0.85, step height 0.1+0.18*difficulty （中等宽些的地形）---> 还可以，大部分能跳过去。不错.
+stair_concreteZ2_actu: Actuactor_net finetuned on stair_concreteZ2. linvel_x [-1,3]; height0.1+0.18*difficulty; step_width=0.85
+stair_concreteZ2_actu2: contunue training on the stair_concreteZ2_actu
+
+stair_concreteZ3: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. lin_vel_y [-0.5,0.5].  On the pyramid stair terrains. Step width: 0.8。 step_height 0.1+0.3*difficulty （高而窄的地形）-----> 不太行，跳不过去
+stair_concreteZ4: Train based on z_feetTraj10. With lin_vel_x[0, 3.0], desired_height[0.45, 0.75]. On the pure one direction stair. Stair width 0.85, stair height: 0.1+0.25*difficulty   -------> SB 策略，跳不过去
 
 
 finetune the z_feetTraj12 on actuactor_net.

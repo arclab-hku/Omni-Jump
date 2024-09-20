@@ -203,42 +203,77 @@ class Terrain:
                                            length=self.width_per_env_pixels,
                                            vertical_scale=self.cfg.vertical_scale,
                                            horizontal_scale=self.cfg.horizontal_scale)
-        slope = difficulty * 0.4
-        step_height = 0.05 + 0.18 * difficulty
+        slope = difficulty * 0.4  # difficulty = i / self.cfg.num_rows
+        step_height = 0.1 + 0.28 * difficulty
         discrete_obstacles_height = 0.05 + difficulty * 0.2
         stepping_stones_size = 1.5 * (1.05 - difficulty)
         stone_distance = 0.05 if difficulty == 0 else 0.1
         hurdle_height = 2.0 * difficulty
-        gap_size = 1.2#0.1 * difficulty
+        gap_size = 0.7 * difficulty
         if difficulty == 0:
             #gap_size = 0.3
             hurdle_height = 0.06
         pit_depth = 1. * difficulty
         if self.type == "stair":
+            # terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                              platform_size=3.)
+            #terrain_utils.stairs_terrain(terrain, step_width=1.0, step_height=step_height)
+            # parkour_gap_terrain(terrain,
+            #                gap_size=gap_size,# should increase with the curriculum
+            #                platform_len=1.2, 
+            #                platform_height=0., 
+            #                num_gaps=6,
+            #                x_range=[1.1, 1.5], # the minimum value should larger than the gap_size
+            #                y_range=[-0.01, 0.01],
+            #                #y_range=[-1.2, 1.2],
+            #                half_valid_width=[0.6, 1.2],
+            #                gap_depth=-1000,
+            #                pad_width=0.1,
+            #                pad_height=0.)
+            gap_terrain(terrain, gap_size=gap_size, platform_size=3., x_range=[1., 1.4], num_gaps=3)
+            #pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+            # terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005,
+            #                                      downsampled_scale=0.2)
+            # terrain_utils.random_uniform_terrain(terrain, min_height=-0.02, max_height=0.02, step=0.005,
+            #                                          downsampled_scale=0.2)
 
-            if choice < self.proportions[0]:
-                if choice < self.proportions[0] / 2:
-                    slope *= -1
-                terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
-            elif choice < self.proportions[1]:
-                terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
-                terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005,
-                                                     downsampled_scale=0.2)
-            elif choice < self.proportions[3]:
-                    if choice < self.proportions[2]:
-                        step_height *= -1
-                    terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height,
-                                                         platform_size=3.)
-            elif choice < self.proportions[4]:
-                terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height,
-                                                     platform_size=3.)
-            elif choice < self.proportions[5]:
-                terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height,
-                                                     platform_size=3.)
-            elif choice < self.proportions[6]:
-                gap_terrain(terrain, gap_size=gap_size, platform_size=3.)
-            else:
-                pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+            # if choice < self.proportions[0]:
+            #     # if choice < self.proportions[0] / 2:
+            #     #     slope *= -1
+            #     terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                              platform_size=3.)
+            #     # terrain_utils.stairs_terrain(terrain, step_width=0.85, step_height=step_height)
+            #     # terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #     #                                          platform_size=3.)
+            # elif choice < self.proportions[1]:
+            #     # terrain_utils.pyramid_sloped_terrain(terrain, slope=slope, platform_size=3.)
+            #     terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                              platform_size=3.)
+            #     # terrain_utils.random_uniform_terrain(terrain, min_height=-0.05, max_height=0.05, step=0.005,
+            #     #                                      downsampled_scale=0.2)
+            #     terrain_utils.random_uniform_terrain(terrain, min_height=-0.02, max_height=0.02, step=0.005,
+            #                                          downsampled_scale=0.2)
+            # elif choice < self.proportions[2]:
+            #         # if choice < self.proportions[2]:
+            #         #     step_height *= -1
+            #         # terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.31, step_height=step_height,
+            #         #                                      platform_size=3.)
+            #         terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                              platform_size=3.)
+            # elif choice < self.proportions[3]:
+            #     terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                          platform_size=3.)
+            # elif choice < self.proportions[4]:
+            #     terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            #                                          platform_size=3.)
+            # # elif choice < self.proportions[5]:
+            # #     terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+            # #                                          platform_size=3.)
+            #     # gap_terrain(terrain, gap_size=gap_size, platform_size=3.)
+            # else:
+            #     # pit_terrain(terrain, depth=pit_depth, platform_size=4.)
+                # terrain_utils.pyramid_stairs_terrain(terrain, step_width=0.85, step_height=step_height,
+                #                                      platform_size=3.)
 
         elif self.type == "stone":
             if choice < self.proportions[0]:
@@ -571,8 +606,9 @@ class Terrain:
             if terrain.idx in [3,4,5,6]:
                 self.goals[i, j, :, :] = terrain.goals + [i * self.env_length, j * self.env_width, 0]
         else:
-            env_origin_x = (i + 0.15) * self.env_length
-            env_origin_y = (j + 0.15) * self.env_width
+            #env_origin_x = (i + 0.15) * self.env_length
+            env_origin_x = (i + 0.35) * self.env_length
+            env_origin_y = (j + 0.35) * self.env_width
             x1 = int((self.env_length / 2. - 1) / terrain.horizontal_scale)
             x2 = int((self.env_length / 2. + 1) / terrain.horizontal_scale)
             y1 = int((self.env_width / 2. - 1) / terrain.horizontal_scale)
@@ -581,6 +617,7 @@ class Terrain:
                 env_origin_z = 0
             else:
                 env_origin_z =  np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
+                #env_origin_z =  terrain.height_field_raw[x1:x2, y1:y2] * terrain.vertical_scale
             self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]            
             # env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
             # self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]
@@ -588,7 +625,7 @@ class Terrain:
             #    self.goals[i, j, :, :] = terrain.goals + [i * self.env_length, j * self.env_width]
 
 
-def gap_terrain(terrain, gap_size, platform_size=1.):
+def gap_terrain(terrain, gap_size, platform_size=1.,x_range=[1.0, 1.2], y_range=[-0.01, 0.01], num_gaps=4):
     gap_size = int(gap_size / terrain.horizontal_scale)
     platform_size = int(platform_size / terrain.horizontal_scale)
 
@@ -602,6 +639,19 @@ def gap_terrain(terrain, gap_size, platform_size=1.):
     terrain.height_field_raw[center_x - x2: center_x + x2, center_y - y2: center_y + y2] = -1000
     terrain.height_field_raw[center_x - x1: center_x + x1, center_y - y1: center_y + y1] = 0
 
+    dis_x_min = round(x_range[0] / terrain.horizontal_scale) + 2*gap_size
+    dis_x_max = round(x_range[1] / terrain.horizontal_scale) + 2*gap_size
+
+    for i in range(num_gaps-1):
+        dis_x = np.random.randint(dis_x_min, dis_x_max)
+        x1 = x1 - dis_x
+        x2 = x1 + gap_size
+        y1 = y1 - dis_x
+        y2 = y1 + gap_size
+        terrain.height_field_raw[center_x - x2: center_x + x2, center_y - y2: center_y + y2] = -1000
+        terrain.height_field_raw[center_x - x1: center_x + x1, center_y - y1: center_y + y1] = 0    
+
+
 def parkour_gap_terrain(terrain,
                            gap_size=1.6,# should increase with the curriculum
                            platform_len=1.8, 
@@ -611,7 +661,7 @@ def parkour_gap_terrain(terrain,
                            y_range=[-0.01, 0.01],
                            #y_range=[-1.2, 1.2],
                            half_valid_width=[0.6, 1.2],
-                           gap_depth=-100,
+                           gap_depth=-1000,
                            pad_width=0.1,
                            pad_height=0.,#0.5,
                            flat=False):
@@ -640,12 +690,81 @@ def parkour_gap_terrain(terrain,
     dis_x_min = round(x_range[0] / terrain.horizontal_scale) + gap_size
     dis_x_max = round(x_range[1] / terrain.horizontal_scale) + gap_size
 
-    dis_x = platform_len
+    dis_x = platform_len # the starting position of the first gap
     goals[0] = [platform_len - 1, mid_y]  # The first dimension of goals is 
     last_dis_x = dis_x
     for i in range(num_gaps):
-        rand_x = (dis_x_min+ dis_x_max)//2#np.random.randint(dis_x_min, dis_x_max)
-        dis_x += rand_x
+        rand_x = np.random.randint(dis_x_min, dis_x_max) #(dis_x_min+ dis_x_max)//2
+        dis_x += rand_x # the distance between 2 gaps
+        rand_y = 0#np.random.randint(dis_y_min, dis_y_max)
+        if not flat:
+            # terrain.height_field_raw[dis_x-stone_len//2:dis_x+stone_len//2, ] = np.random.randint(hurdle_height_min, hurdle_height_max)
+            # terrain.height_field_raw[dis_x-gap_size//2 : dis_x+gap_size//2, 
+            #                          gap_center-half_gap_width:gap_center+half_gap_width] = gap_depth
+            terrain.height_field_raw[dis_x-gap_size//2 : dis_x+gap_size//2, :] = gap_depth
+
+        #terrain.height_field_raw[last_dis_x:dis_x, :mid_y+rand_y-half_valid_width] = gap_depth  # dist_x is a random value
+        #terrain.height_field_raw[last_dis_x:dis_x, mid_y+rand_y+half_valid_width:] = gap_depth
+        
+        last_dis_x = dis_x
+        goals[i+1] = [dis_x-rand_x//2, mid_y + rand_y]
+    final_dis_x = dis_x + np.random.randint(dis_x_min, dis_x_max)
+    # import ipdb; ipdb.set_trace()
+    if final_dis_x > terrain.width:
+        final_dis_x = terrain.width - 0.5 // terrain.horizontal_scale
+    goals[-1] = [final_dis_x, mid_y]
+    pad_width = int(pad_width // terrain.horizontal_scale)
+    pad_height = int(pad_height // terrain.vertical_scale)
+    terrain.height_field_raw[:, :pad_width] = pad_height
+    terrain.height_field_raw[:, -pad_width:] = pad_height
+    terrain.height_field_raw[:pad_width, :] = pad_height
+    terrain.height_field_raw[-pad_width:, :] = pad_height
+    terrain.goals = goals * terrain.horizontal_scale
+
+def vertical_parkour_gap_terrain(terrain,
+                           gap_size=1.6,# should increase with the curriculum
+                           platform_len=1.8, 
+                           platform_height=0., 
+                           num_gaps=5,
+                           x_range=[1.2, 1.8], # the minimum value should larger than the gap_size
+                           y_range=[-0.01, 0.01],
+                           #y_range=[-1.2, 1.2],
+                           half_valid_width=[0.6, 1.2],
+                           gap_depth=-1000,
+                           pad_width=0.1,
+                           pad_height=0.,#0.5,
+                           flat=False):
+    goals = np.zeros((num_gaps+2, 2))          # goals are used to define the waypoint on the road.
+    # terrain.height_field_raw[:] = -200
+    # import ipdb; ipdb.set_trace()
+    mid_y = terrain.length // 2  # length is actually y width
+
+    # dis_x_min = round(x_range[0] / terrain.horizontal_scale)
+    # dis_x_max = round(x_range[1] / terrain.horizontal_scale)
+    dis_y_min = 0#round(y_range[0] / terrain.horizontal_scale)
+    dis_y_max = 0.1#round(y_range[1] / terrain.horizontal_scale)
+
+    platform_len = round(platform_len / terrain.horizontal_scale) # means how many grids in total.
+    platform_height = round(platform_height / terrain.vertical_scale)
+    #gap_depth = -round(np.random.uniform(gap_depth[0], gap_depth[1]) / terrain.vertical_scale) # vartival_scale=0.005 
+    
+    # half_gap_width = round(np.random.uniform(0.6, 1.2) / terrain.horizontal_scale)
+    half_valid_width = round(np.random.uniform(half_valid_width[0], half_valid_width[1]) / terrain.horizontal_scale)
+    # terrain.height_field_raw[:, :mid_y-half_valid_width] = gap_depth
+    # terrain.height_field_raw[:, mid_y+half_valid_width:] = gap_depth
+    
+    terrain.height_field_raw[0:platform_len, :] = platform_height # only descibe the height
+
+    gap_size = round(gap_size / terrain.horizontal_scale)
+    dis_x_min = round(x_range[0] / terrain.horizontal_scale) + gap_size
+    dis_x_max = round(x_range[1] / terrain.horizontal_scale) + gap_size
+
+    dis_x = platform_len # the starting position of the first gap
+    goals[0] = [platform_len - 1, mid_y]  # The first dimension of goals is 
+    last_dis_x = dis_x
+    for i in range(num_gaps):
+        rand_x = np.random.randint(dis_x_min, dis_x_max) #(dis_x_min+ dis_x_max)//2
+        dis_x += rand_x # the distance between 2 gaps
         rand_y = 0#np.random.randint(dis_y_min, dis_y_max)
         if not flat:
             # terrain.height_field_raw[dis_x-stone_len//2:dis_x+stone_len//2, ] = np.random.randint(hurdle_height_min, hurdle_height_max)

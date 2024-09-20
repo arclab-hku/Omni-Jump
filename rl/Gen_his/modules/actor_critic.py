@@ -61,7 +61,7 @@ class ActorCritic(nn.Module):
         self.estLen = kwargs['estLen']
         self.HistoryLen = kwargs['HistoryLen']
 
-        self.num_actor_input = num_obs + self.estLen #+ 197#+264 # +197 means adding the measure heights in the actor
+        self.num_actor_input = num_obs + self.estLen #+ 197#+264 # +197 means adding the measure heights in the actor. estLen is 13.
 
         num_critic_input = num_obs + self.priv_info_dim ##### 45 + 3 + 187 #  num_obs is proprio info(45), priv_info_dim is the whold compute obs dim (11*17+3+4+4+2)
 

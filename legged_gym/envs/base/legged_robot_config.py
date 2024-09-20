@@ -94,10 +94,10 @@ class LeggedRobotCfg(BaseConfig):
         desired_jumping_height = 0.85
 
         class ranges:
-            lin_vel_x = [-2.0, 3.5] # [0.3, 0.8]#[0.2, 2.0][-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0., 0.] # [-0.5, 0.6] #[-0.1, 0.1] # min max [m/s]
-            ang_vel_yaw = [-1.0, 1.0]#[-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
-            height_z = [0.45, 0.8] #[0.45, 0.99]
+            lin_vel_x = [-0.7, 2.0]#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.7, 0.7] #[-0.5, 0.6] # min max [m/s]
+            ang_vel_yaw = [-3., 3.]#[-1., 1.] # [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
+            height_z = [0.45, 0.75] #[0.45, 0.99]
 
             heading = [-3.14, 3.14]#[-0.314,0.314]#[-3.14, 3.14]
             vel_z_bool = [0,1]

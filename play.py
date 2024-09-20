@@ -42,7 +42,7 @@ import torch
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
-    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 5)
+    env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
     env_cfg.terrain.num_rows = 6
     env_cfg.terrain.num_cols = 4
 
@@ -51,7 +51,7 @@ def play(args):
     # env_cfg.terrain.num_rows = 10  # number of terrain rows (levels)
     # env_cfg.terrain.num_cols = 20  # number of terrain cols (types)
 
-    max_init_terrain_level = 10  # starting curriculum state
+    max_init_terrain_level = 10 # starting curriculum state
     env_cfg.terrain.curriculum = True
     env_cfg.noise.add_noise = True
     env_cfg.domain_rand.randomize_friction = False
@@ -60,10 +60,10 @@ def play(args):
     env_cfg.domain_rand.randomize_limb_mass = False
     
     # fixed velocity direction evaluation (make sure the value is within the training range)
-    env_cfg.commands.ranges.lin_vel_x = [3., 3.]
+    env_cfg.commands.ranges.lin_vel_x = [2., 2.]
     env_cfg.commands.ranges.lin_vel_y = [0., 0.]
-    env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
-    env_cfg.commands.ranges.height_z = [0.65, 0.65]
+    env_cfg.commands.ranges.ang_vel_yaw = [-0, -0]
+    env_cfg.commands.ranges.height_z = [0.7, 0.7]
     env_cfg.commands.ranges.heading = [-0, -0]
 
     # prepare environment
