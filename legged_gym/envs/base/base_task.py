@@ -68,7 +68,7 @@ class BaseTask():
 
         self.num_obs = cfg.env.num_observations # 45 那个
         self.num_privileged_obs = cfg.env.num_privileged_obs
-        self.num_histroy_obs = cfg.env.num_histroy_obs
+        self.num_histroy_obs = cfg.env.num_histroy_obs # lrngth = 5
 
         # optimization flags for pytorch JIT
         torch._C._jit_set_profiling_mode(False)
@@ -148,7 +148,7 @@ class BaseTask():
 
     def _allocate_buffers(self):
         # additional buffer
-        self.obs_buf_lag_history = torch.zeros((self.num_envs, self.num_histroy_obs, self.num_obs), device=self.device, dtype=torch.float)
+        self.obs_buf_lag_history = torch.zeros((self.num_envs, self.num_histroy_obs, self.num_obs), device=self.device, dtype=torch.float) # 4096, 5, 45+1
         self._allocate_task_buffer(self.num_envs)
     def _allocate_task_buffer(self, num_envs):
         self.prop_hist_len = self.cfg.env.num_histroy_obs

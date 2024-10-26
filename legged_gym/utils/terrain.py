@@ -45,6 +45,7 @@ class Terrain:
         self.cfg = cfg
         self.num_robots = num_robots
         self.type = cfg.mesh_type
+        self.vis_type = cfg.vis_type
         self.jump = cfg.jump
         if self.type in ["none", 'plane']:
             return
@@ -541,7 +542,8 @@ class Terrain:
             #     pit_terrain(terrain, depth=pit_depth, platform_size=4.)
 
             # flat ground:
-            QRC_terrain(terrain,
+            if self.vis_type == 'train':
+                QRC_terrain(terrain,
                            platform_len=2.5,
                            platform_height=0.,
                            num_stones=self.num_goals-2,
@@ -554,18 +556,19 @@ class Terrain:
             #jump_rectangle_terrain(terrain, hurdle_height_range=[hurdle_height, hurdle_height])
 
             # jumping terrain
-            # if choice < self.proportions[0]:
-            #     parkour_hurdle_terrain(terrain, gap_size=0.5,gap_depth=0.1)
-            #     idx = 0
-            #     terrain.idx = idx   
-            # elif choice < self.proportions[1]:
-            #     parkour_hurdle_terrain(terrain, gap_size=0.5, gap_depth=0.15)
-            #     idx = 1
-            #     terrain.idx = idx 
-            # else:
-            #     parkour_hurdle_terrain(terrain, gap_size=0.5, gap_depth=0.2)
-            #     idx = 2
-            #     terrain.idx = idx 
+            elif self.vis_type == 'test':
+                if choice < self.proportions[0]:
+                    parkour_hurdle_terrain(terrain, gap_size=0.2,gap_depth=0.1)
+                    idx = 0
+                    terrain.idx = idx   
+                elif choice < self.proportions[1]:
+                    parkour_hurdle_terrain(terrain, gap_size=0.2, gap_depth=0.15)
+                    idx = 1
+                    terrain.idx = idx 
+                else:
+                    parkour_hurdle_terrain(terrain, gap_size=0.2, gap_depth=0.2)
+                    idx = 2
+                    terrain.idx = idx 
             
             # else:
             #     parkour_gap_terrain(terrain, gap_size=gap_size)

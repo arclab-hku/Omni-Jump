@@ -4,6 +4,9 @@ from legged_gym import LEGGED_GYM_ROOT_DIR, envs
 from time import time
 from warnings import WarningMessage
 import numpy as np
+from numpy.linalg import norm, inv
+from math import acos, atan2, sqrt, pi
+from scipy.spatial.transform import Rotation as R
 from termcolor import cprint
 import os
 
@@ -22,6 +25,157 @@ from legged_gym.utils.helpers import class_to_dict
 from legged_gym.utils.lstm_latent_model import ACNet 
 from .legged_robot_config import LeggedRobotCfg
 from legged_gym.utils.load_data import ref_data
+
+
+class Aliengo:
+    dist_hip_x = 0.2399
+    dist_hip_y = 0.051
+    len_hip = 0.083
+    len_thigh = 0.25
+    len_calf = 0.25
+
+class Go2:
+    dist_hip_x = 0.1934
+    dist_hip_y = 0.0465
+    len_hip = 0.0955
+    len_thigh = 0.213
+    len_calf = 0.213
+
+class IK:
+    lf = np.array([1,1,1])
+    rf = np.array([1,-1,1])
+    lh = np.array([-1,1,1])
+    rh = np.array([-1,-1,1])
+    
+    def __init__(self,robot,leg='LF'):
+        
+        self.dist_hip_x = robot.dist_hip_x
+        self.dist_hip_y = robot.dist_hip_y
+        self.len_hip    = robot.len_hip
+        self.len_thigh  = robot.len_thigh
+        self.len_calf   = robot.len_calf
+        self.avoid_singular_param = 0.95
+        self.ws_radius = (self.len_calf+self.len_thigh)*self.avoid_singular_param
+
+        hip_xyz_B    = np.array([self.dist_hip_x, self.dist_hip_y, 0])
+        point_in_hip_axis  = np.array([0.0, self.dist_hip_y, 0])
+        thigh_xyz_B  = np.array([self.dist_hip_x ,self.dist_hip_y+self.len_hip, 0])
+        calf_xyz_B   = np.array([self.dist_hip_x ,self.dist_hip_y+self.len_hip, -self.len_thigh])
+        _foot_xyz_B  = np.array([self.dist_hip_x ,self.dist_hip_y+self.len_hip, -self.len_thigh-self.len_calf])
+        
+        if leg == 'LF':
+            self.hip_xyz_B    = self.lf*hip_xyz_B
+            self.point_in_hip_axis  = self.lf*point_in_hip_axis
+            self.thigh_xyz_B  = self.lf*thigh_xyz_B
+            self.calf_xyz_B   = self.lf*calf_xyz_B
+            self._foot_xyz_B  = self.lf*_foot_xyz_B
+
+        
+        elif leg == 'RF':
+            self.hip_xyz_B    = self.rf*hip_xyz_B
+            self.point_in_hip_axis  = self.rf*point_in_hip_axis
+            self.thigh_xyz_B  = self.rf*thigh_xyz_B
+            self.calf_xyz_B   = self.rf*calf_xyz_B
+            self._foot_xyz_B  = self.rf*_foot_xyz_B
+
+        elif leg == 'LH':
+            self.hip_xyz_B    = self.lh*hip_xyz_B
+            self.point_in_hip_axis  = self.lh*point_in_hip_axis
+            self.thigh_xyz_B  = self.lh*thigh_xyz_B
+            self.calf_xyz_B   = self.lh*calf_xyz_B
+            self._foot_xyz_B  = self.lh*_foot_xyz_B
+
+        elif leg == 'RH':
+            self.hip_xyz_B    = self.rh*hip_xyz_B
+            self.point_in_hip_axis  = self.rh*point_in_hip_axis
+            self.thigh_xyz_B  = self.rh*thigh_xyz_B
+            self.calf_xyz_B   = self.rh*calf_xyz_B
+            self._foot_xyz_B  = self.rh*_foot_xyz_B
+
+        else:
+            raise ValueError('leg should be LF, RF, LH, or RH')
+
+
+    def compute_inverse(self,foot_xyz_B, foot_vel_B):
+        #-------calculate calf using variant type of question 2
+
+        foot2hip_B = foot_xyz_B - self.hip_xyz_B
+        foot2hip_len = norm(foot2hip_B)
+        if foot2hip_len> self.ws_radius:
+            print('Warning: foot position %s is out of workspace'%repr(foot_xyz_B.tolist()))
+            foot_xyz_B = self.hip_xyz_B + foot2hip_B/foot2hip_len*self.ws_radius
+            foot2hip_len = self.ws_radius
+            print('\t changed to %s\n'%repr(foot_xyz_B.tolist()))
+        foot2thigh_len = sqrt(foot2hip_len*foot2hip_len - self.len_hip*self.len_hip)
+        calf = acos((self.len_thigh*self.len_thigh+self.len_calf*self.len_calf-foot2thigh_len*foot2thigh_len)/(2*self.len_thigh*self.len_calf))
+        calf = calf - pi # rerange by definition
+        # print(calf)
+        #-------calculate thigh
+        foot2calf_B = np.array([-self.len_calf*np.sin(calf),0.0,-self.len_calf*np.cos(calf)]) # Ry(calf)*p
+        q = self.point_in_hip_axis
+        r = self.hip_xyz_B
+        p = self.calf_xyz_B + foot2calf_B # foot in base frame with only rotated around calf
+        v = q-r
+        u = p-r
+        w = np.array([0.0, 1.0, 0.0])
+        u_ = u - w*np.dot(u,w)
+        v_ = v - w*np.dot(v,w)
+        delta = norm(foot_xyz_B-q)
+        delta_ = sqrt(pow(delta,2) - pow(np.dot(w,p-q),2))
+
+        
+        theta_0  = atan2(np.dot(np.cross(u_,v_),w),np.dot(u_,v_))
+        theta_0_ = acos((np.dot(u_,u_)+np.dot(v_,v_)-pow(delta_,2))/(2*norm(u_)*norm(v_))) # 0~pi
+
+        #rerange by definition
+        if theta_0 > 0:
+            thigh = theta_0 - theta_0_
+        else:
+            thigh = theta_0 + theta_0_
+            
+        # #----calculate hip using question 1
+        rot = R.from_rotvec(thigh*np.array([0.0, 1.0, 0.0])).as_matrix()
+        p = self.thigh_xyz_B + np.dot(rot, np.array([0.0,0.0,-self.len_thigh]) + foot2calf_B) # before rotation
+        q = foot_xyz_B # after rotation
+        r = self.hip_xyz_B
+        w = np.array([1.0, 0.0, 0.0])
+        u = p - r
+        v = q - r
+        u_ = u - w*np.dot(u,w)
+        v_ = v - w*np.dot(v,w)
+        hip = atan2(np.dot(np.cross(u_,v_),w),np.dot(u_,v_))
+        
+        #calculate body frame jacobian
+        J_ = np.zeros((3,3))
+        J_[:,0] = -np.cross(foot2hip_B, np.array([1.0, 0.0, 0.0]))
+        rot_hip = R.from_rotvec(hip*np.array([1.0, 0.0, 0.0])).as_matrix()
+        rot_thigh = R.from_rotvec(thigh*np.array([0.0, 1.0, 0.0])).as_matrix()
+        foot2thigh_thigh = np.array([-self.len_calf*np.sin(calf),0.0,-self.len_calf*np.cos(calf)-self.len_thigh])
+        J_[:,1] = -rot_hip@rot_thigh@np.cross(foot2thigh_thigh,np.array([0,1,0]))
+        rot_calf = R.from_rotvec(calf*np.array([0.0, 1.0, 0.0])).as_matrix()
+        foot2calf_calf = np.array([0,0,-self.len_calf])
+        J_[:,2] = -rot_hip@rot_thigh@rot_calf@np.cross(foot2calf_calf,np.array([0,1,0]))
+        
+        joint_pos = np.array([hip,thigh,calf])
+        joint_vel = np.linalg.lstsq(J_, foot_vel_B, rcond=None)[0]
+        return joint_pos,joint_vel
+    
+    
+class RobotIK:
+    def __init__(self,robot):
+        self.robot =robot
+        self.ik = [IK(robot,'LF'), IK(robot,'RF'), IK(robot,'LH'), IK(robot,'RH')]
+
+    def computeIK(self, foot_pos, foot_vel):
+        joint_pos = np.zeros(12)
+        joint_vel = np.zeros(12)
+        for i in range(4):
+            foot_pos_i = foot_pos[3*i:3*(i+1)]
+            foot_vel_i = foot_vel[3*i:3*(i+1)]
+            joint_pos_i, joint_vel_i = self.ik[i].compute_inverse(foot_pos_i, foot_vel_i)
+            joint_pos[3*i:3*(i+1)] = joint_pos_i  # hip, calf, thigh
+            joint_vel[3*i:3*(i+1)] = joint_vel_i  # hip, calf, thigh
+        return joint_pos, joint_vel
 
 def euler_from_quaternion(quat_angle):
         """
@@ -167,15 +321,17 @@ class LeggedRobot(BaseTask):
             actuator_network_path = self.cfg.control.actuator_net_file.format(LEGGED_GYM_ROOT_DIR=LEGGED_GYM_ROOT_DIR)
             actuator_network = torch.jit.load(actuator_network_path).to(self.device)
 
-            def eval_actuator_network(joint_pos, joint_pos_last, joint_pos_last_last, joint_vel, joint_vel_last,
-                                      joint_vel_last_last):
+            def eval_actuator_network(joint_pos, joint_pos_last, joint_pos_last_last, joint_pos_last_last_last, joint_vel, joint_vel_last,
+                                      joint_vel_last_last, joint_vel_last_last_last):
                 xs = torch.cat((joint_pos.unsqueeze(-1),
                                 joint_pos_last.unsqueeze(-1),
                                 joint_pos_last_last.unsqueeze(-1),
+                                joint_pos_last_last_last.unsqueeze(-1),
                                 joint_vel.unsqueeze(-1),
                                 joint_vel_last.unsqueeze(-1),
-                                joint_vel_last_last.unsqueeze(-1)), dim=-1)
-                torques = actuator_network(xs.view(self.num_envs * 12, 6))
+                                joint_vel_last_last.unsqueeze(-1),
+                                joint_vel_last_last_last.unsqueeze(-1)), dim=-1)
+                torques = actuator_network(xs.view(self.num_envs * 12, 8))
                 return torques.view(self.num_envs, 12)
 
             
@@ -303,8 +459,10 @@ class LeggedRobot(BaseTask):
         # compute observations, rewards, resets, ...
         self.last_has_jumped = self.has_jumped
         self.check_jump()
+        #print("---------self.has_jumped-------", self.has_jumped)
         self._store_states(self.landing_ids)
         idx = self.mid_air * ~self.has_jumped * self.was_in_flight
+        #self.max_height[idx] = torch.max(self.max_height[idx],self.root_states[idx, 2]) 
         # idx = torch.logical_and(self.mid_air,~self.has_jumped)
         self.task_max_height[idx] = torch.max(self.task_max_height[idx],self.root_states[idx, 2]) 
         self.max_height = self.compute_max_height()
@@ -367,12 +525,16 @@ class LeggedRobot(BaseTask):
         self.reset_buf = torch.zeros((self.num_envs, ), dtype=torch.bool, device=self.device) 
         height_cutoff = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1) < -0.5  # root_states[:,2].unsqueeze(1) is num_envs,1 # measred_heights is num_envs, 187
         #height_cutoff_up = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1) > self.commands[:,3] + 0.04
-        height_cutoff_up = self.root_states[:, 2] > (self.commands[:,3] + 0.03)
+        height_cutoff_up = self.root_states[:, 2] > (self.commands[:,3] + 0.06)
         #height_cutoff_low = torch.logical_and(torch.mean(self.task_max_height.unsqueeze(1) - self.measured_heights, dim=1) < self.commands[:,3] - 0.03, self.has_jumped)
-        height_cutoff_low = torch.logical_and(self.task_max_height < (self.commands[:,3] - 0.07), self.has_jumped)  # task_max_height 會重置
+        height_cutoff_low = torch.logical_and(self.task_max_height < (self.commands[:,3] - 0.05), self.has_jumped)  # task_max_height 會重置
         #height_cutoff_low = torch.logical_and(self.max_height < (self.commands[:,3] - 0.07), self.has_jumped) # max_height 不會重置
         #self.reset_buf = torch.any(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1.,
         #                           dim=1)
+        # bounding box added:
+        rewed_ids = self.task_max_height>self.commands[:,3]
+        bounding_box_cons = torch.min(self.root_states_stored[rewed_ids, 2, :5], dim=-1) > (self.commands[:,3] - 0.08)
+        #
         collision_cutoff = torch.sum(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1), dim=-1) > 0.2
         roll_cutoff = torch.abs(self.roll) > 2.4
         #has_jumpd_cutoff = self.has_jumped
@@ -383,12 +545,14 @@ class LeggedRobot(BaseTask):
         #self.reset_buf[self.reset_idx_landing_error] = True         
         self.reset_buf |= self.time_out_buf
         self.reset_buf |= height_cutoff
-        #self.reset_buf |= height_cutoff_up
-        #self.reset_buf |= height_cutoff_low
+        self.reset_buf |= height_cutoff_up
+        self.reset_buf |= height_cutoff_low
         self.reset_buf |= roll_cutoff
         self.reset_buf |= collision_cutoff
         #self.reset_buf |= has_jumpd_cutoff
         #self.reset_buf |= has_jumped_cutoff  # for only jumped once purpose
+        
+        # 加上框的长度信息！！！
 
     def _reset_state_history(self,env_ids):
         """ Resets state history of selected environments"""
@@ -454,11 +618,12 @@ class LeggedRobot(BaseTask):
 
         self.last_dof_vel[env_ids] = 0.
         self.feet_air_time[env_ids] = 0.
-        self.max_height[env_ids] = 0.#self.base_init_state[2]#self.root_states[env_ids, 2]
+        self.max_height[env_ids] = self.base_init_state[2]#0.
         self.task_max_height[env_ids] = self.base_init_state[2]
 
         self.was_in_flight[env_ids] = False
         self.mid_air[env_ids] = False
+        self.mid_air2[env_ids] = False
         self.landing_ids[env_ids] = True
         self.has_jumped[env_ids] = False
         self.last_has_jumped[env_ids] = False
@@ -495,7 +660,6 @@ class LeggedRobot(BaseTask):
         '''
         Store the current states in the state storage buffers
         '''
-
         
         # self.base_lin_vel_stored = torch.roll(self.base_lin_vel_stored, 1, dims=2)
         # self.base_lin_vel_stored[:,:,0] = self.base_lin_vel_history.clone() 
@@ -506,8 +670,8 @@ class LeggedRobot(BaseTask):
         # only store when has_jumped triger:
         #print(self.root_states_stored.size())
         #print('--------env_ids is:', env_ids) # env_ids is for 4 feet respectively
-        self.root_states_stored[env_ids,:,:] = torch.roll(self.root_states_stored[env_ids,:,:] , 1, dims=-1) # root_states_stored.size(): self.num_envs, 13, 2
-        self.root_states_stored[env_ids,:,0] = self.root_states[env_ids,:]#self.root_states_history.clone() 
+        self.root_states_stored[env_ids,:,:] = torch.roll(self.root_states_stored[env_ids,:,:] , 1, dims=-1) # root_states_stored.size(): self.num_envs, 13, 10
+        self.root_states_stored[env_ids,:,0] = self.root_states[env_ids,:]#self.root_states_history.clone()  # 0 是current state, 1—9 是previous state
 
         # self.dof_pos_stored = torch.roll(self.dof_pos_stored, 1, dims=2)
         # self.dof_pos_stored[:,:,0] = self.dof_pos_history.clone() 
@@ -548,13 +712,18 @@ class LeggedRobot(BaseTask):
         return env_ids
 
     def check_has_jump_reset(self):
-        contact_ids = torch.all(self.contact_filt,dim=1)
-        self.task_max_height[self.has_jumped] = self.base_init_state[2]
+        contact_ids = torch.any(self.contact_filt,dim=1)
+        self.task_max_height[contact_ids*self.has_jumped] = self.base_init_state[2]
+        #print("-------------self.task_max_height is--------------", self.max_height)
+        self.was_in_flight[contact_ids*self.has_jumped] = False
         self.has_jumped[contact_ids*self.has_jumped] = False #這裏要加一個 last_contact 和現在contact都是 all true, 才轉爲False的判斷
+
 
     def compute_max_height(self):
         max_heights = torch.max(self.max_height[:],self.root_states[:, 2])
-        max_heights[self.was_in_flight] = 0
+
+        #max_heights[self.was_in_flight] = 0
+        max_heights[self.has_jumped] = 0
         return max_heights 
 
     def _compute_state_history(self):
@@ -738,12 +907,12 @@ class LeggedRobot(BaseTask):
 
 # self.privileged_obs_buf means 私有变量。It's the obs of critics.
      
-        if self.enable_priv_Zheights_weights:
-            self.privileged_obs_buf = self.root_states[:, 2:3]
+        if self.enable_priv_Zheights_weights: #false. No weight prediction
+            self.privileged_obs_buf = self.root_states[:, 2:3] # 
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
                                                 self.priv_info_buf[:, 0:4], # for adding the weights, dim=4
                                                  ), dim=-1)
-        if self.enable_priv_ZXYheights:
+        if self.enable_priv_ZXYheights: # true, add the real ZXY-position values to the crtic.
             self.privileged_obs_buf = self.root_states[:, 2:3]
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
                                                 self.root_states[:, 0:2], # for adding the weights, dim=4
@@ -793,8 +962,7 @@ class LeggedRobot(BaseTask):
 
         if self.cfg.env.train_type == "Dream" or "RMA" or "GenHis":
             # deal with normal observation, do sliding window
-            prev_obs_buf = self.obs_buf_lag_history[:, 1:].clone()
-
+            prev_obs_buf = self.obs_buf_lag_history[:, 1:].clone() # 4096, 5, 45+1
 
             # concatenate to get full history
             cur_obs_buf = self.obs_buf.clone().unsqueeze(1)
@@ -806,7 +974,7 @@ class LeggedRobot(BaseTask):
             at_reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
             self.obs_buf_lag_history[at_reset_env_ids, :, :] = self.obs_buf[at_reset_env_ids].unsqueeze(1)
 
-            self.proprio_hist_buf = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone()
+            self.proprio_hist_buf = self.obs_buf_lag_history[:, -self.prop_hist_len:].clone() 
 
 
 
@@ -1065,11 +1233,11 @@ class LeggedRobot(BaseTask):
             # upper1 = temp < 0.9
             # temp[lower1 * upper1] = 0.8       
 #  go2 jump:
-            temp[temp<0.6] = 0.5 #0.45 #0.50
+            temp[temp<0.6] = 0.48 #0.50
 
             lower0 = 0.6 <= temp
             upper0 = temp < 0.76
-            temp[lower0 * upper0] = 0.7 #0.63 # 0.7
+            temp[lower0 * upper0] = 0.66 #0.68 # 0.7
 
             # lower1 = 0.65 <= temp
             # upper1 = temp < 0.76
@@ -1195,10 +1363,13 @@ class LeggedRobot(BaseTask):
             self.joint_pos_err = self.dof_pos - self.joint_pos_target + self.motor_offsets
             self.joint_vel = self.dof_vel
 
-            torques = self.actuator_network(self.joint_pos_err, self.joint_pos_err_last, self.joint_pos_err_last_last,
-                                            self.joint_vel, self.joint_vel_last, self.joint_vel_last_last)
+            torques = self.actuator_network(self.joint_pos_err, self.joint_pos_err_last, self.joint_pos_err_last_last,self.joint_pos_err_last_4,
+                                            self.joint_vel, self.joint_vel_last, self.joint_vel_last_last, self.joint_vel_last_4)
+            
+            self.joint_pos_err_last_4 = torch.clone(self.joint_pos_err_last_4)
             self.joint_pos_err_last_last = torch.clone(self.joint_pos_err_last)
             self.joint_pos_err_last = torch.clone(self.joint_pos_err)
+            self.joint_vel_last_last_last = torch.clone(self.joint_vel_last_last)
             self.joint_vel_last_last = torch.clone(self.joint_vel_last)
             self.joint_vel_last = torch.clone(self.joint_vel)
             # scale the output
@@ -1441,6 +1612,7 @@ class LeggedRobot(BaseTask):
         self.task_max_height = torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
         self.was_in_flight = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
         self.mid_air = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
+        self.mid_air2 = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
         #up_jump_prob = self.cfg.commands.upward_jump_probability
         #self.up_jump_distribution = torch.distributions.bernoulli.Bernoulli(torch.tensor([up_jump_prob],device=self.device))
         self.landing_ids = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device, requires_grad=False)
@@ -1455,7 +1627,7 @@ class LeggedRobot(BaseTask):
 
         #self.contacts_history = torch.zeros(self.num_envs, len(self.feet_indices)*self.cfg.env.state_history_length, dtype=torch.bool, device=self.device, requires_grad=False)
 
-        self.root_states_stored = torch.zeros(self.num_envs, 13, 2, dtype=torch.float, device=self.device, requires_grad=False) # 13 is the length of root_states
+        self.root_states_stored = torch.zeros(self.num_envs, 13, 10, dtype=torch.float, device=self.device, requires_grad=False) # 13 is the length of root_states
         self.root_states_stored[:, :, 0] = self.root_states# state_history is default to be 20 in curriculum_based jumping 
         self.base_lin_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 7:10])
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.root_states[:, 10:13]) # 10:13 is the ang_vel in the world_frame  # roll, pitch, yaw 
@@ -1962,7 +2134,7 @@ class LeggedRobot(BaseTask):
     def check_jump(self):
         """ Check if the robot has jumped
         """
-        
+
         contact = self.contact_forces[:, self.feet_indices, 2] > 1.
         # contact_filt = contact
         contact_filt = torch.logical_or(contact, self.last_contacts) # Contact is true only if either current or previous contact was true
@@ -1971,11 +2143,13 @@ class LeggedRobot(BaseTask):
         # Handle starting in mid-air (initialise in air):
         settled_after_init = torch.logical_and(torch.all(contact_filt,dim=1), self.root_states[:,2]<=0.34) # torch.all() outputs the dimension with all True.
         jump_filter = torch.all(~contact_filt, dim=1)#torch.logical_and(torch.all(~contact_filt, dim=1),self.root_states[:,2]>0.32) # If no contact for all 4 feet, jump is true
+        jump_filter2 = torch.all(~contact, dim=1)
         # jump_filter: last 和current沒有一隻足碰到了地
         # torch.all() output True only if all are true. torch.any() output flase only if all are false.
         # jump_filter = torch.sum(contact_filt, dim=1) <= 2 # If more than  foot is in the air, jump has started
 
         self.mid_air = jump_filter.clone()
+        self.mid_air2 = jump_filter2.clone() 
 
         idx_record_pose = torch.logical_and(settled_after_init,~self.settled_after_init)
         self.settled_after_init_timer[idx_record_pose] = self.episode_length_buf[idx_record_pose].clone()
@@ -1986,7 +2160,7 @@ class LeggedRobot(BaseTask):
         self.was_in_flight[torch.logical_and(jump_filter,self.settled_after_init)] = True # If no contact for all 4 feet, robot is in flight
 
         # The robot has already jumped IFF it was previously in flight and has now landed:
-        has_jumped = torch.logical_and(torch.any(contact_filt,dim=1), self.was_in_flight) 
+        has_jumped = torch.logical_and(torch.any(contact_filt, dim=1), self.was_in_flight) 
 
         # Only count the first time flight is achieved:
         self.landing_poses[torch.logical_and(has_jumped,~self.has_jumped)] = self.root_states[torch.logical_and(has_jumped,~self.has_jumped),:7] #之前没跳，这个step刚跳起来的那些 
@@ -2335,7 +2509,7 @@ class LeggedRobot(BaseTask):
         max_height_reward = (self.task_max_height - self.commands[:, 3]) # encourage the max_height to approach 0.9 # aliengo 0.85
 # only the one that has_jumped and finish the whole episode can track the max_height reward.
         rew = torch.exp(-torch.square(max_height_reward)/0.05)
-
+    
         return rew #* (self.commands[:, 4])
     
     def _reward_base_height_flight(self):  # maybe useful
@@ -2384,11 +2558,39 @@ class LeggedRobot(BaseTask):
         up_bond = self.commands[:, 3]+0.03
         low_bond = self.commands[:, 3]-0.03
         rewed_ids = torch.logical_and(torch.logical_and(self.has_jumped, self.task_max_height>low_bond), self.task_max_height<up_bond)
+        #rewed_ids = torch.logical_and(torch.logical_and(self.has_jumped, self.max_height>low_bond), self.max_height<up_bond)
         #rew[rewed_ids * env_ids] = 1
         rew[rewed_ids] = 1
 
         #rew[self.commands[:, 3]<0.45] = 0  ### only when stick on ground
         return rew
+
+# bounding box design
+    # def _reward_bounding_box(self): 
+    #     rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
+    #     up_bond = self.commands[:, 3]+0.06
+    #     low_bond = self.commands[:, 3]-0.05
+    #     for i in range(10):
+    #         reward_ids = self.root_states_stored[:,2,i]>low_bond #整个轨迹全部落在框框里面就行
+    #     return rew
+        #self.root_states_stored[:,0:3,0:5]
+        #self.root_states_stored[:,0:3,5:10]
+
+        
+    def _reward_constrained_jumping(self):
+        # 加上框的长度信息 bounding box
+
+        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
+        up_bond = self.commands[:, 3]+0.06
+        low_bond = self.commands[:, 3]-0.05
+        # bounding box term:
+        rewed_ids = torch.logical_and(self.task_max_height>low_bond, self.task_max_height<up_bond)
+        min_hist = torch.min(self.root_states_stored[rewed_ids, 2, :5], dim=-1) 
+        if min_hist>low_bond:
+            rew[rewed_ids] = 10   
+        else:    
+            rew[rewed_ids] = 1        
+        return rew                       
 
     def _reward_stick_to_ground(self):
         # Reward maintaining contact at the very beginning of the episode:
@@ -2479,16 +2681,17 @@ class LeggedRobot(BaseTask):
         angle_diff = torch.square(self.dof_pos - self.default_dof_pos) # self.default_dof_pos is 0, 0.72, 1.4144
         #angle_diff[self.mid_air + self.has_jumped,0::3] *= 10 # For forward hips
         # angle_diff[self.mid_air + self.has_jumped, 0] *= 10 
-        # angle_diff[self.mid_air + self.has_jumped, 3] *= 10 
-        # angle_diff[self.mid_air + self.has_jumped, 6] *= 10
+        #angle_diff[self.mid_air + self.has_jumped, 9] *= 10 
+        #angle_diff[self.mid_air + self.has_jumped, 6] *= 10
         # emphasis on the hip pose:
-        angle_diff[:, 9] *= 10
-        angle_diff[:, 0] *= 10
-        angle_diff[:, 3] *= 10 
-        angle_diff[:, 6] *= 10
+        angle_diff[:, 9] *= 5
+        angle_diff[:, 0] *= 5
+        angle_diff[:, 3] *= 5 
+        angle_diff[:, 6] *= 5
         rew = torch.exp(torch.sum(angle_diff,dim=1)*0.01)
-        rew[self.has_jumped] *= 2.0 # emphasis on the has_jumped one.
-        rew[self.root_states[:,2]>0.36] = 0
+        #rew[self.has_jumped] *= 2.0 # emphasis on the has_jumped one.
+        #rew[self.root_states[:,2]>0.33] = 0
+        rew[self.mid_air2] = 0
         return rew # 6 and 12
 
     def _reward_tracking_feet_pos(self):
@@ -2765,7 +2968,7 @@ class LeggedRobot(BaseTask):
         # Only reward if in mid_air, hasn't jumped and height is above 0.45
         base_height = self.root_states[:,2]
         #rew[base_height<=0.36] = rew_landing[base_height<=0.36]
-        rew[base_height<=0.36] = 0.0
+        rew[base_height<=0.34] = 0.0
         rew[~self.mid_air] = 0.0 # only reward the agents in the mid-air
         #rew[self.has_jumped] = 0.0
         #print("foot clearance reward is: ", rew)
@@ -2775,12 +2978,12 @@ class LeggedRobot(BaseTask):
         #desired_feet_pos_z = 0.347 * self.root_states[:, 2] - 0.438 # the delta_z = f(Zcom) = a*Zcom+b (fixed 0.8m desired height)
         base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
         #desired_feet_pos_z = 0.15/(self.commands[:,3]-0.31) * base_height + (0.31*self.commands[:,3]-0.0496)/(0.31-self.commands[:,3]) # aliengo
-        desired_feet_pos_z = 0.183/(self.commands[:,3]-0.315) * base_height + (0.315*self.commands[:,3]-0.0416)/(0.315-self.commands[:,3]) # go2
+        desired_feet_pos_z = 0.183/((self.commands[:,3]-0.1)-0.315) * base_height + (0.315*(self.commands[:,3]-0.1)-0.0416)/(0.315-(self.commands[:,3]-0.1)) # go2
         feet_relative = self.feet_pos[:, :, :3] - self.root_states[:, :3].unsqueeze(1)
         feet_body_frame = torch.zeros(self.num_envs, 4, 3, device=self.device, requires_grad=False)
         for i in range(4):
             feet_body_frame[:,i,:] = quat_rotate_inverse(self.base_quat, feet_relative[:,i,:]) #(4096,4,3)
-                 
+ 
         feet_pos_ini = torch.tensor(self.cfg.init_state.rel_foot_pos).to(self.device).transpose(1,0).view(1,4,3)
         feet_pos_des = feet_pos_ini.clone() #(1,4,3)
         des_feet_envs = feet_pos_des.repeat(self.num_envs,1,1) #(4096,4,3)
@@ -2789,6 +2992,25 @@ class LeggedRobot(BaseTask):
         feet_error = torch.linalg.norm(feet_body_frame - des_feet_envs, dim=-1)
         rew = torch.exp(-torch.sum(torch.square(feet_error), dim=-1))
         rew[~self.mid_air] = 0.0 # only reward the agents in the mid-air        
+        return rew
+    
+    def _reward_tracking_air_angle(self):
+        # Consider how to implement IK here: mid_air 都track同一个angle
+        Go2_IK = RobotIK(Go2)
+        jp,jv = Go2_IK.computeIK(np.array([0.232, 0.148, -0.115, 0.232, -0.148, -0.115,-0.155, 0.148, -0.115,-0.155, -0.148, -0.115]),
+                 np.array([0,0,0,0,0,0,0,0,0,0,0,0]))
+        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
+        jp = torch.from_numpy(jp)
+        jp = jp.to(self.device)
+        angle_diff = torch.square(self.dof_pos - jp)
+        # emphasis on two rear thigh joints
+        angle_diff[:, 2] *= 10
+        angle_diff[:, 5] *= 10        
+        angle_diff[:, 7] *= 10
+        angle_diff[:, 10] *= 10
+        rew = torch.exp(torch.sum(angle_diff,dim=1)*0.01)
+        rew[~self.mid_air2] = 0.
+        #rew[self.root_states[:,2]<0.31] = 0
         return rew
 
     def _reward_stumble(self):
