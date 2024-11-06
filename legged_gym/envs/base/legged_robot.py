@@ -9,6 +9,7 @@ from math import acos, atan2, sqrt, pi
 from scipy.spatial.transform import Rotation as R
 from termcolor import cprint
 import os
+import time
 
 from isaacgym.torch_utils import *
 from isaacgym import gymtorch, gymapi, gymutil
@@ -96,7 +97,7 @@ class IK:
             raise ValueError('leg should be LF, RF, LH, or RH')
 
 
-    def compute_inverse(self,foot_xyz_B, foot_vel_B):
+    def compute_inverse(self,foot_xyz_B, foot_vel_B, hip_angle):
         #-------calculate calf using variant type of question 2
 
         foot2hip_B = foot_xyz_B - self.hip_xyz_B
@@ -143,7 +144,8 @@ class IK:
         v = q - r
         u_ = u - w*np.dot(u,w)
         v_ = v - w*np.dot(v,w)
-        hip = atan2(np.dot(np.cross(u_,v_),w),np.dot(u_,v_))
+        #hip = atan2(np.dot(np.cross(u_,v_),w),np.dot(u_,v_)) # define the hip as the default value
+        hip = hip_angle
         
         #calculate body frame jacobian
         J_ = np.zeros((3,3))
@@ -164,15 +166,20 @@ class IK:
 class RobotIK:
     def __init__(self,robot):
         self.robot =robot
-        self.ik = [IK(robot,'LF'), IK(robot,'RF'), IK(robot,'LH'), IK(robot,'RH')]
+        self.ik = [IK(robot,'LF'), IK(robot,'RF'), IK(robot,'LH'), IK(robot,'RH')] # FL FR RL RR 0 1 2 3
 
     def computeIK(self, foot_pos, foot_vel):
         joint_pos = np.zeros(12)
         joint_vel = np.zeros(12)
+        left_hip = 0.0
+        right_hip = -0.0
         for i in range(4):
             foot_pos_i = foot_pos[3*i:3*(i+1)]
             foot_vel_i = foot_vel[3*i:3*(i+1)]
-            joint_pos_i, joint_vel_i = self.ik[i].compute_inverse(foot_pos_i, foot_vel_i)
+            if i%2 == 0:
+                joint_pos_i, joint_vel_i = self.ik[i].compute_inverse(foot_pos_i, foot_vel_i,left_hip)
+            else:
+                joint_pos_i, joint_vel_i = self.ik[i].compute_inverse(foot_pos_i, foot_vel_i,right_hip)
             joint_pos[3*i:3*(i+1)] = joint_pos_i  # hip, calf, thigh
             joint_vel[3*i:3*(i+1)] = joint_vel_i  # hip, calf, thigh
         return joint_pos, joint_vel
@@ -241,6 +248,13 @@ class LeggedRobot(BaseTask):
         self._init_buffers()
         self._prepare_reward_function()
         self.init_done = True
+    
+        self.save_actions = cfg.env.save_action
+        if self.save_actions:
+            self.action_log = []
+            self.start_time = time.time()
+            self.log_dir = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', 'actions')
+            os.makedirs(self.log_dir, exist_ok=True)
 
         # load actuator network
         if self.cfg.control.control_type == "actuator_net2":
@@ -366,6 +380,42 @@ class LeggedRobot(BaseTask):
 
         return camera_handle, local_transform
 
+    def save_action(self, delayed_actions):
+        if not self.save_actions:
+            return
+
+        # Convert to numpy array and move to CPU if necessary
+        actions_np = delayed_actions.cpu().numpy()
+        
+        # Get current time step
+        current_time = time.time() - self.start_time
+        
+        # Append to action log
+        self.action_log.append((current_time, actions_np))
+
+        # Periodically save to file (e.g., every 1000 steps)
+        if len(self.action_log) >= 4000:
+            self._save_actions_to_file()
+
+    def _save_actions_to_file(self):
+        if not self.action_log:
+            return
+
+        # Convert action log to structured numpy array
+        dtype = [('time', float), ('actions', float, (self.num_envs, 12))]
+        actions_array = np.array(self.action_log, dtype=dtype)
+        
+        # Generate filename with timestamp
+        filename = f'actions_{time.strftime("%Y%m%d-%H%M%S")}.npy'
+        filepath = os.path.join(self.log_dir, filename)
+        
+        # Save to file
+        np.save(filepath, actions_array)
+        print(f"Saved actions to {filepath}")
+        
+        # Clear the action log
+        self.action_log = []
+
     def step(self, actions):
         """ Apply actions, simulate, call self.post_physics_step()
         Args:
@@ -373,6 +423,10 @@ class LeggedRobot(BaseTask):
         """
         clip_actions = self.cfg.normalization.clip_actions
         self.actions = torch.clip(actions, -clip_actions, clip_actions).to(self.device)
+
+        self.action_buffer = torch.roll(self.action_buffer, shifts=1, dims=0)
+        self.action_buffer[0] = self.actions
+        delayed_actions = self.action_buffer[self.env_delay_steps, torch.arange(self.num_envs, device=self.device)]
         # step physics and render each frame
         self.render()
         for _ in range(self.cfg.control.decimation):
@@ -384,7 +438,16 @@ class LeggedRobot(BaseTask):
                 self.gym.set_dof_position_target_tensor(self.sim, gymtorch.unwrap_tensor(self.target_poses))
             else:
                 # Note: Torques control
-                self.torques = self._compute_torques(self.actions).view(self.torques.shape)
+                if self.cfg.env.save_action:
+                    try:
+                        self.save_action(delayed_actions)
+                    except KeyboardInterrupt:
+                        if self.cfg.env.save_action:
+                            print("Interrupt received. Saving actions...")
+                            self._save_actions_to_file()
+                            raise  # Re-raise the exception after saving
+                self.torques = self._compute_torques(delayed_actions).view(self.torques.shape)
+                #self.torques = self._compute_torques(self.actions).view(self.torques.shape)
                 self.gym.set_dof_actuation_force_tensor(self.sim, gymtorch.unwrap_tensor(self.torques)) # isaacGYM 仿真環境與gym學習環境交互。把算出來的torques 傳入。
                                                                                                         # gym_torch.unwrap_tensor is to wrap the input into a PyTorch Tensor object
             self.gym.simulate(self.sim)
@@ -533,7 +596,11 @@ class LeggedRobot(BaseTask):
         #                           dim=1)
         # bounding box added:
         rewed_ids = self.task_max_height>self.commands[:,3]
-        bounding_box_cons = torch.min(self.root_states_stored[rewed_ids, 2, :5], dim=-1) > (self.commands[:,3] - 0.08)
+        hist_error = self.root_states_stored[:, 2, :5] - (self.commands[:,2:3] - 0.08)
+        passed_ids = torch.all(hist_error>0, dim=-1)
+        bounding_box_cons = rewed_ids * passed_ids
+        # hip dof_pos limitaion condition:
+        hip_torque_termi = torch.logical_and(torch.any(self.dof_pos[:,:] < self.dof_pos_limits[:, 0], dim=-1), torch.any(self.dof_pos[:,:] > self.dof_pos_limits[:, 1], dim=-1))
         #
         collision_cutoff = torch.sum(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1), dim=-1) > 0.2
         roll_cutoff = torch.abs(self.roll) > 2.4
@@ -544,11 +611,13 @@ class LeggedRobot(BaseTask):
         # reset the one that is too far from the desired landing postion or the orientation is too far from desired yaw.
         #self.reset_buf[self.reset_idx_landing_error] = True         
         self.reset_buf |= self.time_out_buf
+        #self.reset_buf |= hip_torque_termi
         self.reset_buf |= height_cutoff
         self.reset_buf |= height_cutoff_up
         self.reset_buf |= height_cutoff_low
         self.reset_buf |= roll_cutoff
         self.reset_buf |= collision_cutoff
+        #self.reset_buf |= bounding_box_cons
         #self.reset_buf |= has_jumpd_cutoff
         #self.reset_buf |= has_jumped_cutoff  # for only jumped once purpose
         
@@ -650,7 +719,8 @@ class LeggedRobot(BaseTask):
             self.extras["time_outs"] = self.time_out_buf
 
         self.randomize_dof_props(env_ids)
-
+        self.env_delay_steps[env_ids] = torch.randint(0, self.cfg.control.max_delay_steps + 1, (len(env_ids),), device=self.device)
+        self.action_buffer[:, env_ids] = 0
         # self.has_jumped[env_ids] = False
         # self._has_jumped_rand_envs[env_ids] = False
         # RMA related reset buffer
@@ -1101,15 +1171,16 @@ class LeggedRobot(BaseTask):
             self.torque_limits = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
             for i in range(len(props)):
                 self.dof_pos_limits[i, 0] = props["lower"][i].item()
-                self.dof_pos_limits[i, 1] = props["upper"][i].item()
+                self.dof_pos_limits[i, 1] = props["upper"][i].item() 
                 self.dof_vel_limits[i] = props["velocity"][i].item()
-                self.torque_limits[i] = props["effort"][i].item()
+                self.torque_limits[i] = props["effort"][i].item() #* 0.8
                 # soft limits
                 m = (self.dof_pos_limits[i, 0] + self.dof_pos_limits[i, 1]) / 2
                 r = self.dof_pos_limits[i, 1] - self.dof_pos_limits[i, 0]
                 self.dof_pos_limits[i, 0] = m - 0.5 * r * self.cfg.rewards.soft_dof_pos_limit
                 self.dof_pos_limits[i, 1] = m + 0.5 * r * self.cfg.rewards.soft_dof_pos_limit
-
+            # print("dof_pos_limits lower:", self.dof_pos_limits[:, 0])
+            # print("dof_pos_limits up:", self.dof_pos_limits[:, 1])
         if self.cfg.domain_rand.randomize_motor_strength:
             motor_strength = []
             for i in range(self.num_dofs):
@@ -1237,7 +1308,7 @@ class LeggedRobot(BaseTask):
 
             lower0 = 0.6 <= temp
             upper0 = temp < 0.76
-            temp[lower0 * upper0] = 0.66 #0.68 # 0.7
+            temp[lower0 * upper0] = 0.66 #0.66 #0.68 # 0.7
 
             # lower1 = 0.65 <= temp
             # upper1 = temp < 0.76
@@ -1656,6 +1727,12 @@ class LeggedRobot(BaseTask):
                                    foot_vel[:, 2, ],
                                    foot_vel[:, 3, ],
                                       ), dim=-1)
+        # actuator delay
+        # Initialize delay steps for each environment
+        self.env_delay_steps = torch.randint(0, self.cfg.control.max_delay_steps + 1, (self.num_envs,), device=self.device)
+        # Initialize action buffer
+        max_delay = self.cfg.control.max_delay_steps
+        self.action_buffer = torch.zeros((max_delay + 1, self.num_envs, self.num_actions), device=self.device)
         # joint positions offsets and PD gains
         self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
         self.default_dof_pos_peak = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False) 
@@ -2579,17 +2656,16 @@ class LeggedRobot(BaseTask):
         
     def _reward_constrained_jumping(self):
         # 加上框的长度信息 bounding box
-
         rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
         up_bond = self.commands[:, 3]+0.06
         low_bond = self.commands[:, 3]-0.05
         # bounding box term:
         rewed_ids = torch.logical_and(self.task_max_height>low_bond, self.task_max_height<up_bond)
-        min_hist = torch.min(self.root_states_stored[rewed_ids, 2, :5], dim=-1) 
-        if min_hist>low_bond:
-            rew[rewed_ids] = 10   
-        else:    
-            rew[rewed_ids] = 1        
+        hist_error = self.root_states_stored[:, 2, :5] - (self.commands[:,2:3] - 0.08)
+        passed_ids = torch.all(hist_error>0, dim=-1)
+        bounding_box_cons = rewed_ids * passed_ids
+        rew[rewed_ids] = 1
+        #rew[bounding_box_cons] = 10        
         return rew                       
 
     def _reward_stick_to_ground(self):
@@ -3045,9 +3121,7 @@ class LeggedRobot(BaseTask):
         # cosmetic penalty for hip motion
         return torch.sum(torch.abs(self.dof_pos[:, [2, 5, 8, 11]] - self.default_dof_pos[:, [2, 5, 8, 11]]), dim=1)
 
-
-    ############## Motion Functions ########
-
+    ############## Motion Functions ############
     def _reward_f_hip_motion(self):
         # cosmetic penalty for hip motion
         return torch.sum(torch.abs(self.dof_pos[:, [0, 3]] - self.default_dof_pos[:, [0, 3]]), dim=1)
@@ -3158,12 +3232,12 @@ class LeggedRobot(BaseTask):
 
     # ------------ _change_cmds functions----------------
 
-    def _change_cmds(self, vx, vy, vang):
+    def _change_cmds(self, vx, vy, vang, height):
         # change command_ranges with the input
         self.commands[:, 0] = vx
         self.commands[:, 1] = vy
         self.commands[:, 2] = vang
-        # self.commands[:, 3] = heading
+        self.commands[:, 3] = height
 
     # ************************ RMA specific ************************
     def reset(self):

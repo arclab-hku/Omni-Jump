@@ -21,6 +21,9 @@ class Go2BaseCfg(LeggedRobotCfg):
         num_histroy_obs = 5
         pass_has_jumped = True
 
+        save_action = False
+
+        
 
 
     class terrain(LeggedRobotCfg.terrain):
@@ -37,14 +40,14 @@ class Go2BaseCfg(LeggedRobotCfg):
                         [-0.315,-0.315,-0.316,-0.316]]# z  # relative to the COM pos [FL FR RL RR]
         rel_foot_pos_peak = [[0.232,0.232,-0.155,-0.155], # x
                         [0.148,-0.148,0.148,-0.148], # y
-                        [-0.112,-0.112,-0.115,-0.115]] # z  # relative to the COM pos 
-        pos = [0.1, 0.0, 0.34]  # x,y,z [m] # aliengo 0.39
+                        [-0.115,-0.115,-0.115,-0.115]] # z  # relative to the COM pos 
+        pos = [0.1, 0.0, 0.32]  # x,y,z [m] # aliengo 0.39
         default_joint_angles = { # = target angles [rad] when action = 0.0
 
-            'FL_hip_joint': 0.05,   # [rad]
-            'RL_hip_joint': 0.05,   # [rad]
-            'FR_hip_joint': -0.05,  # [rad]
-            'RR_hip_joint': -0.05,   # [rad]
+            'FL_hip_joint': 0.0,   # [rad]
+            'RL_hip_joint': 0.0,   # [rad]
+            'FR_hip_joint': -0.0,  # [rad]
+            'RR_hip_joint': -0.0,   # [rad]
 
             'FL_thigh_joint': 0.64,     # [rad]
             'RL_thigh_joint': 0.69,   # [rad]
@@ -75,13 +78,15 @@ class Go2BaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "actuator_net2"#""actuator_net2"#"POSE" #"P"#"actuator_net"#"POSE" #
+        control_type = "P"#""actuator_net2"#"POSE" #"P"#"actuator_net"#"POSE" #
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 40.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
         damping = {"joint": 1.2}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
+        # delay buffer:
+        max_delay_steps = 5
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
         use_actuator_network = True
@@ -93,7 +98,7 @@ class Go2BaseCfg(LeggedRobotCfg):
         name = "go2"
         foot_name = "foot"
         penalize_contacts_on = ["hip", "thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip","thigh"]#["base", "trunk", "hip","thigh"]
+        terminate_after_contacts_on = ["base", "trunk", "hip", "thigh"]#["base", "trunk", "hip","thigh"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
 
     class domain_rand(LeggedRobotCfg.domain_rand):
@@ -133,7 +138,7 @@ class Go2BaseCfg(LeggedRobotCfg):
         class scales(LeggedRobotCfg.rewards.scales):
             task_pos = 0.#2.5
             task_ori = 0.#2.0
-            tracking_lin_vel = 2.0 #3.0#2.0#1.5 #3.5#3.0#1.2#2.0#1.0#0.6#1.5#1.0
+            tracking_lin_vel = 2.0#2.0 #3.0#2.0#1.5 #3.5#3.0#1.2#2.0#1.0#0.6#1.5#1.0
             tracking_ang_vel = 1.0#1.2#1.0#0.8 #1.5#1.75#1.0#0.8#0.6
             tracking_pitch_vel = 0.#4.0
             tracking_yaw = 0.#0.7#0.6
@@ -151,7 +156,7 @@ class Go2BaseCfg(LeggedRobotCfg):
             tracking_pos = 0#1.5
             tracking_feet_pos = 0.#0.8
             
-            torques = 0.000001#0.00001#-0.00001 #0.
+            torques = 0.#-0.0001#0.#-0.000001#0.00001#-0.00001 #0.
             dof_acc = -2.5e-7
             base_height = 0#0.2#0.3#0.1
             feet_air_time = 0.#1.0
@@ -175,18 +180,18 @@ class Go2BaseCfg(LeggedRobotCfg):
 
             feet_stumble = 0.#-0.5
             collision = -1.0
-            action_rate = 0.#-0.00001#-0.001
+            action_rate = 0.#-0.0001#0.#-0.00001#-0.001
             # #### motion
-            default_pose = -0.14 # dont be too big!
-            tracking_air_angle = -0.5
-            hip_motion = -0.06
+            default_pose = -0.14 # don't be too big!
+            tracking_air_angle = -0.3 #-0.5
+            hip_motion = 0.#-0.06
             f_hip_motion = 0.#-0.08
             r_hip_motion = 0.#-0.08
             f_thigh_motion = 0.#-0.06
             r_thigh_motion = 0.#-0.06
             f_calf_motion = 0.#-0.05
             r_calf_motion = 0.#-0.05
-
+            dof_pos_limits = 0.#-0.05
             # f_hip_motion_height = -0.08
             # r_hip_motion_height = -0.08
             # f_thigh_motion_height = -0.06

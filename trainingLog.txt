@@ -248,16 +248,45 @@ go2_long_jump_pose2_2_3_actu2： lin_vel 4.0, ang_vel 1.2, constrained_jumping 1
 go2_long_jump_pose2_2_3_actu3: lin_vel 3.0, ang_vel 1.2, constrained_jumping 1.0 ---------> 
 go2_long_jump_pose2_2_4: add high and low height termination conditions.  -----> 没法track太高的跳跃
 go2_long_jump_pose2_2_5： Trained based on go2_long_jump_pose2_2_3. height command changed to [0.55, 0.75]. And lin_vel command changed from [1.5,4.0] to [-0.5,2.0]   ---------------> result非常不错，能track不同高低了。
+go2_long_jump_pose2_2_5_P0: Trained based on 2_2_5. P policy. lin_vel changed to [1.6, 3.5]  ------> last.pt 训练出来了不同高度 又高有远
+go2_long_jump_pose2_2_5_P1: Trained based on 2_2_5. P policy. The difference between it and P0 is adding the torque penalty.
+go2_long_jump_pose2_2_5_P2:(on A100) Trained based on 2_2_5. P policy. The difference between it and P0 is adding the action_rate penalty.
+go2_long_jump_pose2_2_5_P3:(on A100) adding the torque and action_rate penalty.  -----> 仿真表现非常好
+
+go2_long_jump_pose2_2_5_P4(A100): -0.001 action rate and torque penalty.   ------> No!!
+go2_long_jump_pose2_2_5P5_Tlimit: 80% torque limitations. with a little torque and action_rate penalty
+go2_long_jump_pose2_2_5_P_onlyTlimit85: 85% torque limitations. No torque and action_rate penalty.
+
 
 go2_long_jump_pose2_2_6： Trained based on 2_2_5. POSE policy. lin_vel changed to [1.6, 3.5]  ------> last.pt 训练出来了不同高度 又高有远
 go2_long_jump_pose2_2_6_actu1/2: directly trained on the 2_2_6 last.pt. nothing changed.
 go2_long_jump_pose2_2_6_actu3: torque weights reduced 10 times smaller. lin_vel changed to [1.0, 2.5] -----> 能track不同高低！而且也挺远的，就是hip的角度不太对
-go2_long_jump_pose2_2_6_actu4: add hip regulation terms-0.12. The commanded height changed from 0.68 to 0.66
+go2_long_jump_pose2_2_6_actu4: add hip regulation terms-0.12. The commanded height changed from 0.68 to 0.66 -------> last.pt 能用，两种高度，跳的又远。就是腿部有点怪。可以上真机试一试！！！
+actu4_2: no hip_motion, regulate the hip angle in tracking_air_angle reward term. Use torque penalty 
+
 先训go2_long_jump_pose2_2_6的actuator_net版本，效果不行的话。就用2_2_5的POSE策略训练一个actuator_net版本1，然后再基于版本1增大command lin vel训练个版本2
+
+go2_long_jump_pose2_2_6_actu5: 为了调整姿态，站立default_pose里面拿掉了对hip的规定。
+
+go2_long_jump_pose2_2_8: (POSE) No collision termination on thigh! continue training on the 2_2_5 with lin_vel(1.6,3.5), and no lin_vel_y. With 确定的 hip in tracking_air_angle reward. -------> good but thigh contact the ground
+go2_long_jump_pose2_2_8_actu1:  
+
+go2_long_jump_pose2_2_9: the same as 2_2_8 with termination on thigh contact.
+go2_long_jump_pose2_2_9_actu1: 
+go2_long_jump_pose2_2_9_actu2: ablatation on torque penalty. No torque penalty.
+
+go2_long_jump_pose2_2_9_actu4: tracking_air_angle with 0 default hip angle regulation.
+go2_long_jump_pose2_2_9_P0: tracking_air_angle with 0 default hip angle regulation, using P control ----> model_1650 needs real robot deployment.
+
+go2_long_jump_pose2_2_7: (POSE) continue training on the 2_2_5 with lin_vel(1.6,3.5) and add the bounding_box constraints only on rewards.其他不变
 
 
 go2_long_jump_pose3: 相比于2增加了，task_max_height reward tracking_lin_vel (-1,1)
 go2_long_jump_pose4: 相比于3，增加了jumping 1->1.5; task_max_height 0,1 -> 0.2
+
+# versatile jump policy:
+go2_versatile_jump0: versatile jump with linvelx [-0.5,1.0], with action delayed buffer for sim2real problem.
+go2_versatile_jump1: without action delayed buffer.
 
 此策略需要的改动： 将task_max_height reward 换成有会重置刷新的max_track reward。
 go2_jump2_4_2: with max_track reward only   --------> 還可以的POSE策略，就是ang_vel track的略微有點不準。跳的夠遠。model_3350.pt比較好,4000之後的都是垃圾。 2.5 max_track reward

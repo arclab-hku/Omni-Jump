@@ -45,6 +45,7 @@ class LeggedRobotCfg(BaseConfig):
         measure_obs_heights = False
         num_histroy_obs = 1
         num_env_priv_obs = None  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
+        
 
     class terrain:
         mesh_type = 'plane'# 'plane'  # "heightfield" # none, plane, heightfield or trimesh
@@ -95,9 +96,9 @@ class LeggedRobotCfg(BaseConfig):
         desired_jumping_height = 0.85
 
         class ranges:
-            lin_vel_x = [2.0, 4.0]#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0.2, 0.2] #[-0.5, 0.6] # min max [m/s]
-            ang_vel_yaw = [-1., 1.]#[-1., 1.] # [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
+            lin_vel_x = [-0.5, 1.0]#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.5, 0.5] #[-0.5, 0.6] # min max [m/s]
+            ang_vel_yaw = [-2., 2.]#[-1., 1.] # [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
             height_z = [0.55, 0.75] #[0.45, 0.99]
 
             heading = [-3.14, 3.14]#[-0.314,0.314]#[-3.14, 3.14]
@@ -261,7 +262,7 @@ class LeggedRobotCfg(BaseConfig):
         tracking_sigma = 0.25  # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1.0  # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.0
-        soft_torque_limit = 1.0
+        soft_torque_limit = 0.9#1.0
         base_height_target = 0.9
         foot_height_target = 1.0
         max_contact_force = 100.  # forces above this value are penalized

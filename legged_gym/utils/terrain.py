@@ -558,15 +558,15 @@ class Terrain:
             # jumping terrain
             elif self.vis_type == 'test':
                 if choice < self.proportions[0]:
-                    parkour_hurdle_terrain(terrain, gap_size=0.2,gap_depth=0.1)
+                    parkour_hurdle_terrain(terrain, gap_size=0.1,gap_depth=0.2)
                     idx = 0
                     terrain.idx = idx   
                 elif choice < self.proportions[1]:
-                    parkour_hurdle_terrain(terrain, gap_size=0.2, gap_depth=0.15)
+                    parkour_hurdle_terrain(terrain, gap_size=0.1, gap_depth=0.1)
                     idx = 1
                     terrain.idx = idx 
                 else:
-                    parkour_hurdle_terrain(terrain, gap_size=0.2, gap_depth=0.2)
+                    parkour_hurdle_terrain(terrain, gap_size=0.15, gap_depth=0.2)
                     idx = 2
                     terrain.idx = idx 
             
@@ -842,7 +842,7 @@ def parkour_hurdle_terrain(terrain,
             # terrain.height_field_raw[dis_x-stone_len//2:dis_x+stone_len//2, ] = np.random.randint(hurdle_height_min, hurdle_height_max)
             # terrain.height_field_raw[dis_x-gap_size//2 : dis_x+gap_size//2, 
             #                          gap_center-half_gap_width:gap_center+half_gap_width] = gap_depth
-            terrain.height_field_raw[dis_x-gap_size//2 : dis_x+gap_size//2, :] = gap_depth/ terrain.vertical_scale
+            terrain.height_field_raw[dis_x-gap_size//2 : dis_x+gap_size//2, :] = (gap_depth+i*0.05)/ terrain.vertical_scale 
 
         #terrain.height_field_raw[last_dis_x:dis_x, :mid_y+rand_y-half_valid_width] = gap_depth  # dist_x is a random value
         #terrain.height_field_raw[last_dis_x:dis_x, mid_y+rand_y+half_valid_width:] = gap_depth

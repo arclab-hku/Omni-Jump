@@ -20,6 +20,7 @@ class PlayJoy():
         self.joy_cmd_vely = 0.
         self.joy_cmd_heading = 0.0
         self.joy_cmd_ang_vel = 0.0
+        self.joy_cmd_height = 0.68
         self.joy_sub = rospy.Subscriber('/joy', Joy, self.joy_callback, queue_size=1)
 
         self.env_cfg, self.train_cfg = task_registry.get_cfgs(name=args.task)
@@ -44,6 +45,7 @@ class PlayJoy():
         self.env_cfg.commands.ranges.lin_vel_y = [self.joy_cmd_vely, self.joy_cmd_vely]
         self.env_cfg.commands.ranges.ang_vel_yaw = [self.joy_cmd_ang_vel, self.joy_cmd_ang_vel]
         self.env_cfg.commands.ranges.heading = [self.joy_cmd_heading, self.joy_cmd_heading]
+        self.env_cfg.commands.ranges.height_z = [self.joy_cmd_height, self.joy_cmd_height]
 
         # init ros publisher
         self.obs_pub = rospy.Publisher('/legged_gym/observation', Float64MultiArray, queue_size=10)
@@ -119,7 +121,7 @@ class PlayJoy():
             obs_dict, rews, dones, infos = env.step(actions.detach())
 
             # cmd's linear velocity changing module
-            env._change_cmds(self.joy_cmd_velx, self.joy_cmd_vely, self.joy_cmd_ang_vel)
+            env._change_cmds(self.joy_cmd_velx, self.joy_cmd_vely, self.joy_cmd_ang_vel, self.joy_cmd_height)
             obs =  obs_dict['obs']
             # print('sdsd', obs.shape, obs_dict)
             # ************ for debug ************
@@ -199,10 +201,14 @@ class PlayJoy():
         # self.lin_vel_z_pub.publish(obs_float[47])
 
     def joy_callback(self, joy_msg):
-        self.joy_cmd_velx = joy_msg.axes[4] * 1.5
+        self.joy_cmd_velx = joy_msg.axes[4] * 4.0
         self.joy_cmd_vely = joy_msg.axes[3] * 1.0
         # self.joy_cmd_heading = joy_msg.axes[0] * 1.5
         self.joy_cmd_ang_vel = joy_msg.axes[0] * 3.0
+        if joy_msg.axes[7] < -0.5:
+            self.joy_cmd_height = 0.48
+        else:
+            self.joy_cmd_height = 0.68
         #print('handle x_vel command:', self.joy_cmd_velx)
 
 
