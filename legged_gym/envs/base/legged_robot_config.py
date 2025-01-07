@@ -79,7 +79,7 @@ class LeggedRobotCfg(BaseConfig):
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75  # slopes above this threshold will be corrected to vertical surfaces
-        origin_zero_z = True
+        origin_zero_z = False#True
         num_goals = 8
         height = [0.02, 0.06]
         downsampled_scale = 0.075
@@ -95,14 +95,21 @@ class LeggedRobotCfg(BaseConfig):
         tracking_z = True
         desired_jumping_height = 0.85
 
+        jump_prob = 0.3
+        zero_v_cmd_normal = False#True # if True, in normal mode, the commands are set to zero velocity  
+        bool_jump = False#True # is true use the newcode structure
+
         class ranges:
-            lin_vel_x = [-0.5, 1.0]#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0.5, 0.5] #[-0.5, 0.6] # min max [m/s]
-            ang_vel_yaw = [-2., 2.]#[-1., 1.] # [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
-            height_z = [0.55, 0.75] #[0.45, 0.99]
+            lin_vel_x = [-0.8, 1.0]#[1.0, 3.0] #[-0.6, 1.0] aliengo#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.5, 0.5] #[-0., 0.] #[-0.5, 0.6] # min max [m/s]
+            ang_vel_yaw = [-1.0, 1.0]#[-1., 1.] long_jump# [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
+            height_z = [0.5, 0.8] #[0.45, 0.99]
 
             heading = [-3.14, 3.14]#[-0.314,0.314]#[-3.14, 3.14]
             vel_z_bool = [0,1]
+
+            z_jump = [0.55, 0.75] #root max height(command for jumping)
+            z_normal = [0.20, 0.45] # command for walking #NOTE not used
  
         
     # class commands():
@@ -155,7 +162,7 @@ class LeggedRobotCfg(BaseConfig):
             "joint_b": 0.}
 
     class control:
-        control_type = 'P'  # P: position, V: velocity, T: torques
+        control_type = 'POSE'  # P: position, V: velocity, T: torques
         # PD Drive parameters:
         stiffness = {'joint_a': 10.0, 'joint_b': 15.}  # [N*m/rad]
         damping = {'joint_a': 1.0, 'joint_b': 1.5}     # [N*m*s/rad]
@@ -262,7 +269,7 @@ class LeggedRobotCfg(BaseConfig):
         tracking_sigma = 0.25  # tracking reward = exp(-error^2/sigma)
         soft_dof_pos_limit = 1.0  # percentage of urdf limits, values above this limit are penalized
         soft_dof_vel_limit = 1.0
-        soft_torque_limit = 0.9#1.0
+        soft_torque_limit = 0.9
         base_height_target = 0.9
         foot_height_target = 1.0
         max_contact_force = 100.  # forces above this value are penalized
@@ -305,7 +312,7 @@ class LeggedRobotCfg(BaseConfig):
         substeps = 1
         gravity = [0., 0., -9.81]  # [m/s^2]
         up_axis = 1  # 0 is y, 1 is z
-        enable_debug_viz = False
+        enable_debug_viz = True #False
 
         class physx:
             num_threads = 10

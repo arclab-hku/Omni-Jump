@@ -61,9 +61,9 @@ def play(args):
     
     # fixed velocity direction evaluation (make sure the value is within the training range)
     env_cfg.commands.ranges.lin_vel_x = [1.0, 1.0]
-    env_cfg.commands.ranges.lin_vel_y = [0., 0.]
+    env_cfg.commands.ranges.lin_vel_y = [-0., -0.]
     env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
-    env_cfg.commands.ranges.height_z = [0.75, 0.785]
+    env_cfg.commands.ranges.height_z = [0.7, 0.7]
     env_cfg.commands.ranges.heading = [-0, -0]
 
     # prepare environment
@@ -73,6 +73,7 @@ def play(args):
     train_cfg.runner.resume = True # set the mode to be evalution
     ppo_runner, train_cfg = task_registry.make_alg_runner(env=env, name=args.task, args=args, train_cfg=train_cfg)
     policy = ppo_runner.get_inference_policy(device=env.device)
+    estimation = ppo_runner.get_estimations(device=env.device)
 
     # export policy as a jit module (used to run it from C++)
     # if EXPORT_POLICY:
@@ -92,7 +93,8 @@ def play(args):
 
     for i in range(1000*int(env.max_episode_length)):
         actions = policy(obs_dict)
-        obs_dict, rews, dones, infos = env.step(actions.detach())
+        _, _, _, ests, _ = estimation(obs_dict)
+        obs_dict, rews, dones, infos = env.step(actions.detach(), ests.detach())
         if RECORD_FRAMES:
             if i % 2:
                 filename = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'frames', f"{img_idx}.png")

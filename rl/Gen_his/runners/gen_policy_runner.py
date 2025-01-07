@@ -16,9 +16,7 @@ from rl.Gen_his.env import VecEnv
 
 from rl.Gen_his.modules.actor_critic import DmEncoder
 
-
 class GenHisPolicyRunner:
-
     def __init__(self,
                  env: VecEnv,
                  train_cfg,
@@ -92,8 +90,9 @@ class GenHisPolicyRunner:
             # Rollout
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
-                    actions = self.alg.act(obs_dict)
-                    obs_dict, rewards, dones, infos = self.env.step(actions)
+                    actions = self.alg.act(obs_dict) # here to add the estimation height value to the environment
+                    _, _, _, estimations, _ = self.alg._actor_critic(obs_dict)
+                    obs_dict, rewards, dones, infos = self.env.step(actions, estimations)
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
                     self.alg.process_env_step(rewards, dones, infos)
 
@@ -116,7 +115,7 @@ class GenHisPolicyRunner:
                 start = stop
                 self.alg.compute_returns(obs_dict)
 
-            mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss = self.alg.update()
+            mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss, mean_policy_loss = self.alg.update()
             stop = time.time()
             learn_time = stop - start
             if self.nn_dir is not None:
@@ -149,16 +148,18 @@ class GenHisPolicyRunner:
                 self.writer.add_scalar('Episode/' + key, value, locs['it'])
                 ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.4f}\n"""
         mean_std = self.alg.actor_critic.std.mean()
+        mean_policy_loss = self.alg.actor_critic.std.mean()
         fps = int(self.num_steps_per_env * self.env.num_envs / (locs['collection_time'] + locs['learn_time']))
-
+    
         self.writer.add_scalar('Vel/vel_loss', locs['mean_vel_loss'], locs['it'])
         self.writer.add_scalar('Vel/height_loss', locs['mean_height_loss'], locs['it'])
         self.writer.add_scalar('Vel/contact_loss', locs['mean_contact_loss'], locs['it'])
-
+        
         self.writer.add_scalar('Loss/value_function', locs['mean_value_loss'], locs['it'])
         self.writer.add_scalar('Loss/surrogate', locs['mean_surrogate_loss'], locs['it'])
         self.writer.add_scalar('Loss/learning_rate', self.alg.learning_rate, locs['it'])
         self.writer.add_scalar('Policy/mean_noise_std', mean_std.item(), locs['it'])
+        self.writer.add_scalar('Policy/mean_policy_loss', locs['mean_value_loss'], locs['it'])
         self.writer.add_scalar('Perf/total_fps', fps, locs['it'])
         self.writer.add_scalar('Perf/collection time', locs['collection_time'], locs['it'])
         self.writer.add_scalar('Perf/learning_time', locs['learn_time'], locs['it'])
@@ -252,6 +253,13 @@ class GenHisPolicyRunner:
         if device is not None:
             self.alg.actor_critic.to(device)
         return self.alg.actor_critic.act_inference
+    
+    def get_estimations(self, device=None):
+        self.alg.actor_critic.eval()  # switch to evaluation mode (dropout for example)
+        if device is not None:
+            self.alg.actor_critic.to(device)
+        #_, _, _, ests, _ = self.alg.actor_critic._actor_critic
+        return self.alg.actor_critic._actor_critic
 
     def restore_train(self, path):  # fine tune
         if not path:

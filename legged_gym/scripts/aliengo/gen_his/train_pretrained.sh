@@ -12,9 +12,9 @@ EXTRA_ARGS_SLUG=${EXTRA_ARGS// /_}
 echo extra "${EXTRA_ARGS}"
 
 CUDA_VISIBLE_DEVICES=${GPUS} \
-python train.py --task=go2 --num_envs=4096 --headless --seed=${SEED} \
+python train.py --task=aliengo --num_envs=4096 --headless --seed=${SEED} \
 --algo=GenHis \
 --priv_info \
---output_name=go2/gen_his/"${CACHE}" \
---checkpoint_model=outputs/go2/gen_his/"${PRETRAIN}"/stage1_nn/last.pt \
+--output_name=aliengo/gen_his/"${CACHE}" \
+--checkpoint_model=outputs/aliengo/gen_his/"${PRETRAIN}"/stage1_nn/last.pt \
 ${EXTRA_ARGS}

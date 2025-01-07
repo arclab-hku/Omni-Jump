@@ -558,15 +558,57 @@ class Terrain:
             # jumping terrain
             elif self.vis_type == 'test':
                 if choice < self.proportions[0]:
-                    parkour_hurdle_terrain(terrain, gap_size=0.1,gap_depth=0.2)
+                    num_rectangles = 30
+                    rectangle_min_size = 1.
+                    rectangle_max_size = 2.
+                    terrain_utils.discrete_obstacles_terrain(
+                    terrain,
+                    0.12,
+                    rectangle_min_size,
+                    rectangle_max_size,
+                    num_rectangles,
+                    platform_size=3.0,
+                )
+                #     terrain_utils.pyramid_stairs_terrain(
+                #     terrain, step_width=0.31, step_height=0.15, platform_size=3.0
+                # )
+                    #parkour_hurdle_terrain(terrain, gap_size=0.2,gap_depth=0.25)
                     idx = 0
                     terrain.idx = idx   
                 elif choice < self.proportions[1]:
-                    parkour_hurdle_terrain(terrain, gap_size=0.1, gap_depth=0.1)
+                    num_rectangles = 30
+                    rectangle_min_size = 1.
+                    rectangle_max_size = 2.
+                    terrain_utils.discrete_obstacles_terrain(
+                    terrain,
+                    0.1,
+                    rectangle_min_size,
+                    rectangle_max_size,
+                    num_rectangles,
+                    platform_size=3.0,
+                )
+                #     terrain_utils.pyramid_stairs_terrain(
+                #     terrain, step_width=0.31, step_height=0.15, platform_size=3.0
+                # )
+                    #parkour_hurdle_terrain(terrain, gap_size=0.2,gap_depth=0.25)
                     idx = 1
                     terrain.idx = idx 
                 else:
-                    parkour_hurdle_terrain(terrain, gap_size=0.15, gap_depth=0.2)
+                    num_rectangles = 40
+                    rectangle_min_size = 1.
+                    rectangle_max_size = 2.
+                #     terrain_utils.pyramid_stairs_terrain(
+                #     terrain, step_width=0.31, step_height=0.15, platform_size=3.0
+                # )
+                    terrain_utils.discrete_obstacles_terrain(
+                    terrain,
+                    0.11,
+                    rectangle_min_size,
+                    rectangle_max_size,
+                    num_rectangles,
+                    platform_size=3.0,
+                )
+                    #parkour_hurdle_terrain(terrain, gap_size=0.2, gap_depth=0.2)
                     idx = 2
                     terrain.idx = idx 
             
@@ -619,7 +661,7 @@ class Terrain:
             if self.cfg.origin_zero_z:
                 env_origin_z = 0
             else:
-                env_origin_z =  np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale
+                env_origin_z =  (np.max(terrain.height_field_raw[x1:x2, y1:y2])) * terrain.vertical_scale
                 #env_origin_z =  terrain.height_field_raw[x1:x2, y1:y2] * terrain.vertical_scale
             self.env_origins[i, j] = [env_origin_x, env_origin_y, env_origin_z]            
             # env_origin_z = np.max(terrain.height_field_raw[x1:x2, y1:y2]) * terrain.vertical_scale

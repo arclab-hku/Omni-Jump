@@ -11,7 +11,7 @@ class Go1BaseCfg(LeggedRobotCfg):
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = 200 + 5 +12# 187, 5 means 4 mass and 1 z height
+        num_privileged_obs = 200 + 5 +12+ 3 + 2 - 4 - 8 # 187, 5 means 4 mass and 1 z height
         train_type = "EST"  # standard, priv, lbc, standard, RMA, EST, Dream, GenHis
 
         follow_cam = False
@@ -20,18 +20,25 @@ class Go1BaseCfg(LeggedRobotCfg):
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
         num_histroy_obs = 5
+        pass_has_jumped = True
+
+        save_action = False
 
 
     class terrain(LeggedRobotCfg.terrain):
         mesh_type = 'trimesh'
         jump = True
         origin_zero_z = False#True
+        vis_type = 'train' #'test'
 
     class init_state(LeggedRobotCfg.init_state):
         pos = [0.0, 0.0, 0.34]  # x,y,z [m]
         rel_foot_pos = [[0.181,0.181,-0.195,-0.195], # x feet pos which are equal to the x pos of hip joint
                         [0.12675,-0.12675,0.12675,-0.12675], # y feet pos is the same as the initial values
                         [-0.32,-0.32,-0.32,-0.32]] 
+        rel_foot_pos_peak = [[0.232,0.232,-0.155,-0.155], # x
+                        [0.148,-0.148,0.148,-0.148], # y
+                        [-0.112,-0.112,-0.115,-0.115]] # z  # relative to the COM pos 
         default_joint_angles = { # = target angles [rad] when action = 0.0
 
             'FL_hip_joint': 0.0,   # [rad]
@@ -70,9 +77,9 @@ class Go1BaseCfg(LeggedRobotCfg):
         # PD Drive parameters:
         control_type = "POSE"#"actuator_net"
         # stiffness = {'joint': 20.}  # [N*m/rad]
-        stiffness = {"joint": 30.0}  # [N*m/rad]
+        stiffness = {"joint": 40.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
-        damping = {"joint": 0.8}  # [N*m*s/rad]
+        damping = {"joint": 1.2}  # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
@@ -85,7 +92,7 @@ class Go1BaseCfg(LeggedRobotCfg):
         name = "go1"
         foot_name = "foot"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip"]
+        terminate_after_contacts_on = ["base", "trunk", "hip","thigh", "calf"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
         # flip_visual_attachments = False  # Some .obj meshes must be flipped from y-up to z-up
 
@@ -108,16 +115,22 @@ class Go1BaseCfg(LeggedRobotCfg):
         randomize_Motor_Offset = True  # actuator net: True
         added_Motor_OffsetRange = [-0.02, 0.02]
 
+        randomize_has_jumped = True # Randomize if the robot has jumped or not at the start of the episode
+        has_jumped_random_prob = 0.8
+        reset_has_jumped = True # Whether to reset the has_jumped to False at a random point of the episode
+        manual_has_jumped_reset_time = 0 # Manual time at which to reset has_jumped (in steps)
+
 
     class rewards(LeggedRobotCfg.rewards):
         base_height_target = 0.5
         max_contact_force = 500.0
         only_positive_rewards = True
         foot_height_target = 0.09
+        max_height_reward_sigma = 0.05
 
         class scales(LeggedRobotCfg.rewards.scales):
-            tracking_lin_vel = 1.0#1.2#1.0#1.0#0.6#1.5#1.0
-            tracking_ang_vel = 0.#0.5#0.5#0.35
+            tracking_lin_vel = 2.0#1.2#1.0#1.0#0.6#1.5#1.0
+            tracking_ang_vel = 1.2#0.5#0.5#0.35
             tracking_yaw = 0.#5.0#0.7#0.6
             lin_vel_z = 0.#1.5#3.5#-1.0 #-0.5 # base_lin_vel_z
             lin_vel_z_world = 0.8#0.5#2.5#1.8
@@ -125,38 +138,51 @@ class Go1BaseCfg(LeggedRobotCfg):
             ang_vel_xy = -0.6#-0.6
             headup = 0#0.5#0.5
             uf_forces = 0#2.5
-            orientation = -0.8#0 #0#0.2 positive means encourage the robot to stand upright
+            orientation = -1.0#0 #0#0.2 positive means encourage the robot to stand upright
             upright = 0.#-0.2 # negative means encourage the robot to stand upright
             vel_switch = 0.#1.0
             tracking_pos = 0#1.5
             tracking_feet_pos = 0#0.8
 
             torques = 0.#-0.00001
+            hip_torques = 0.#0.0001
+            thigh_torques = 0.00001 #0.0001
+            calf_torques = 0.00001#-0.00001
             dof_acc = -2.5e-7
             base_height = 0#0.2#0.3#0.1
             feet_air_time = 0.#1.0
 
-            feet_distance = 0.8#1.0#0.4#0.65
-            early_contact = 0.#10.#1.0
-            max_height = 0.#5.#1.0#10.0#1.5#0.8  # add has_jumped mask and used the simple env
-            task_max_height = 20.0#20.0
-            base_height_flight = 1.0 #0.8 # Reward for being in the air, only active the first jump
-            base_height_stance = 0.5 #0.4 # Reward fo            
-            jumping = 1.0#1.0
+            stick_to_ground = 0.#0.5
+
+            feet_distance = 0.#0.8#0.2#0.8#1.0#0.4#0.65
+            feet_pos = 0.#0.6#0.8#0.4#0.6 # maybe need to be smaller
+            early_contact = 0.#1.0
+            height_track = 0.5#0.2#1.2#可以小一点#1.5#2.5#2.5#4.#5.#1.0#10.0#1.5#0.8  # add has_jumped mask and used the simple env
+            max_track = 0.#1.5#2.5
+            task_max_height = 1.0  #0.3#1.0#0.3#0.#0.5#0.1#0.5 #1.0 #2.0 #0.8 #2.5 #20.0 #0.
+            constrained_jumping = 0.#20.0#3.0#1.0
+            base_height_flight = 0.#0.8 #0.8 # Reward for being in the air, only active the first jump
+            base_height_stance = 0.#0.8 #0.4 # Reward fo            
+            jumping = 30.0#30.#10.0 #25.0 #1.0
             has_jumped = 0.#5.0 # remember to delete the has_jumped cutoff in check_termination
+
+            pitch_tracking = 0.#3.0#1.0 #1.0 需要它大，reward他 
+            pitch_vel_tracking = 0.#0.3 # penalize the acceleration difference.
 
             feet_stumble = 0.#-0.5
             collision = -1.0
-            action_rate = -0.01#-0.005
+            action_rate = 0.#-0.0001#0.#-0.00001#-0.001
             # #### motion
-            default_pose = -0.12 # dont be too big!
+            default_pose = -0.12 #-0.12 # don't be too big!
+            tracking_air_angle = -0.5#-0.5#-0.14#-0.1 #-0.5
+            hip_motion = 0.#-0.06
             f_hip_motion = 0.#-0.08
             r_hip_motion = 0.#-0.08
             f_thigh_motion = 0.#-0.06
-            r_thigh_motion = 0.#-0.06
+            r_thigh_motion = 0.#-0.06  
             f_calf_motion = 0.#-0.05
             r_calf_motion = 0.#-0.05
-
+            dof_pos_limits = 0.#-0.05
             # f_hip_motion_height = -0.08
             # r_hip_motion_height = -0.08
             # f_thigh_motion_height = -0.06
@@ -164,13 +190,13 @@ class Go1BaseCfg(LeggedRobotCfg):
             # f_calf_motion_height = -0.06
             # r_calf_motion_height = -0.06
 
-            flfr_gait_diff = -0.2#-0.2
-            flfr_gait_diff2 = 0.#-0.015
-            rlrr_gait_diff = -0.2#-0.2
+            flfr_gait_diff = -0.04#-0.2
+            flfr_gait_diff2 = 0.  #-0.015
+            rlrr_gait_diff = -0.04#-0.2
             rlrr_gait_diff2 = 0.#-0.015
 
-            flrl_gait_diff = 0.#-0.2#-0.2
-            frrr_gait_diff = 0.#-0.2#-0.2
+            flrl_gait_diff = -0.04#-0.2#-0.2#-0.2
+            frrr_gait_diff = -0.04#-0.2#-0.2#-0.2
 
             FL_phase_height = 0.#0.3
             FR_phase_height = 0.#0.3
@@ -225,8 +251,10 @@ class Go1BaseCfg(LeggedRobotCfg):
         enableMeasuredVel = True
         enableMeasuredHeight = True
         enableForce = True
-        enable_priv_Zheights_weights = True
+        enable_priv_Zheights_weights = False#True
         enable_priv_feet_height = True
+        enable_priv_ang_vel = True
+        enable_priv_ZXYheights = True
 
 
 class Go1BaseCfgPPO(LeggedRobotCfgPPO):
@@ -237,16 +265,15 @@ class Go1BaseCfgPPO(LeggedRobotCfgPPO):
         save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'go1'
         export_policy = False
+        export_onnx_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 8+12]#[258, 128, 3]  # 3 is for the vel estimator. 
+        priv_mlp_units = [258, 128, 8+12+3+2-4-8]#[258, 128, 3]  # 3 is for the vel estimator. 
         priv_info = False
-        priv_info_dim = 200+5+12
-        estLen = 3+1+4+12
+        priv_info_dim = 200+5+12+3+2-4-8 
+        estLen = 3+1+4+12+3+2-4-8 
         proprio_adapt = False
         checkpoint_model = None
         proprio_adapt_out_dim = 11
-
-
         HistoryLen = 5
-        Hist_info_dim = 45 * HistoryLen
+        Hist_info_dim = (45+1) * HistoryLen

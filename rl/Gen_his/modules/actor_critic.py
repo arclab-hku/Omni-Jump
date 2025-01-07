@@ -6,8 +6,12 @@ import torch.nn as nn
 from torch.distributions import Normal
 from torch.nn.modules import rnn
 
+import os
 
-class DmEncoder(nn.Module):
+#from .legged_robot_config import LeggedRobotCfg
+
+ 
+class DmEncoder(nn.Module):  # SHAP values output
     def __init__(self, num_encoder_obs, encoder_hidden_dims):
         super().__init__()
 
@@ -47,7 +51,7 @@ class ActorCritic(nn.Module):
                 [key for key in kwargs.keys()]))
         super(ActorCritic, self).__init__()
 
-
+        #self.cfg = cfg
 
         # ---- Priv Info ----
         self.priv_mlp = kwargs['priv_mlp_units']
@@ -71,6 +75,12 @@ class ActorCritic(nn.Module):
         self.dm_encoder = DmEncoder(self.num_encoder_input,  self.encoder_mlp)
 
         cprint(f"Encoder MLP: {self.dm_encoder}", 'green', attrs=['bold'])
+
+        self.extrin_file_dir = '/home/leo/research/leggedR/adaptive_legged_gym/rl/Gen_his/utils/shap_data/aliengo2_extrin.npy'
+        #self.extrin_file = 'extrin.npy'
+        self.proprio_hist_file_dir = '/home/leo/research/leggedR/adaptive_legged_gym/rl/Gen_his/utils/shap_data/aliengo2_proprio_hist.npy'
+        #self.proprio_hist_file = 'proprio_hist.npy'
+        self.extrin_list, self.proprio_hist_list = [], []
 
 
         activation = get_activation(activation)
@@ -181,35 +191,64 @@ class ActorCritic(nn.Module):
         # obs_his = obs_proprio_hist
         # extrin_gt = obs_dict['privileged_info'][:, 0:23]
 
-        # pos tracking:
+        # ZXY tracking and feet pos:
         obs = obs_dict['obs']
+        #obs_vel = obs_dict['privileged_info'][:, 7:10]
         obs_vel = obs_dict['privileged_info'][:, 10:13]
         obs_feet_pos = obs_dict['privileged_info'][:, 3:7]
         obs_zxy = obs_dict['privileged_info'][:, 0:3]
         #obs_mass = obs_dict['privileged_info'][:, 3:7]
         obs_ang_vel = obs_dict['privileged_info'][:, 7:10]
         #obs_hight = obs_dict['privileged_info'][:, 3:200]
-        obs_hight = obs_dict['privileged_info'][:, 13:210]#+264]
+        #obs_hight = obs_dict['privileged_info'][:, 10:207]#+264]
+        obs_hight = obs_dict['privileged_info'][:, 13:210]
         obs_proprio_hist = obs_dict['proprio_hist']
         obs_his = obs_proprio_hist
-        extrin_gt = obs_dict['privileged_info'][:, 0:13]        
+        #extrin_gt = obs_dict['privileged_info'][:, 0:10] 
+        extrin_gt = obs_dict['privileged_info'][:, 0:13] 
+        # Z tracking:
+        # obs = obs_dict['obs']
+        # obs_vel = obs_dict['privileged_info'][:, 4:7]#obs_dict['privileged_info'][:, 10:13]
+        # #obs_feet_pos = obs_dict['privileged_info'][:, 3:7]
+        # #obs_zxy = obs_dict['privileged_info'][:, 0:3]
+        # obs_z = obs_dict['privileged_info'][:, 0:1]
+        # #obs_mass = obs_dict['privileged_info'][:, 3:7]
+        # obs_ang_vel = obs_dict['privileged_info'][:, 1:4]#obs_dict['privileged_info'][:, 7:10]
+        # #obs_hight = obs_dict['privileged_info'][:, 3:200]
+        # obs_hight = obs_dict['privileged_info'][:, 7:204]#[:, 13:210]#+264]
+        # obs_proprio_hist = obs_dict['proprio_hist']
+        # obs_his = obs_proprio_hist
+        # extrin_gt = obs_dict['privileged_info'][:, 0:7]#[:, 0:13]            
 
         # cprint(f"obs_sffsdgg: {obs.shape,  obs_his.shape, obs, obs_his}", 'green', attrs=['bold'])
-
+        
         # print('obs_proprio_hist', obs_proprio_hist.shape, obs_proprio_hist)
-
+         
         # cprint(f"obs_his: {obs_his.shape, obs_his}", 'red', attrs=['bold'])
 
-
-        extrin_en = self.dm_encoder(obs_his) # output dim=20
-
+    # for SHAP analysis：
+        extrin_en = self.dm_encoder(obs_his) # output dim=13
+        #extrin_en.reshape(self.cfg.num_envs, self.cfg.num_histroy_obs, self.cfg.num_observations) # envs, 5, 46
+        #print('----------------obs_his dimension is:', obs_his.size()) #obs_his: (num_envs, 46*5=230) 
+        #print('-------------------------------------------')
+    # store the value as test_DATAset for SHAP analysis
+        self.extrin_list += [extrin_en.detach().cpu().numpy()]
+        self.proprio_hist_list += [obs_dict['proprio_hist'].detach().cpu().numpy()]
+        extrin_array = np.array(self.extrin_list).reshape(-1, extrin_en.shape[1])
+        #proprio_hist_array = np.array(self.proprio_hist_list).reshape(-1, 20, 46)
+    #store the input obs_his here.
+        #np.save(self.proprio_hist_file_dir, proprio_hist_array)
+    # store the encoder output here 
+        #np.save(self.extrin_file_dir, extrin_array)
 
         # # extrin = torch.tanh(extrin_en)
         extrin_gt = torch.tanh(extrin_gt)
-
+        #print('----------------estimation height is:', extrin_en.size()) # extrin_en shape is(num_envs, estimation_length=13)
+        #print('-------------------------------------------')
         #actor_obs = torch.cat([ obs, extrin_en], dim=-1)  ## 45 + 3
         actor_obs = torch.cat([extrin_en, obs], dim=-1)#torch.cat([ obs, extrin_en, obs_hight], dim=-1) # 45 + 3 + 197
         #critic_obs = torch.cat([obs_z, obs_mass, obs_ang_vel, obs_feet_pos, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
+        #critic_obs = torch.cat([obs_z, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
         critic_obs = torch.cat([obs_zxy, obs_feet_pos, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
 
         # extrin_en and the input observation of critics最好一一对应

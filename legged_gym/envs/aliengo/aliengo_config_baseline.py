@@ -18,15 +18,18 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
         measure_obs_heights = False
         num_env_priv_obs = 17  # if not None a priviledge_obs_buf will be returned by step() (critic obs for assymetric training). None is returned otherwise
-        num_histroy_obs = 5
+        num_histroy_obs = 20
         pass_has_jumped = True
+
+        save_action = False
 
 
 
     class terrain(LeggedRobotCfg.terrain):
-        mesh_type = 'stair'#'trimesh'#'stone'#'QRC'#
+        mesh_type = 'trimesh'#'trimesh'#'stone'#'QRC'#
         jump = True
-        origin_zero_z = True
+        origin_zero_z = False#True
+        vis_type = 'train' #'test'
 
 
     class init_state(LeggedRobotCfg.init_state):
@@ -74,7 +77,7 @@ class AliengoBaseCfg(LeggedRobotCfg):
 
     class control(LeggedRobotCfg.control):
         # PD Drive parameters:
-        control_type = "actuator_net"#"POSE" #
+        control_type = "P"#"actuator_net1" #"actuactor_net"#"POSE"#
         # stiffness = {'joint': 20.}  # [N*m/rad]
         stiffness = {"joint": 40.0}  # [N*m/rad]
         # damping = {'joint': 0.5}     # [N*m*s/rad]
@@ -84,14 +87,16 @@ class AliengoBaseCfg(LeggedRobotCfg):
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
         use_actuator_network = True
-        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/model_300.pth"
+        actuator_net_file = "{LEGGED_GYM_ROOT_DIR}/resources/actuator_nets/unitree_aliengo_2rd_f100_it4000_ly2_mlp_dec27_dec28.pt"
+
+        max_delay_steps = 5
 
     class asset(LeggedRobotCfg.asset):
-        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo.urdf"
+        file = "{LEGGED_GYM_ROOT_DIR}/resources/robots/aliengo_description/urdf/aliengo_old.urdf"
         name = "aliengo"
-        foot_name = "foot"
+        foot_name = "foot"#["FL_foot", "FR_foot", "RL_foot", "RR_foot"]#"foot"
         penalize_contacts_on = ["hip", "thigh", "calf"]
-        terminate_after_contacts_on = ["base", "trunk", "hip"]#["base", "trunk", "hip"]
+        terminate_after_contacts_on = ["base", "trunk", "hip", "thigh"]#["base"]#["base", "trunk", "hip", "thigh"]#["base", "trunk", "hip"]
         self_collisions = 1  # 1 to disable, 0 to enable...bitwise filter
 
     class domain_rand(LeggedRobotCfg.domain_rand):
@@ -131,8 +136,8 @@ class AliengoBaseCfg(LeggedRobotCfg):
         class scales(LeggedRobotCfg.rewards.scales):
             task_pos = 0.#2.5
             task_ori = 0.#2.0
-            tracking_lin_vel = 2.5#1.2#1.0#1.2#1.0#1.0#0.6#1.5#1.0
-            tracking_ang_vel = 1.0#0.6#0.5
+            tracking_lin_vel = 2.5#2.0#2.5#1.2#1.0#1.2#1.0#1.0#0.6#1.5#1.0
+            tracking_ang_vel = 1.2#1.0#1.2#0.6#0.5
             tracking_pitch_vel = 0.#4.0
             tracking_yaw = 0.#0.7#0.6
             tracking_pitch = 0.
@@ -142,13 +147,14 @@ class AliengoBaseCfg(LeggedRobotCfg):
             ang_vel_xy = 0.#-1.0#-0.6 # penalize on yaw
             headup = 0#0.5#0.5
             uf_forces = 0#2.5
-            orientation = -0.6#-0.5#-0.5#0.2 positive means encourage the robot to stand upright
+            orientation = -1.0#-1.0#-0.6#-0.5#0.2 positive means encourage the robot to stand upright
             upright = 0.#-0.2 # negative means encourage the robot to stand upright
             vel_switch = 0.#1.0
             tracking_pos = 0#1.5
             tracking_feet_pos = 0.#0.8
 
-            torques = 0.#-0.00001
+            torque_limits = -0.01 #0.
+            torques = -1e-6 #-1e-7
             dof_acc = -2.5e-7
             base_height = 0#0.2#0.3#0.1
             feet_air_time = 0.#1.0
@@ -156,13 +162,13 @@ class AliengoBaseCfg(LeggedRobotCfg):
             stick_to_ground = 0.#0.5
 
             feet_distance = 0.#0.8#1.0#0.4#0.65
-            feet_pos = 0.#0.6#0.4#0.6 # maybe need to be smaller
+            feet_pos = 0.6#0.4#0.6 # maybe need to be smaller
             early_contact = 0.#1.0
             max_height = 0.#2.5#4.#5.#1.0#10.0#1.5#0.8  # add has_jumped mask and used the simple env
-            task_max_height = 15.0#20.0
+            task_max_height = 1.5#0.6#1.0#15.0#20.0
             base_height_flight = 0.#0.8 #0.8 # Reward for being in the air, only active the first jump
             base_height_stance = 0.#0.8 #0.4 # Reward fo            
-            jumping = 1.0#1.0
+            jumping = 30.0#12#20.0#1.0
             has_jumped = 0.#5.0 # remember to delete the has_jumped cutoff in check_termination
 
             pitch_tracking = 0.#3.0#1.0 #1.0 需要它大，reward他 
@@ -172,7 +178,8 @@ class AliengoBaseCfg(LeggedRobotCfg):
             collision = -1.0
             action_rate = -0.01#-0.005
             # #### motion
-            default_pose = -0.14 # dont be too big!
+            default_pose = -0.1 # dont be too big!
+            tracking_air_angle = 0.#-0.6#-0.6
             f_hip_motion = 0.#-0.08
             r_hip_motion = 0.#-0.08
             f_thigh_motion = 0.#-0.06
@@ -187,13 +194,13 @@ class AliengoBaseCfg(LeggedRobotCfg):
             # f_calf_motion_height = -0.06
             # r_calf_motion_height = -0.06
 
-            flfr_gait_diff = -0.08#-0.2
+            flfr_gait_diff = -0.04#-0.08#-0.2
             flfr_gait_diff2 = 0.#-0.015
-            rlrr_gait_diff = -0.08#-0.2
+            rlrr_gait_diff = -0.04#-0.08#-0.2
             rlrr_gait_diff2 = 0.#-0.015
 
-            flrl_gait_diff = 0.#-0.2#-0.2
-            frrr_gait_diff = 0.#-0.2#-0.2
+            flrl_gait_diff = -0.0#-0.2#-0.
+            frrr_gait_diff = -0.0#-0.2#-0.
 
             FL_phase_height = 0.#0.3
             FR_phase_height = 0.#0.3
@@ -240,12 +247,12 @@ class AliengoBaseCfgPPO(LeggedRobotCfgPPO):
         export_onnx_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 8+12+3+2-4-8]#[258, 128, 3]  # 3 is for the vel estimator. 
+        priv_mlp_units = [256, 128, 8+12+3+2-4-8]#[258, 128, 3]  # 3 is for the vel estimator. 
         priv_info = False
         priv_info_dim = 200+5+12+3+2-4-8 # +2 for the XY position tracking
         estLen = 3+1+4+12+3+2-4-8 # +2 for the XY position tracking
         proprio_adapt = False
         checkpoint_model = None
         proprio_adapt_out_dim = 11
-        HistoryLen = 5
+        HistoryLen = 20
         Hist_info_dim = (45+1) * HistoryLen

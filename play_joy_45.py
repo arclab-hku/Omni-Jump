@@ -201,8 +201,8 @@ class PlayJoy():
         # self.lin_vel_z_pub.publish(obs_float[47])
 
     def joy_callback(self, joy_msg):
-        self.joy_cmd_velx = joy_msg.axes[4] * 4.0
-        self.joy_cmd_vely = joy_msg.axes[3] * 1.0
+        self.joy_cmd_velx = joy_msg.axes[4] #* 4.0
+        self.joy_cmd_vely = joy_msg.axes[3] #* 1.0
         # self.joy_cmd_heading = joy_msg.axes[0] * 1.5
         self.joy_cmd_ang_vel = joy_msg.axes[0] * 3.0
         if joy_msg.axes[7] < -0.5:

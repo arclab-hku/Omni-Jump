@@ -214,13 +214,14 @@ class PPO:
             else:
                 value_loss = (returns_batch - value_batch).pow(2).mean()
 
-            loss_policy = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean()
+            loss_policy = surrogate_loss + self.value_loss_coef * value_loss - self.entropy_coef * entropy_batch.mean() # PPO Policy Loss
 
             extrin_batch = self.actor_critic.extrin_loss(obs_dict_batch, masks=masks_batch,
                                                          hidden_states=hid_states_batch[1]) # the same as the output of actor_critic.evaluate(), encoder output
             #extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:11]) # the input for critics, real values exclude heights and disturbance_force
-            extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:13])  # the input for critics, real values exclude heights and disturbance_force
-            
+            extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:10])  # the input for critics, real values exclude heights and disturbance_force
+            #extrin_gt_batch = torch.tanh(privileged_info_batch[:, 0:7]) 
+
             # encoder loss: for velocity tracking
             # real_vel = privileged_info_batch[:, 20:23]
             # real_mass = privileged_info_batch[:, 1:5]
@@ -238,6 +239,8 @@ class PPO:
             # loss_encoder = vel_loss + mass_loss + Zheight_loss + feet_pos_loss + ang_loss
 
             # encoder loss: for position tracking
+            # tracking feet positions, robot height, and the robot XY:
+            #real_vel = privileged_info_batch[:, 7:10]
             real_vel = privileged_info_batch[:, 10:13]
             #real_mass = privileged_info_batch[:, 3:7]
             real_ang_vel = privileged_info_batch[:, 7:10]
@@ -245,7 +248,8 @@ class PPO:
             real_ZXYheights = privileged_info_batch[:, 0:3] 
             real_feet_pos = privileged_info_batch[:, 3:7]
 
-            vel_loss = F.mse_loss(extrin_batch[:, 10:13], real_vel) #extrin_gt_batch[:, 17:20])
+            #vel_loss = F.mse_loss(extrin_batch[:, 7:10], real_vel) #extrin_gt_batch[:, 17:20])
+            vel_loss = F.mse_loss(extrin_batch[:, 10:13], real_vel)
             height_loss = 0
             contact_loss = 0
             #mass_loss = F.mse_loss(extrin_batch[:, 3:7], real_mass) #extrin_gt_batch[:, 1:5])
@@ -253,6 +257,18 @@ class PPO:
             ZXYheight_loss = F.mse_loss(extrin_batch[:, 0:3], real_ZXYheights) #extrin_gt_batch[:, 0:1])
             feet_pos_loss = F.mse_loss(extrin_batch[:, 3:7], real_feet_pos) #extrin_gt_batch[:, 5:17])
             loss_encoder = vel_loss + ZXYheight_loss + feet_pos_loss + ang_loss
+
+            # # only tracking the robot height:
+            # real_vel = privileged_info_batch[:, 4:7]
+            # real_ang_vel = privileged_info_batch[:, 1:4]
+            # real_Zheights = privileged_info_batch[:, 0:1] 
+
+            # vel_loss = F.mse_loss(extrin_batch[:, 4:7], real_vel) #extrin_gt_batch[:, 17:20])
+            # height_loss = 0
+            # contact_loss = 0
+            # ang_loss = F.mse_loss(extrin_batch[:,1:4], real_ang_vel)
+            # Z_loss = F.mse_loss(extrin_batch[:, 0:1], real_Zheights)
+            # loss_encoder = vel_loss + Z_loss + ang_loss
 
             w1 = 1
             w2 = 1
@@ -272,6 +288,7 @@ class PPO:
             mean_vel_loss += vel_loss.item()
             mean_height_loss += 0
             mean_contact_loss += 0
+            #mean_Zheight_loss += Z_loss.item()
             #mean_Zheight_loss += Zheight_loss.item()
             mean_Zheight_loss += ZXYheight_loss.item()
             #mean_mass_loss += mass_loss.item()
@@ -279,6 +296,7 @@ class PPO:
 
             mean_value_loss += value_loss.item()
             mean_surrogate_loss += surrogate_loss.item()
+            mean_loss_policy += loss_policy.item()
 
         num_updates = self.num_learning_epochs * self.num_mini_batches
         mean_value_loss /= num_updates
@@ -286,9 +304,9 @@ class PPO:
         mean_vel_loss /= num_updates
         mean_Zheight_loss /= num_updates
         #mean_mass_loss /= num_updates
-        mean_feet_pos_loss /= num_updates       
-
+        mean_feet_pos_loss /= num_updates      
+        mean_loss_policy /= num_updates 
 
         self.storage.clear()
 
-        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss #mean_Zheight_loss, mean_mass_loss, mean_feet_pos_loss
+        return mean_value_loss, mean_surrogate_loss, mean_vel_loss, mean_height_loss, mean_contact_loss, mean_loss_policy #mean_Zheight_loss, mean_mass_loss, mean_feet_pos_loss

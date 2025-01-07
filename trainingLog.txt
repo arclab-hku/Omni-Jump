@@ -174,7 +174,27 @@ z_feetTraj_hard30: Train based on 10. Actuactor_net finetune. Penalize on the hi
 30_4: rlrr_sym reward smaller. lin_vel_xy [-0.8,0.8]&[-0.5,0.5] with new resample_commands. Only track one dimension. -----> 没法跳太高
 30_5: 与4的区别在于，换成了三级别desired_height command.  -----> 跳的挺远。model_950
 30_6: Train based on 30. Larger feet_pos reward and smaller lin_vel.  ------> 还可以。横跳的时候要加入一个反向的-0.05的yaw转动，纵向跳的没有30_5远. last.pt
+#真機很不錯：
 30_7：Train based on 30. Everything the same as 30_6 except larger lin_vel_xy [-1,1];[-0.65,0.65]  ------> 还不错，都还行。除了没法跳到很高。前后腿姿态比较均衡。目前最好用的部署策略。
+
+20hist_1: ACTUatorNet policy. hist=20. No lin_y vel and an_vel
+20hist_2: P policy. with termination conditions.
+20hist_P_0_all: P policy. With all the dircetion velocity and different jumping
+
+#use new urdf to train:
+z_feetTraj_hard30_7_newURDF0: actuator net training. -----> 可以用的，能跳,就是後腿不收腿
+z_feetTraj_hard30_7_newURDF1：actuator net training。加了feet_pos reward以及 高度termination條件 ----->姿態比0好，但是還是不收後腿。
+z_feetTraj_hard30_7_newURDF2: tracking_air_angle reward instead of feet_pos. P control.  ---> 沒啥用，還是不收腿
+z_feetTraj_hard30_7_newURDF3：與2不同的地方在於加上了前後腿的對稱項reward  ------》很強，收腿很不錯，就是轉yaw跳躍有點受到sym reward的影響
+z_feetTraj_hard30_7_newURDF4： actuator_net control。 基於3繼續訓練，拿掉了所有的腿部對稱reward.  ------》 看着已經頗爲不錯的versatile jump策略了
+z_feetTraj_hard30_7_newURDF5: actuator_net control. pretrained on 0. Use the feet pos reward and flrl frrr sym reward. 解決落地前要主動伸腿的問題。
+z_feetTraj_hard30_7_newURDF5_2: continue training on 5. To enhance its vel tracking and gestrue stability.
+
+z_feetTraj_hard30_7_newURDF6_long: finetune based on 3 model_500.
+
+z_feetTraj_hard30_7_newURDF_long0： 在4的基礎上訓練一個新的long jump策略。lin_vel2.5, jumping12, task_max_height0.6， torques -1e-7, torque_limits -0.01  ----------> 2600挺遠的, 2.5-3.0的速度跳的挺遠的，勉強能用，就是落地不太行
+z_feetTraj_hard30_7_newURDF_long1: 在4的基礎上訓練一個新的long jump策略.於0相比的改動：linvel_x 1.0-3.0, orientation:-0.6-> -1.0
+
 
 z_feetTraj_hard30_long0: （actuactor_net） Train based on 30. lower desired height[0.45, 0.8] 0.55,0.65,0.75; larger lin_vel_x command. No lin_vel_y ------> 不太行，2.0的速度都track不上
 z_feetTraj_hard30_long1:（POSE）Train based on z_feetTraj10. Change feet_pose from 0.4 to 0.5
@@ -236,6 +256,8 @@ go2_jump2_4_actu_new8: torques = -0.00001; action_rate = -0.00001; and new actua
 go2_jump2_4_actu_new9: torques = -0.000001;action_rate = -0.000001; lin_vel 1.2 --> 1.5
 go2_jump2_4_actu_new10: no action_rate penalty
 
+go2_jump2_4_versatile_disTR_P0: torques reward encourage thigh and hip respectively. Use P control. 0.9 torque limits. air_angle_tracking -0.4 reward.
+
 #long jump policy: 
 go2_long_jump_pose0
 go2_long_jump_pose2: 姿态不错 就是跳不高 -----> model_650和model_1000 都能用
@@ -244,6 +266,11 @@ go2_long_jump_pose2_2_1: add termination on the thigh contact
 go2_long_jump_pose2_2_2: add weights on orientation rewards and tracking_lin_vel: (1.5, 4.0) ---->model_500.pt能用
 go2_long_jump_pose2_2_3： add termination on the thigh contact （lin_vel2.0， cons_jumping 1.0）---->last.pt可以用
 go2_long_jump_pose2_2_3_actu: lin_vel 2.0, ang_vel 1.0, constrained_jumping 1.0 -----------> model_550可以。姿态啥的都很不错，就是跳不太远。
+go2_long_jump_pose2_2_3_actu_lat: Only lin_vel_y and a little yaw(0.3)  -------> model_650 横跳的真机实验
+go2_long_jump_pose2_2_3_actu_varyH: No lin_vel, only a little ang_vel. No Height termination condition ------> model_650做真机
+
+go2_long_jump_pose2_2_3_actu_lat2: add flfr rrrl sym reward and smaller yaw(0.1). Add height termination  ------》 不行
+
 go2_long_jump_pose2_2_3_actu2： lin_vel 4.0, ang_vel 1.2, constrained_jumping 1.0 ---------> 
 go2_long_jump_pose2_2_3_actu3: lin_vel 3.0, ang_vel 1.2, constrained_jumping 1.0 ---------> 
 go2_long_jump_pose2_2_4: add high and low height termination conditions.  -----> 没法track太高的跳跃
@@ -286,7 +313,22 @@ go2_long_jump_pose4: 相比于3，增加了jumping 1->1.5; task_max_height 0,1 -
 
 # versatile jump policy:
 go2_versatile_jump0: versatile jump with linvelx [-0.5,1.0], with action delayed buffer for sim2real problem.
-go2_versatile_jump1: without action delayed buffer.
+go2_versatile_jump1: without action delayed buffer. Add task_max_height reward.
+go2_versatile_jumpTMH1: 前腿thigh的angle不对。 
+go2_versatile_jumpTMH2: jumping -> 5.0, task_max_height -> 0.5, trackin_air_angle -> 0.1
+
+go2_versatile_jump_P2: train based on go2_long_jump_pose2 model_650. P control ---->没啥用
+go2_versatile_jump_pose2： train based on  go2_long_jump_pose2 model_650. POSE control --->last.pt能用，足端姿势太高
+go2_versatile_jump_pose2_2: train based on go2_long_jump_pose2 last.pt. with feet_distance reward to adjust the feet position
+go2_versatile_jump_pose3: jumping 5.0, task_max_height 0.5. feet_distance 0.8, air_angle -0.2. Train based on go2_long_jump_pose2 model_650.
+go2_versatile_jump_pose4: jumping 2.0, task_max_height 0.1, tracking air angle -0.5  ---------> 效果不如pose2的那个。
+
+go2_versatile_jump_pose5： train from scratch with jumping 5.0, task_max_height 0.5, tracking air angle -0.5  ---->腿部动作很抽象
+go2_versatile_jump_pose6： train from scratch with jumping 3.0, task_max_height 0.3, tracking air angle -0. and feet_distance 0.8, default pose tracking all the time. 
+go2_versatile_jump_pose7: train from scratch with jumping 20.0, task_max_height 2.0, tracking air angle 0. in the air, and feet_pos 0.6, default pose tracking on the ground.
+
+go2_versatile_jump_pose2_P0： 估计是后向速度太快了，
+go2_versatile_jump_pose2_P1： x-0.5,1.0 y-0.6,0.6
 
 此策略需要的改动： 将task_max_height reward 换成有会重置刷新的max_track reward。
 go2_jump2_4_2: with max_track reward only   --------> 還可以的POSE策略，就是ang_vel track的略微有點不準。跳的夠遠。model_3350.pt比較好,4000之後的都是垃圾。 2.5 max_track reward
@@ -296,10 +338,17 @@ go2_jump2_4_4： train based on 2_4_3 with 側向速度。 -------> 訓出來了
 
 go2_jump2_4_4_newACTU1: train based on go2_jump2_4_4 with 0.48, 0.66 as jumping target and jumping 30 max_track 1.5. No action rate reward
 go2_jump2_4_4_newACTU2: train based on go2_jump2_4_4 with 0.48, 0.66 as jumping target and jumping 30 max_track 1.5. With action rate reward. And lin_vel_y [-1,1] -------> model_400.pt 能用
+go2_jump2_4_4_newACTU2_PosandIK: on go2_jump2_4_4_newACTU2 model_400. Use new feet_pos combined with IK. No lin_vel_y. Only x and yaw.
+
 go2_jump2_4_4_newACTU3: train based on go2_jump2_4_4 with 0.48, 0.68 as jumping target and jumping 20, orientation=-0.6, lin_vel = 3.0, no lin_vel_y and lin_vel_x is [-0.5,3.0]
 go2_jump2_4_4_newACTU4: Use new constrained_jumping reward instead of jumping reward. Don't include the has_jumped anymore.
 go2_jump2_4_4_newACTU5: The same changes as 4, with addition on the new reset mechanism of self.was_in_flight. --------> model_250.pt还不错。 能跳的远，但就是前腿没有收起来。以及地形有hurdle，这是不对的
 go2_jump2_4_4_newACTU6： the same as the 5, but no hurdle terrains.   -------------->model_300 works well. The first jump is long, but the leg gesture is not good. 
+go2_jump2_4_4_newACTU6_varyH:  -------> model_650 真机实验
+go2_jump2_4_4_newACTU6_varyH2:  
+go2_jump2_4_4_newACTU6_lon: ----------> model_600 真机实验
+go2_jump2_4_4_newACTU6_lat: ----------> model_550 真机实验
+
 go2_jump2_4_4_newACTU7: Use the new thigh/calf angle tracking reward. -------------->
 
 go2_jump2_4_4_new_2: trained based on go2_jump2_4_4 with task_max_height and jumping reward, without height termination conditions. -------> last.pt非常好。能verstaile 還能track不同高度。actuator_net 在這兒finetune.
@@ -333,7 +382,7 @@ go2_jump2_4_23： Only track 2.5, 3.0 lin_vel_x with jumping, height reward and 
 
 go2_jump2_4_24: lower height and only (2.5,3.0) lin_vel_x. train based on go2_jump2_4. -----> 第一跳很高，後面就比較矮。而且初始位姿很奇怪。
 
-go2_jump2_4_25： train based on the 2_4_4 without height termination condition.  -----> 0.6+的高度long jump 能夠實現了。就是起跳姿勢有點奇怪。actuactor_net在這基礎上finetune. for long jump.
+go2_jump2_4_25: train based on the 2_4_4 without height termination condition.  -----> 0.6+的高度long jump 能夠實現了。就是起跳姿勢有點奇怪。actuactor_net在這基礎上finetune. for long jump.
 go2_jump2_4_26: train based on the 2_4_25 with task_max_height in the termination condition.
 
 go2_jump2_4_27: trained based on 2_4_26 without height termination conditions. -----> model_500.pt works well. Jump long enough with two different heights! 不過跳躍姿勢還是有點怪。
@@ -375,6 +424,9 @@ go2_jump4_POSE_2_actu_new4: Orientation reward: -0.6 ---> -1.0; Adjusted feet_po
 go2_jump4_POSE_2_actu_new11: using feet_pos reward together with action rate and torque penalty.(new actuator_net)
 
 go2_jump4_POSE_2_newActu: 
+
+go2_versatile_jump_pose2_P0: ------> 倒是都能track就是前腿太抽象了
+
 
 ##########jumping over stairs:##########
 stair_concreteZ: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the pyramid stair terrains. Step width: 0.85, step height 0.05+0.15*difficulty （矮地形）

@@ -131,8 +131,9 @@ class BaseTask():
         env_ids = self.reset_buf.nonzero().squeeze(-1)
         self.reset_idx(env_ids)
         zero_actions = torch.zeros(self.num_envs, self.num_actions, device=self.device, requires_grad=False)
+        zero_estimations = torch.zeros(self.num_envs, 13, device=self.device, requires_grad=False)
         # step the simulator
-        self.step(zero_actions)
+        self.step(zero_actions, zero_estimations)
         self.obs_dict['obs'] = torch.clip(self.obs_buf, -self.clip_obs, self.clip_obs)
         if self.num_privileged_obs is not None:
             self.obs_dict['privileged_info'] = torch.clip(self.privileged_obs_buf, -self.clip_obs, self.clip_obs)
