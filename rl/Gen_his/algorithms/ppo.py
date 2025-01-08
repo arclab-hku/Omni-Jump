@@ -157,6 +157,7 @@ class PPO:
         mean_feet_pos_loss = 0
         mean_height_loss = 0
         mean_contact_loss = 0
+        mean_loss_policy = 0
 
         if self.actor_critic.is_recurrent:
             generator = self.storage.reccurent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
@@ -241,22 +242,23 @@ class PPO:
             # encoder loss: for position tracking
             # tracking feet positions, robot height, and the robot XY:
             #real_vel = privileged_info_batch[:, 7:10]
-            real_vel = privileged_info_batch[:, 10:13]
+            real_vel = privileged_info_batch[:, 10 -7:13 -7]
             #real_mass = privileged_info_batch[:, 3:7]
-            real_ang_vel = privileged_info_batch[:, 7:10]
+            real_ang_vel = privileged_info_batch[:, 7 -7:10 -7]
             #real_Zheights = privileged_info_batch[:, 0:1] 
-            real_ZXYheights = privileged_info_batch[:, 0:3] 
-            real_feet_pos = privileged_info_batch[:, 3:7]
+            #real_ZXYheights = privileged_info_batch[:, 0:3] 
+            #real_feet_pos = privileged_info_batch[:, 3:7]
 
-            #vel_loss = F.mse_loss(extrin_batch[:, 7:10], real_vel) #extrin_gt_batch[:, 17:20])
-            vel_loss = F.mse_loss(extrin_batch[:, 10:13], real_vel)
+            
+            vel_loss = F.mse_loss(extrin_batch[:, 10 -7:13 -7], real_vel)
             height_loss = 0
             contact_loss = 0
             #mass_loss = F.mse_loss(extrin_batch[:, 3:7], real_mass) #extrin_gt_batch[:, 1:5])
-            ang_loss = F.mse_loss(extrin_batch[:,7:10], real_ang_vel)
-            ZXYheight_loss = F.mse_loss(extrin_batch[:, 0:3], real_ZXYheights) #extrin_gt_batch[:, 0:1])
-            feet_pos_loss = F.mse_loss(extrin_batch[:, 3:7], real_feet_pos) #extrin_gt_batch[:, 5:17])
-            loss_encoder = vel_loss + ZXYheight_loss + feet_pos_loss + ang_loss
+            ang_loss = F.mse_loss(extrin_batch[:,7 -7:10 -7], real_ang_vel)
+            #ZXYheight_loss = F.mse_loss(extrin_batch[:, 0:3], real_ZXYheights) #extrin_gt_batch[:, 0:1])
+            #feet_pos_loss = F.mse_loss(extrin_batch[:, 3:7], real_feet_pos) #extrin_gt_batch[:, 5:17])
+            #loss_encoder = vel_loss + ZXYheight_loss + feet_pos_loss + ang_loss
+            loss_encoder = vel_loss + ang_loss
 
             # # only tracking the robot height:
             # real_vel = privileged_info_batch[:, 4:7]
@@ -290,9 +292,9 @@ class PPO:
             mean_contact_loss += 0
             #mean_Zheight_loss += Z_loss.item()
             #mean_Zheight_loss += Zheight_loss.item()
-            mean_Zheight_loss += ZXYheight_loss.item()
+            #mean_Zheight_loss += ZXYheight_loss.item()
             #mean_mass_loss += mass_loss.item()
-            mean_feet_pos_loss += feet_pos_loss.item()
+            #mean_feet_pos_loss += feet_pos_loss.item()
 
             mean_value_loss += value_loss.item()
             mean_surrogate_loss += surrogate_loss.item()

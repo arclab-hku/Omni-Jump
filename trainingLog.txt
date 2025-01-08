@@ -219,7 +219,7 @@ z_feetTraj15: train from scratch. With max_height_reward and stick_to_ground. 0 
 ##########jump_over_gaps:#############
 gap_variousZ1: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the parkour_gap_terrain. gap size is 0.8*difficulty. lin_vel_x [-1,3], desired_height[0.45,0.9]   ------> failure. 机器人选择横向跳，绕开了地形
 gap_variousZ2： terrain different than 1. Add the vertical gap. lin_vel [1.0,3.0]. With desired_height [0.45, 0.9]. Gap size is 0.8*difficulty.
-gap_variousZ3: mostly similar to gap_variousZ2 except the gap size is smaller. 0.8 -> 0.7  ----> 还可以。但是reward还没有完全收敛
+gap_variousZ3: mostly similar to gap_variousZ2 except the gap size is smaller. 0.8 -> 0.7  ---->  还可以。但是reward还没有完全收敛
 gap_variousZ3_actu: actuactor_net finetune based on gap_variousZ3
 gap_variousZ3_actu2: continuously training based on gap_variousZ3_actu.
 
@@ -330,11 +330,11 @@ go2_versatile_jump_pose7: train from scratch with jumping 20.0, task_max_height 
 go2_versatile_jump_pose2_P0： 估计是后向速度太快了，
 go2_versatile_jump_pose2_P1： x-0.5,1.0 y-0.6,0.6
 
-此策略需要的改动： 将task_max_height reward 换成有会重置刷新的max_track reward。
+此策略需要的改动: 将task_max_height reward换成有会重置刷新的max_track reward。
 go2_jump2_4_2: with max_track reward only   --------> 還可以的POSE策略，就是ang_vel track的略微有點不準。跳的夠遠。model_3350.pt比較好,4000之後的都是垃圾。 2.5 max_track reward
 go2_jump2_4_3: with new task_max_height reward only  -------->還挺不錯的，跳的夠遠。last.pt就可以。只是沒有側跳
 versatile_jump: 
-go2_jump2_4_4： train based on 2_4_3 with 側向速度。 -------> 訓出來了 已經能夠橫跳了。好的策略！可以保存下來,用於actuactor_net finetuned.就是沒法低跳，只能高跳。 建議換成（0.5，0.7）以及up_condition 和max_height的low condition去finetune.  
+go2_jump2_4_4: train based on 2_4_3 with 側向速度。 -------> 訓出來了 已經能夠橫跳了。好的策略！可以保存下來,用於actuactor_net finetuned.就是沒法低跳，只能高跳。 建議換成（0.5，0.7）以及up_condition 和max_height的low condition去finetune.  
 
 go2_jump2_4_4_newACTU1: train based on go2_jump2_4_4 with 0.48, 0.66 as jumping target and jumping 30 max_track 1.5. No action rate reward
 go2_jump2_4_4_newACTU2: train based on go2_jump2_4_4 with 0.48, 0.66 as jumping target and jumping 30 max_track 1.5. With action rate reward. And lin_vel_y [-1,1] -------> model_400.pt 能用
@@ -353,7 +353,6 @@ go2_jump2_4_4_newACTU7: Use the new thigh/calf angle tracking reward. ----------
 
 go2_jump2_4_4_new_2: trained based on go2_jump2_4_4 with task_max_height and jumping reward, without height termination conditions. -------> last.pt非常好。能verstaile 還能track不同高度。actuator_net 在這兒finetune.
 go2_jump2_4_4_new_2_actu
-
 
 go2_jump2_4_4_new_3: replace feet_distance reward with feet_pos reward and larger orientation penalty.
 go2_jump2_4_4_new_3_actu: finetune on the new_3 last.pt
@@ -427,7 +426,6 @@ go2_jump4_POSE_2_newActu:
 
 go2_versatile_jump_pose2_P0: ------> 倒是都能track就是前腿太抽象了
 
-
 ##########jumping over stairs:##########
 stair_concreteZ: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the pyramid stair terrains. Step width: 0.85, step height 0.05+0.15*difficulty （矮地形）
 stair_concreteZ2： Train based on z_feetTraj10. With desired_height [0.45, 0.9]. On the pyramid stair terrains. Step width: 0.85, step height 0.1+0.18*difficulty （中等宽些的地形）---> 还可以，大部分能跳过去。不错.
@@ -437,21 +435,20 @@ stair_concreteZ2_actu2: contunue training on the stair_concreteZ2_actu
 stair_concreteZ3: Train based on z_feetTraj10. With desired_height [0.45, 0.9]. lin_vel_y [-0.5,0.5].  On the pyramid stair terrains. Step width: 0.8。 step_height 0.1+0.3*difficulty （高而窄的地形）-----> 不太行，跳不过去
 stair_concreteZ4: Train based on z_feetTraj10. With lin_vel_x[0, 3.0], desired_height[0.45, 0.75]. On the pure one direction stair. Stair width 0.85, stair height: 0.1+0.25*difficulty   -------> SB 策略，跳不过去
 
-
 finetune the z_feetTraj12 on actuactor_net.
 z_feetTraj12_actu: finetuned based on z_feetTraj12.  -----> 高度tracking能力一般，只有两个档位0.5以及0.7。但是也能用。
 z_feetTraj_hard2_2_actu: finetune based on z_feetTraj_hard2_2
-z_feetTraj_hard2_2_actu_2/_3 : continue finetune on hard2_2_actu with lin_vel_xy [-0.5, 0.5]
+z_feetTraj_hard2_2_actu_2/_3: continue finetune on hard2_2_actu with lin_vel_xy [-0.5, 0.5]
 
 z_feetTraj_hard2_2_actu_v2_0: finetune based on z_feetTraj_hard2_2 with lin_vel_xy [0,0] first.  ------> 除了不能横跳，其他都很不错。
 
-z_feetTraj_hard2_2_actu_v2_1: trained based on v2_0, with lin_vel_xy [-0.5, 0.5]----------> 高度track还可以，可以做不同高度地跳跃。verstile jumping 还差点意思。 可以做height_tracking 和前后左右跳，转跳的单次跳跃实验。
+z_feetTraj_hard2_2_actu_v2_1: trained based on v2_0, with lin_vel_xy [-0.5, 0.5] ----------> 高度track还可以，可以做不同高度地跳跃。verstile jumping 还差点意思。 可以做height_tracking 和前后左右跳，转跳的单次跳跃实验。
 z_feetTraj_hard2_2_actu_v2_2: higher ang_vel_tracking reward and larger lin_vel_x
 z_feetTraj_hard2_2_actu_v2_3: continue on z_feetTraj_hard2_2_actu_v2_2    -------> 可以用来试试了
 z_feetTraj_hard2_2_actu_v2_4: continue on z_feetTraj_hard2_2_actu_v2_3    -------> 姿态太怪
-z_feetTraj_hard2_2_actu_v2_5： continue on 2_4 with frfl_sym and rlrr_sym   -----> 不错不错 都能来几步
+z_feetTraj_hard2_2_actu_v2_5: continue on 2_4 with frfl_sym and rlrr_sym -------> 不错不错 都能来几步
 
-z_feetTraj_hard2_2_actu_v2_6：continue on v2_0, and only track x or y once a time.
+z_feetTraj_hard2_2_actu_v2_6: continue on v2_0, and only track x or y once a time.
 
 flip:
 1. try to train back flip with pitch_vel tracking based on the jumping scenario. -----> 

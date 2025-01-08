@@ -91,8 +91,9 @@ class GenHisPolicyRunner:
             with torch.inference_mode():
                 for i in range(self.num_steps_per_env):
                     actions = self.alg.act(obs_dict) # here to add the estimation height value to the environment
-                    _, _, _, estimations, _ = self.alg._actor_critic(obs_dict)
-                    obs_dict, rewards, dones, infos = self.env.step(actions, estimations)
+                    #estimation = self.get_estimations(self.device)
+                    #_, _, _, estimations, _ = estimation(obs_dict)
+                    obs_dict, rewards, dones, infos = self.env.step(actions)
                     rewards, dones = rewards.to(self.device), dones.to(self.device)
                     self.alg.process_env_step(rewards, dones, infos)
 
@@ -148,7 +149,7 @@ class GenHisPolicyRunner:
                 self.writer.add_scalar('Episode/' + key, value, locs['it'])
                 ep_string += f"""{f'Mean episode {key}:':>{pad}} {value:.4f}\n"""
         mean_std = self.alg.actor_critic.std.mean()
-        mean_policy_loss = self.alg.actor_critic.std.mean()
+        #mean_policy_loss = self.alg.actor_critic.std.mean()
         fps = int(self.num_steps_per_env * self.env.num_envs / (locs['collection_time'] + locs['learn_time']))
     
         self.writer.add_scalar('Vel/vel_loss', locs['mean_vel_loss'], locs['it'])

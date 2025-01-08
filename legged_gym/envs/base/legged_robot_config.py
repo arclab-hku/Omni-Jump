@@ -100,8 +100,8 @@ class LeggedRobotCfg(BaseConfig):
         bool_jump = False#True # is true use the newcode structure
 
         class ranges:
-            lin_vel_x = [-0.8, 1.0]#[1.0, 3.0] #[-0.6, 1.0] aliengo#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0.5, 0.5] #[-0., 0.] #[-0.5, 0.6] # min max [m/s]
+            lin_vel_x = [-0.6, 1.0]#[1.0, 3.0] #[-0.6, 1.0] aliengo#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.6, 0.6] #[-0., 0.] #[-0.5, 0.6] # min max [m/s]
             ang_vel_yaw = [-1.0, 1.0]#[-1., 1.] long_jump# [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
             height_z = [0.5, 0.8] #[0.45, 0.99]
 
@@ -312,7 +312,7 @@ class LeggedRobotCfg(BaseConfig):
         substeps = 1
         gravity = [0., 0., -9.81]  # [m/s^2]
         up_axis = 1  # 0 is y, 1 is z
-        enable_debug_viz = True #False
+        enable_debug_viz = False#True #False
 
         class physx:
             num_threads = 10

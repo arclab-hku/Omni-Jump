@@ -10,7 +10,7 @@ class Go2BaseCfg(LeggedRobotCfg):
         # num_proprio_obs = 48
         camera_res = [1280, 720]
         camera_type = "d"  # rgb
-        num_privileged_obs = 200 + 5 +12 + 3 + 2 - 4 - 8#-4-2# 187, 5 means 4 mass and 1 z height and 3 world_ang_vel， 2 for XY position tracking
+        num_privileged_obs = 200 + 5 +12 + 3 + 2 - 4 - 8 -7#-4-2# 187, 5 means 4 mass and 1 z height and 3 world_ang_vel， 2 for XY position tracking
         train_type = "GenHis"#"EST"  # standard, priv, lbc, standard, RMA, EST, Dream, GenHis
 
         follow_cam = False
@@ -256,17 +256,17 @@ class Go2BaseCfg(LeggedRobotCfg):
         enableMeasuredVel = True
         enableMeasuredHeight = True
         enableForce = True
-        enable_priv_Zheights_weights = False#True
-        enable_priv_feet_height = True
+        enable_priv_Zheights_weights = False #True
+        enable_priv_feet_height = False #True
         enable_priv_ang_vel = True
-        enable_priv_ZXYheights = True
+        enable_priv_ZXYheights = False #True
 
 
 class Go2BaseCfgPPO(LeggedRobotCfgPPO):
 
     class runner(LeggedRobotCfgPPO.runner):
         run_name = ''
-        max_iterations = 9000  # number of policy updates
+        max_iterations = 5000  # number of policy updates
         resume = False
         save_interval = 50  # check for potential saves every this many iterations
         experiment_name = 'go2'
@@ -274,10 +274,10 @@ class Go2BaseCfgPPO(LeggedRobotCfgPPO):
         export_onnx_policy = False
 
     class Encoder(LeggedRobotCfgPPO.Encoder):
-        priv_mlp_units = [258, 128, 8+12+3+2-4-8]# -4-2]#[258, 128, 3]  # 3 is for the vel estimator. 
+        priv_mlp_units = [258, 128, 8+12+3+2-4-8 -7]# -4-2]#[258, 128, 3]  # 3 is for the vel estimator. 
         priv_info = False
-        priv_info_dim = 200+5+12+3+2-4-8#-3 #-4-2# +2 for the XY position tracking: 197+3+10
-        estLen = 3+1+4+12+3+2-4-8#-3 #-4-2# +2 for the XY position tracking
+        priv_info_dim = 200+5+12+3+2-4-8 -7#-3 #-4-2# +2 for the XY position tracking: 197+3+10
+        estLen = 3+1+4+12+3+2-4-8 -7#-3 #-4-2# +2 for the XY position tracking
         proprio_adapt = False
         checkpoint_model = None
         proprio_adapt_out_dim = 11

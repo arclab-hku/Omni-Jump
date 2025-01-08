@@ -428,7 +428,8 @@ class LeggedRobot(BaseTask):
         # Clear the action log
         self.action_log = []
 
-    def step(self, actions, estimations):
+    #def step(self, actions, estimations):
+    def step(self, actions):
         """ Apply actions, simulate, call self.post_physics_step()
         Args:
             actions (torch.Tensor): Tensor of shape (num_envs, num_actions_per_env)
@@ -467,7 +468,7 @@ class LeggedRobot(BaseTask):
             if self.device == 'cpu':
                 self.gym.fetch_results(self.sim, True)
             self.gym.refresh_dof_state_tensor(self.sim)
-        self.post_physics_step(estimations)
+        self.post_physics_step()#estimations)
 
         # return clipped obs, clipped states (None), rewards, dones and infos
         clip_obs = self.cfg.normalization.clip_observations
@@ -484,7 +485,7 @@ class LeggedRobot(BaseTask):
         self.obs_dict['proprio_hist'] = self.proprio_hist_buf.to(self.device).flatten(1)
         return self.obs_dict, self.rew_buf, self.reset_buf, self.extras
 
-    def post_physics_step(self, estimations):
+    def post_physics_step(self):#, estimations):
         """ check terminations, compute observations and rewards
             calls self._post_physics_step_callback() for common computations
             calls self._draw_debug_vis() if needed
@@ -631,7 +632,7 @@ class LeggedRobot(BaseTask):
         #self.reset_buf |= height_cutoff_up
         #self.reset_buf |= height_cutoff_low
         self.reset_buf |= roll_cutoff
-        #self.reset_buf |= collision_cutoff
+        self.reset_buf |= collision_cutoff
         #self.reset_buf |= bounding_box_cons
         #self.reset_buf |= has_jumpd_cutoff
         #self.reset_buf |= has_jumped_cutoff  # for only jumped once purpose
@@ -998,7 +999,7 @@ class LeggedRobot(BaseTask):
                                       ), dim=-1)  # normally do not change it. Because it's the 45-dim obs of actor.
 
 # self.privileged_obs_buf means 私有变量。It's the obs of critics.
-        self.privileged_obs_buf = self.root_states[:, 2:3]
+        #self.privileged_obs_buf = self.root_states[:, 2:3]
         if self.enable_priv_Zheights_weights: #false. No weight prediction
             self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
                                                 self.priv_info_buf[:, 0:4], # for adding the weights, dim=4
@@ -1016,9 +1017,10 @@ class LeggedRobot(BaseTask):
                                                   self.RR_feet_pos[:,2:3],
                                                  ), dim=-1)      
         if self.enable_priv_ang_vel:
-            self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
-                                                self.root_states[:, 10:13], # for adding the weights, dim=4
-                                                 ), dim=-1)
+            self.privileged_obs_buf = self.root_states[:, 10:13]
+            #self.privileged_obs_buf = torch.cat((self.privileged_obs_buf,
+            #                                    self.root_states[:, 10:13], # for adding the weights, dim=4
+            #                                     ), dim=-1)
 
 
         if self.enable_priv_enableMeasuredVel:
@@ -3240,7 +3242,7 @@ class LeggedRobot(BaseTask):
         #feet_error_landing = torch.linalg.norm(feet_body_frame - feet_pos_ini,dim=-1)
         #rew_landing = torch.exp(-torch.sum(torch.square(feet_error_landing), dim=-1))
         # Only reward if in mid_air, hasn't jumped and height is above 0.45
-        base_height = self.root_states[:,2]
+        # base_height = self.root_states[:,2]
         #rew[base_height<=0.36] = rew_landing[base_height<=0.36]
         #rew[base_height<=0.34] = 0.0
         rew[~self.mid_air] = 0.0 # only reward the agents in the mid-air
@@ -3249,35 +3251,37 @@ class LeggedRobot(BaseTask):
         return rew
     
     def _reward_feet_pos(self): # smooth the feet gesture in the mid_air
-        desired_feet_pos_z = 0.347 * self.root_states[:, 2] - 0.438 # the delta_z = f(Zcom) = a*Zcom+b (fixed 0.8m desired height)
+        #desired_feet_pos_z = 0.347 * self.root_states[:, 2] - 0.438 # the delta_z = f(Zcom) = a*Zcom+b (fixed 0.8m desired height)
         base_height = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1)
         #desired_feet_pos_z = 0.15/(self.commands[:,3]-0.31) * base_height + (0.31*self.commands[:,3]-0.0496)/(0.31-self.commands[:,3]) # aliengo
-        #desired_feet_pos_z = 0.183/((self.commands[:,3]-0.1)-0.315) * base_height + (0.315*(self.commands[:,3]-0.1)-0.0416)/(0.315-(self.commands[:,3]-0.1)) # go2
+        desired_feet_pos_z = 0.183/((self.commands[:,3]-0.1)-0.315) * base_height + (0.315*(self.commands[:,3]-0.1)-0.0416)/(0.315-(self.commands[:,3]-0.1)) # go2
         feet_relative = self.feet_pos[:, :, :3] - self.root_states[:, :3].unsqueeze(1)
         feet_body_frame = torch.zeros(self.num_envs, 4, 3, device=self.device, requires_grad=False)
         for i in range(4):
             feet_body_frame[:,i,:] = quat_rotate_inverse(self.base_quat, feet_relative[:,i,:]) #(4096,4,3)
  
-        feet_pos_ini = torch.tensor(self.cfg.init_state.rel_foot_pos).to(self.device).transpose(1,0).view(1,4,3)
+        feet_pos_ini = torch.tensor(self.cfg.init_state.rel_foot_pos_peak).to(self.device).transpose(1,0).view(1,4,3)
         feet_pos_des = feet_pos_ini.clone() #(1,4,3)
-        # feet_pos_des = feet_pos_des.cpu().data.numpy()
-        # Go2_IK = RobotIK(Go2)
-        # jp,jv = Go2_IK.computeIK(np.array([feet_pos_des[0,0,0], feet_pos_des[0,0,1], feet_pos_des[0,0,2], feet_pos_des[0,1,0], feet_pos_des[0,1,1], feet_pos_des[0,1,2], feet_pos_des[0,2,0], feet_pos_des[0,2,1], feet_pos_des[0,2,2], feet_pos_des[0,3,0], feet_pos_des[0,3,1], feet_pos_des[0,3,2]]),
-        #          np.array([0,0,0,0,0,0,0,0,0,0,0,0]))
-        # rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        # jp = torch.from_numpy(jp)
-        # jp = jp.to(self.device)
-        # angle_diff = torch.square(self.dof_pos - jp)
-        #angle_diff[:, 0] *= 10
-        #angle_diff[:, 3] *= 10
-        #angle_diff[:, 6] *= 10   
-        #angle_diff[:, 9] *= 10
-        # rew = torch.exp(-torch.sum(angle_diff,dim=1)*0.01)
-        des_feet_envs = feet_pos_des.repeat(self.num_envs,1,1) #(4096,4,3)
-        for i in range(4):
-            des_feet_envs[:,i,2 ] = desired_feet_pos_z #(4096,)
-        feet_error = torch.linalg.norm(feet_body_frame - des_feet_envs, dim=-1)
-        rew = torch.exp(-torch.sum(torch.square(feet_error), dim=-1))
+        feet_pos_des = feet_pos_des.cpu().data.numpy()
+        Go2_IK = RobotIK(Go2)
+        jp,jv = Go2_IK.computeIK(np.array([feet_pos_des[0,0,0], feet_pos_des[0,0,1], feet_pos_des[0,0,2], feet_pos_des[0,1,0], feet_pos_des[0,1,1], feet_pos_des[0,1,2], feet_pos_des[0,2,0], feet_pos_des[0,2,1], feet_pos_des[0,2,2], feet_pos_des[0,3,0], feet_pos_des[0,3,1], feet_pos_des[0,3,2]]),
+                 np.array([0,0,0,0,0,0,0,0,0,0,0,0]))
+        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
+        jp = torch.from_numpy(jp)
+        jp = jp.to(self.device)
+        angle_diff = torch.square(self.dof_pos - jp)
+        angle_diff[:, 0] *= 10
+        angle_diff[:, 3] *= 10
+        angle_diff[:, 6] *= 10   
+        angle_diff[:, 9] *= 10
+        rew = torch.exp(-torch.sum(angle_diff,dim=1)*0.01)
+        # only control the feet position without joint positions:
+        # des_feet_envs = feet_pos_des.repeat(self.num_envs,1,1) #(4096,4,3)
+        # for i in range(4):
+        #     des_feet_envs[:,i,2 ] = desired_feet_pos_z #(4096,)
+        # feet_error = torch.linalg.norm(feet_body_frame - des_feet_envs, dim=-1)
+        # rew = torch.exp(-torch.sum(torch.square(feet_error), dim=-1))
+
         rew[~self.mid_air] = 0.0 # only reward the agents in the mid-air        
         return rew
     
