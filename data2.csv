@@ -1,0 +1,1825 @@
+Importing module 'gym_38' (/home/leo/research/isaacgym/python/isaacgym/_bindings/linux-x86_64/gym_38.so)
+Setting GYM_USD_PLUG_INFO_PATH to /home/leo/research/isaacgym/python/isaacgym/_bindings/linux-x86_64/usd/plugInfo.json
+PyTorch version 1.13.0+cu117
+Device count 1
+/home/leo/research/isaacgym/python/isaacgym/_bindings/src/gymtorch
+ninja: no work to do.
+Not connected to PVD
++++ Using GPU PhysX
+Physics Engine: PhysX
+Physics Device: cuda:0
+GPU Pipeline: enabled
+Exported graph: graph(%observation : Float(1, 59, strides=[59, 1], requires_grad=0, device=cpu),
+      %0.weight : Float(512, 59, strides=[59, 1], requires_grad=1, device=cpu),
+      %0.bias : Float(512, strides=[1], requires_grad=1, device=cpu),
+      %2.weight : Float(256, 512, strides=[512, 1], requires_grad=1, device=cpu),
+      %2.bias : Float(256, strides=[1], requires_grad=1, device=cpu),
+      %4.weight : Float(128, 256, strides=[256, 1], requires_grad=1, device=cpu),
+      %4.bias : Float(128, strides=[1], requires_grad=1, device=cpu),
+      %6.weight : Float(12, 128, strides=[128, 1], requires_grad=1, device=cpu),
+      %6.bias : Float(12, strides=[1], requires_grad=1, device=cpu)):
+  %/0/Gemm_output_0 : Float(1, 512, strides=[512, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/0/Gemm"](%observation, %0.weight, %0.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::0 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1/Elu_output_0 : Float(1, 512, strides=[512, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1/Elu"](%/0/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %/2/Gemm_output_0 : Float(1, 256, strides=[256, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/2/Gemm"](%/1/Elu_output_0, %2.weight, %2.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::2 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1_1/Elu_output_0 : Float(1, 256, strides=[256, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1_1/Elu"](%/2/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %/4/Gemm_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/4/Gemm"](%/1_1/Elu_output_0, %4.weight, %4.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::4 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1_2/Elu_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1_2/Elu"](%/4/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %action : Float(1, 12, strides=[12, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/6/Gemm"](%/1_2/Elu_output_0, %6.weight, %6.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::6 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  return (%action)
+
+Exported graph: graph(%observation : Float(1, 230, strides=[230, 1], requires_grad=0, device=cpu),
+      %encoder.0.weight : Float(258, 230, strides=[230, 1], requires_grad=1, device=cpu),
+      %encoder.0.bias : Float(258, strides=[1], requires_grad=1, device=cpu),
+      %encoder.2.weight : Float(128, 258, strides=[258, 1], requires_grad=1, device=cpu),
+      %encoder.2.bias : Float(128, strides=[1], requires_grad=1, device=cpu),
+      %encoder.4.weight : Float(13, 128, strides=[128, 1], requires_grad=1, device=cpu),
+      %encoder.4.bias : Float(13, strides=[1], requires_grad=1, device=cpu)):
+  %/encoder/encoder.0/Gemm_output_0 : Float(1, 258, strides=[258, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.0/Gemm"](%observation, %encoder.0.weight, %encoder.0.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.0 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/encoder/encoder.1/Relu_output_0 : Float(1, 258, strides=[258, 1], requires_grad=1, device=cpu) = onnx::Relu[onnx_name="/encoder/encoder.1/Relu"](%/encoder/encoder.0/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.ReLU::encoder.1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1457:0
+  %/encoder/encoder.2/Gemm_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.2/Gemm"](%/encoder/encoder.1/Relu_output_0, %encoder.2.weight, %encoder.2.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.2 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/encoder/encoder.3/Relu_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Relu[onnx_name="/encoder/encoder.3/Relu"](%/encoder/encoder.2/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.ReLU::encoder.3 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1457:0
+  %/encoder/encoder.4/Gemm_output_0 : Float(1, 13, strides=[13, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.4/Gemm"](%/encoder/encoder.3/Relu_output_0, %encoder.4.weight, %encoder.4.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.4 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %action : Float(1, 13, strides=[13, 1], requires_grad=1, device=cpu) = onnx::Tanh[onnx_name="/encoder/encoder.5/Tanh"](%/encoder/encoder.4/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.Tanh::encoder.5 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/activation.py:358:0
+  return (%action)
+
+53
+Setting seed: 1
+Enable Visualization
+z_height 0.3377417027950287
+contact [ True  True False False]
+torque [-0.  0.  0. -0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 0.489072
+feet_height -0.29779145
+'train_cfg' provided -> Ignoring 'name=go2'
+load model last.pt
+resume name: resume_name
+ActorCritic.__init__ got unexpected arguments, which will be ignored: ['Hist_info_dim', 'HistoryLen', 'checkpoint_model', 'decoder_mlp_units', 'estLen', 'priv_info', 'priv_info_dim', 'priv_mlp_units', 'proprio_adapt', 'proprio_adapt_out_dim', 'velLen']
+Encoder MLP: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+Actor MLP: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=256, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+**********  Hist_info_shape   [230]
+z_height 0.33293819427490234
+contact [False  True  True False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 0.5141473
+feet_height -0.3046285
+Loading model from: ('/home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_long_jump_pose2_2_5', 'stage1_nn', '/home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_long_jump_pose2_2_5/stage1_nn/last.pt')
+Exporting policy to jit module(C++)
+exported jit actor: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+exported jit encoder: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+Exporting policy to onnx module(C++)
+************** dummy observation size torch.Size([1, 59]) **************
+************** dummy observation size torch.Size([1, 230]) **************
+exported onnx actor: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+exported onnx encoder: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+**************** start loading model from:****************  /home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_long_jump_pose2_2_5/stage1_nn/last.pt
+**************** RUNNER  <rl.Gen_his.runners.gen_policy_runner.GenHisPolicyRunner object at 0x7f169e3988b0>
+z_height 0.3173863887786865
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.1616629
+feet_height -0.23415631
+z_height 0.2924243211746216
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3487904
+feet_height -0.14222121
+z_height 0.26775673031806946
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2075703
+feet_height -0.083191514
+z_height 0.24204042553901672
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.]
+vel 1.3746097
+feet_height -0.0689313
+z_height 0.21169859170913696
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.]
+vel 1.666402
+feet_height -0.071088105
+z_height 0.1769503802061081
+contact [False False  True False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.7881371
+feet_height -0.06727311
+z_height 0.15172092616558075
+contact [False  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.108076
+feet_height -0.08976879
+z_height 0.14110760390758514
+contact [ True  True  True  True]
+torque [ 0.  0.  0. -0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 0.82698
+feet_height -0.11029088
+z_height 0.14576715230941772
+contact [ True  True  True  True]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1485226
+feet_height -0.12463188
+z_height 0.16802890598773956
+contact [ True  True False  True]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.815397
+feet_height -0.15841131
+z_height 0.2057129293680191
+contact [ True  True False  True]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.4396966
+feet_height -0.20137112
+z_height 0.25620755553245544
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.9097605
+feet_height -0.24830517
+z_height 0.3133475184440613
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.009116
+feet_height -0.28445262
+z_height 0.36851438879966736
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8224566
+feet_height -0.29891896
+z_height 0.41859543323516846
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.7092535
+feet_height -0.2947174
+z_height 0.46322429180145264
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 2.4862046
+feet_height -0.2810418
+z_height 0.5022637248039246
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.2433677
+feet_height -0.24937063
+z_height 0.5359513759613037
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9836559
+feet_height -0.21071862
+z_height 0.5656655430793762
+contact [False False False False]
+torque [ 0. -0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.854008
+feet_height -0.17903502
+z_height 0.5900410413742065
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.59667
+feet_height -0.15024169
+z_height 0.6089745759963989
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4502646
+feet_height -0.12298472
+z_height 0.6235356330871582
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3444618
+feet_height -0.10189769
+z_height 0.6340855360031128
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2605691
+feet_height -0.08590065
+z_height 0.6410279870033264
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2100816
+feet_height -0.07294978
+z_height 0.644685685634613
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.185241
+feet_height -0.06267212
+z_height 0.6453248858451843
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1848748
+feet_height -0.055791784
+z_height 0.642890453338623
+contact [False False False False]
+torque [ 0. -0.  0.  0.  0.  0.  0.  0.  0. -0.  0. -0.]
+vel 1.2032537
+feet_height -0.05235539
+z_height 0.6372093558311462
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.  0.]
+vel 1.2420112
+feet_height -0.051904015
+z_height 0.6282272338867188
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0. -0. -0. -0.  0.  0.]
+vel 1.2991624
+feet_height -0.05425613
+z_height 0.6157541871070862
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.3757154
+feet_height -0.058399513
+z_height 0.5998182892799377
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4622366
+feet_height -0.064310886
+z_height 0.5800971984863281
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5785139
+feet_height -0.07044458
+z_height 0.5562621355056763
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.720347
+feet_height -0.07562456
+z_height 0.5283852815628052
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8703004
+feet_height -0.08052184
+z_height 0.49645400047302246
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.0338047
+feet_height -0.08556792
+z_height 0.46024197340011597
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.2143266
+feet_height -0.09015542
+z_height 0.41967737674713135
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3996015
+feet_height -0.09421
+z_height 0.3747335374355316
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.589911
+feet_height -0.09732994
+z_height 0.3255459666252136
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.772496
+feet_height -0.0988861
+z_height 0.27251553535461426
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.940515
+feet_height -0.09962515
+z_height 0.21569879353046417
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.1200902
+feet_height -0.10016492
+z_height 0.15718789398670197
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.]
+vel 2.9048414
+feet_height -0.09739555
+z_height 0.12165950238704681
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.]
+vel 1.5087742
+feet_height -0.09927572
+z_height 0.12557046115398407
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0. -0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.6189227
+feet_height -0.10639504
+z_height 0.16245771944522858
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.4307714
+feet_height -0.14737183
+z_height 0.21056368947029114
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8051426
+feet_height -0.20036915
+z_height 0.26758265495300293
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.137807
+feet_height -0.2539062
+z_height 0.32773062586784363
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.0425396
+feet_height -0.29349834
+z_height 0.3845025300979614
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.9290955
+feet_height -0.31999046
+z_height 0.4373173415660858
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8485723
+feet_height -0.328153
+z_height 0.48407426476478577
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.5396407
+feet_height -0.30808362
+z_height 0.5240471959114075
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2639272
+feet_height -0.2645834
+z_height 0.5579974055290222
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9846727
+feet_height -0.21913372
+z_height 0.58683842420578
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.8024296
+feet_height -0.18288845
+z_height 0.6099809408187866
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5649673
+feet_height -0.15066147
+z_height 0.6279038786888123
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4301431
+feet_height -0.12151035
+z_height 0.6417545080184937
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3350357
+feet_height -0.09959859
+z_height 0.6518638730049133
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2584589
+feet_height -0.083124936
+z_height 0.6585531830787659
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.2098081
+feet_height -0.06998482
+z_height 0.6620660424232483
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1852664
+feet_height -0.059837744
+z_height 0.662620484828949
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1853691
+feet_height -0.053453483
+z_height 0.6600930094718933
+contact [False False False False]
+torque [ 0.  0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.2050135
+feet_height -0.050704688
+z_height 0.65428626537323
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2460159
+feet_height -0.05103863
+z_height 0.6451597809791565
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.3048749
+feet_height -0.054218978
+z_height 0.6325333714485168
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.3817564
+feet_height -0.059164286
+z_height 0.6164228320121765
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.4693087
+feet_height -0.06574352
+z_height 0.5964983701705933
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5873066
+feet_height -0.072319314
+z_height 0.5724998712539673
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.7281375
+feet_height -0.077966504
+z_height 0.5444589853286743
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8795857
+feet_height -0.08331272
+z_height 0.5122091770172119
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.051232
+feet_height -0.088256404
+z_height 0.47562986612319946
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.2319639
+feet_height -0.09271033
+z_height 0.4347021281719208
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.4177146
+feet_height -0.09662005
+z_height 0.38943931460380554
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.6043093
+feet_height -0.09923504
+z_height 0.34021422266960144
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.772686
+feet_height -0.10079415
+z_height 0.28721755743026733
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9466958
+feet_height -0.101934016
+z_height 0.2303529679775238
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.129566
+feet_height -0.10282565
+z_height 0.16985733807086945
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.1809475
+feet_height -0.10182246
+z_height 0.12927010655403137
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.]
+vel 1.6519854
+feet_height -0.10971859
+z_height 0.12751053273677826
+contact [ True  True  True  True]
+torque [ 0. -0.  0. -0. -0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.3206749
+feet_height -0.11186529
+z_height 0.16216903924942017
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.427696
+feet_height -0.14867981
+z_height 0.21133370697498322
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8168488
+feet_height -0.20190361
+z_height 0.26845335960388184
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.1141934
+feet_height -0.25381586
+z_height 0.32856208086013794
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.0453267
+feet_height -0.29159018
+z_height 0.38567689061164856
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.9362533
+feet_height -0.3178767
+z_height 0.4388963580131531
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8557935
+feet_height -0.32757968
+z_height 0.48593950271606445
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.5396526
+feet_height -0.3079043
+z_height 0.5260913968086243
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2576823
+feet_height -0.2645054
+z_height 0.5601723194122314
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9727793
+feet_height -0.21918951
+z_height 0.589069664478302
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7858392
+feet_height -0.18284845
+z_height 0.6122810244560242
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5480524
+feet_height -0.15055
+z_height 0.6303128600120544
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4114982
+feet_height -0.12141311
+z_height 0.6442899107933044
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3144859
+feet_height -0.09958813
+z_height 0.654524028301239
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2359778
+feet_height -0.08319049
+z_height 0.661331832408905
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1858362
+feet_height -0.07009984
+z_height 0.6649522185325623
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1600686
+feet_height -0.059956547
+z_height 0.665597140789032
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.159152
+feet_height -0.053491775
+z_height 0.6631641983985901
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1780713
+feet_height -0.050642066
+z_height 0.6574598550796509
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2186437
+feet_height -0.050882235
+z_height 0.6484372019767761
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2775995
+feet_height -0.053970307
+z_height 0.6359028816223145
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.355537
+feet_height -0.05878227
+z_height 0.619886040687561
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4438479
+feet_height -0.06526446
+z_height 0.600064754486084
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5629363
+feet_height -0.07181171
+z_height 0.5761603713035583
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.7055424
+feet_height -0.07742493
+z_height 0.5482263565063477
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8574011
+feet_height -0.08276756
+z_height 0.5161119699478149
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.029107
+feet_height -0.087796524
+z_height 0.47966235876083374
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.2115362
+feet_height -0.0922627
+z_height 0.43886470794677734
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.397882
+feet_height -0.0961698
+z_height 0.39373326301574707
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.5856676
+feet_height -0.09887411
+z_height 0.34460124373435974
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.756567
+feet_height -0.100440085
+z_height 0.2916933298110962
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9300575
+feet_height -0.10153799
+z_height 0.2349305897951126
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1131628
+feet_height -0.10240579
+z_height 0.17438675463199615
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1950278
+feet_height -0.101878874
+z_height 0.13217401504516602
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6941013
+feet_height -0.111561224
+z_height 0.12791797518730164
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2150509
+feet_height -0.109154835
+z_height 0.15965627133846283
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.305556
+feet_height -0.14427891
+z_height 0.20563386380672455
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.6632028
+feet_height -0.19555426
+z_height 0.26063862442970276
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0651238
+feet_height -0.24810481
+z_height 0.3203383982181549
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0352395
+feet_height -0.2862829
+z_height 0.3767482042312622
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8649642
+feet_height -0.31101397
+z_height 0.42958974838256836
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8360488
+feet_height -0.3205366
+z_height 0.4767444133758545
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.529774
+feet_height -0.30424103
+z_height 0.5169833898544312
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.252333
+feet_height -0.2624198
+z_height 0.55130535364151
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9738595
+feet_height -0.21769777
+z_height 0.5805066227912903
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7849098
+feet_height -0.18153171
+z_height 0.6040099263191223
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5429146
+feet_height -0.14941956
+z_height 0.6223772764205933
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4057287
+feet_height -0.12044874
+z_height 0.6367241144180298
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3048035
+feet_height -0.09882841
+z_height 0.6473128795623779
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.222175
+feet_height -0.08253339
+z_height 0.6544637680053711
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1691864
+feet_height -0.06952603
+z_height 0.6584216952323914
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1407487
+feet_height -0.05947542
+z_height 0.659392237663269
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1373374
+feet_height -0.05308225
+z_height 0.657268762588501
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1540463
+feet_height -0.050266165
+z_height 0.6518621444702148
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1931633
+feet_height -0.050485566
+z_height 0.6431295275688171
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2513491
+feet_height -0.053534646
+z_height 0.6308754086494446
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.3292068
+feet_height -0.058296315
+z_height 0.615126371383667
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4180627
+feet_height -0.06471095
+z_height 0.5955732464790344
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5374243
+feet_height -0.071223356
+z_height 0.5719423890113831
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.6805061
+feet_height -0.07683504
+z_height 0.5443010330200195
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8319584
+feet_height -0.08223549
+z_height 0.5125043988227844
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.0032148
+feet_height -0.087395996
+z_height 0.47636887431144714
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.1867075
+feet_height -0.09195417
+z_height 0.43587687611579895
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3737848
+feet_height -0.095907785
+z_height 0.39104241132736206
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.5628088
+feet_height -0.09869315
+z_height 0.3421730697154999
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.7358503
+feet_height -0.10026735
+z_height 0.2895295321941376
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9085143
+feet_height -0.10134742
+z_height 0.2330508530139923
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.0913637
+feet_height -0.10222238
+z_height 0.17286328971385956
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1603267
+feet_height -0.10148099
+z_height 0.13122256100177765
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6696045
+feet_height -0.11056597
+z_height 0.1280573159456253
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2395777
+feet_height -0.10967341
+z_height 0.1604306548833847
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.3281217
+feet_height -0.14525844
+z_height 0.2074984908103943
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.7167175
+feet_height -0.1974305
+z_height 0.26321232318878174
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0651252
+feet_height -0.24985087
+z_height 0.32289791107177734
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.0298593
+feet_height -0.28745863
+z_height 0.3794724941253662
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8772812
+feet_height -0.3120553
+z_height 0.4325396716594696
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8415005
+feet_height -0.32237956
+z_height 0.4797828495502472
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.530165
+feet_height -0.30559593
+z_height 0.520087718963623
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2517104
+feet_height -0.2635167
+z_height 0.5544015765190125
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9692888
+feet_height -0.21846893
+z_height 0.5835084915161133
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7786168
+feet_height -0.18204468
+z_height 0.6068860292434692
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.536874
+feet_height -0.14970279
+z_height 0.6251177191734314
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.399419
+feet_height -0.12060174
+z_height 0.6393370032310486
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2993567
+feet_height -0.09890582
+z_height 0.6498232483863831
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.2175723
+feet_height -0.08257653
+z_height 0.6568891406059265
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1647929
+feet_height -0.06955032
+z_height 0.6607697010040283
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1365771
+feet_height -0.05947986
+z_height 0.6616687178611755
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1336435
+feet_height -0.053081337
+z_height 0.6594786047935486
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1510417
+feet_height -0.05026385
+z_height 0.6540125012397766
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1907578
+feet_height -0.050528232
+z_height 0.6452244520187378
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2495209
+feet_height -0.053639602
+z_height 0.6329163312911987
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.3278397
+feet_height -0.058458637
+z_height 0.6171165704727173
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4170306
+feet_height -0.06493146
+z_height 0.5975117087364197
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5369035
+feet_height -0.0714823
+z_height 0.573828935623169
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.6802876
+feet_height -0.077122405
+z_height 0.5461273789405823
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8324742
+feet_height -0.08252384
+z_height 0.5142556428909302
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.00465
+feet_height -0.08763541
+z_height 0.478045791387558
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.1881366
+feet_height -0.09215933
+z_height 0.43748247623443604
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3753912
+feet_height -0.09609638
+z_height 0.3925800323486328
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.564233
+feet_height -0.09882237
+z_height 0.3436671793460846
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.736173
+feet_height -0.100389406
+z_height 0.2909802198410034
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9098122
+feet_height -0.10148293
+z_height 0.2344457358121872
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.0931718
+feet_height -0.10235558
+z_height 0.17413999140262604
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1743503
+feet_height -0.10184607
+z_height 0.13395822048187256
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6417654
+feet_height -0.11114097
+z_height 0.12922143936157227
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2067361
+feet_height -0.11069322
+z_height 0.15996500849723816
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.2767572
+feet_height -0.145476
+z_height 0.20626723766326904
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.679586
+feet_height -0.19686815
+z_height 0.2615784704685211
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0467741
+feet_height -0.24912916
+z_height 0.32110023498535156
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0188904
+feet_height -0.286421
+z_height 0.3774450421333313
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8561304
+feet_height -0.3102776
+z_height 0.43040403723716736
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.832479
+feet_height -0.3208307
+z_height 0.47773006558418274
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.5261004
+feet_height -0.3054006
+z_height 0.5181683897972107
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2471745
+feet_height -0.26403567
+z_height 0.5526095628738403
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9628768
+feet_height -0.21878105
+z_height 0.5817906260490417
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7701137
+feet_height -0.1819587
+z_height 0.605216920375824
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5260243
+feet_height -0.14938027
+z_height 0.6235179305076599
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.387895
+feet_height -0.12027935
+z_height 0.6378249526023865
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2861094
+feet_height -0.098700255
+z_height 0.6484066247940063
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.202639
+feet_height -0.08247183
+z_height 0.6555696725845337
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1481979
+feet_height -0.06951619
+z_height 0.6595437526702881
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1186357
+feet_height -0.059484087
+z_height 0.6605331897735596
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1149018
+feet_height -0.053099718
+z_height 0.6584357023239136
+contact [False False False False]
+torque [ 0.  0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1318598
+feet_height -0.050293706
+z_height 0.6530666947364807
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1714805
+feet_height -0.0505802
+z_height 0.6443765163421631
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2305083
+feet_height -0.05370645
+z_height 0.632166862487793
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.3093712
+feet_height -0.0585332
+z_height 0.6164658069610596
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.3992704
+feet_height -0.06501081
+z_height 0.5969580411911011
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5200549
+feet_height -0.071560256
+z_height 0.5733693242073059
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.6643543
+feet_height -0.07719171
+z_height 0.545759379863739
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8174094
+feet_height -0.08257809
+z_height 0.5139773488044739
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.9903986
+feet_height -0.08766968
+z_height 0.47785645723342896
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.1745849
+feet_height -0.09217213
+z_height 0.4373835325241089
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3624022
+feet_height -0.09609139
+z_height 0.39257216453552246
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.5517743
+feet_height -0.09880306
+z_height 0.3437516391277313
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.724093
+feet_height -0.10035267
+z_height 0.2911564111709595
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.8982587
+feet_height -0.10142885
+z_height 0.23471082746982574
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.082142
+feet_height -0.10228324
+z_height 0.17449690401554108
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1630857
+feet_height -0.10175738
+z_height 0.13251331448554993
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6776788
+feet_height -0.11186474
+z_height 0.1281035840511322
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.1958376
+feet_height -0.10884568
+z_height 0.15937687456607819
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.2793722
+feet_height -0.14364436
+z_height 0.2048340141773224
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.6361396
+feet_height -0.19450709
+z_height 0.25941208004951477
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0513787
+feet_height -0.24716859
+z_height 0.3189564049243927
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0287035
+feet_height -0.28550446
+z_height 0.37529054284095764
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8555613
+feet_height -0.30998433
+z_height 0.42810747027397156
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 2.8321955
+feet_height -0.31968594
+z_height 0.47526097297668457
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.5261884
+feet_height -0.30390453
+z_height 0.5154638290405273
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2474
+feet_height -0.26211512
+z_height 0.5497822761535645
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9711457
+feet_height -0.21733804
+z_height 0.5789949893951416
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7807264
+feet_height -0.18116128
+z_height 0.6025234460830688
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5386748
+feet_height -0.14912836
+z_height 0.6209381818771362
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4013661
+feet_height -0.12027176
+z_height 0.6353398561477661
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2997056
+feet_height -0.098767444
+z_height 0.6459802389144897
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.216227
+feet_height -0.08257142
+z_height 0.6531728506088257
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.162562
+feet_height -0.06963739
+z_height 0.6571614742279053
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1336474
+feet_height -0.05962824
+z_height 0.6581555008888245
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1300627
+feet_height -0.053247277
+z_height 0.6560474038124084
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1467873
+feet_height -0.050389424
+z_height 0.6506590843200684
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1859746
+feet_height -0.050588448
+z_height 0.6419444680213928
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2444842
+feet_height -0.053617768
+z_height 0.6297047734260559
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.322758
+feet_height -0.05834713
+z_height 0.6139684915542603
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4120986
+feet_height -0.064723015
+z_height 0.5944268107414246
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.531852
+feet_height -0.07120143
+z_height 0.5708050727844238
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.6753567
+feet_height -0.0767834
+z_height 0.5431739687919617
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8270024
+feet_height -0.082164206
+z_height 0.5113930702209473
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.998316
+feet_height -0.087325945
+z_height 0.4752730131149292
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.182166
+feet_height -0.09187523
+z_height 0.43479686975479126
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3694026
+feet_height -0.09581734
+z_height 0.3899800777435303
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.5586612
+feet_height -0.098612934
+z_height 0.34112074971199036
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.73234
+feet_height -0.10018114
+z_height 0.2884870767593384
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9048555
+feet_height -0.10124983
+z_height 0.2320222556591034
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.087727
+feet_height -0.10211851
+z_height 0.1718958169221878
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1496487
+feet_height -0.10117483
+z_height 0.1307665854692459
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.]
+vel 1.6584913
+feet_height -0.10990043
+z_height 0.12832771241664886
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2687167
+feet_height -0.11015522
+z_height 0.16121816635131836
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.3433874
+feet_height -0.14637098
+z_height 0.20868036150932312
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.7400117
+feet_height -0.19890611
+z_height 0.2646443247795105
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0739694
+feet_height -0.25119567
+z_height 0.3243376314640045
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.0325735
+feet_height -0.2887854
+z_height 0.381064772605896
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8973138
+feet_height -0.31365222
+z_height 0.43419724702835083
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8478763
+feet_height -0.3240022
+z_height 0.4813574254512787
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.534175
+feet_height -0.3063017
+z_height 0.5215802788734436
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2551606
+feet_height -0.26372606
+z_height 0.5557966232299805
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9727061
+feet_height -0.21860261
+z_height 0.5848121643066406
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7833219
+feet_height -0.18222186
+z_height 0.6081123948097229
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.543507
+feet_height -0.1499264
+z_height 0.6262592673301697
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.4068067
+feet_height -0.12084127
+z_height 0.6403847336769104
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.308197
+feet_height -0.099128425
+z_height 0.6507754325866699
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.2279147
+feet_height -0.082801364
+z_height 0.6577435731887817
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1762809
+feet_height -0.069771595
+z_height 0.6615230441093445
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1490879
+feet_height -0.059688758
+z_height 0.6623213887214661
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1470209
+feet_height -0.053272404
+z_height 0.6600341200828552
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1650512
+feet_height -0.05044738
+z_height 0.6544728875160217
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2050858
+feet_height -0.05070854
+z_height 0.64559006690979
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2638646
+feet_height -0.053813033
+z_height 0.6331893801689148
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.3418905
+feet_height -0.0586274
+z_height 0.6172999739646912
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4305849
+feet_height -0.06509836
+z_height 0.5976053476333618
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5499078
+feet_height -0.071641415
+z_height 0.5738306045532227
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.6927296
+feet_height -0.07726665
+z_height 0.5460327863693237
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.844586
+feet_height -0.08264217
+z_height 0.514059841632843
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.0164323
+feet_height -0.08771516
+z_height 0.4777492880821228
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.1993382
+feet_height -0.09221006
+z_height 0.43708816170692444
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.3860567
+feet_height -0.096127935
+z_height 0.39209213852882385
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.574269
+feet_height -0.098842
+z_height 0.3430910110473633
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.7456372
+feet_height -0.10040854
+z_height 0.29031556844711304
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9191408
+feet_height -0.10150532
+z_height 0.2336893081665039
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1023273
+feet_height -0.10237859
+z_height 0.17333798110485077
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1721604
+feet_height -0.10168445
+z_height 0.1316065490245819
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6734726
+feet_height -0.111168265
+z_height 0.12795454263687134
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2302175
+feet_height -0.1096407
+z_height 0.1603652387857437
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.3311868
+feet_height -0.14509341
+z_height 0.20722059905529022
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.7046974
+feet_height -0.1971558
+z_height 0.2628151476383209
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0700288
+feet_height -0.2496188
+z_height 0.3225325047969818
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.0312562
+feet_height -0.287448
+z_height 0.3791086673736572
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.8800282
+feet_height -0.31241882
+z_height 0.43214625120162964
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8412747
+feet_height -0.32255924
+z_height 0.4793255627155304
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.5287282
+feet_height -0.3054809
+z_height 0.5195527672767639
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2499964
+feet_height -0.26317024
+z_height 0.5538197159767151
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9693981
+feet_height -0.21818592
+z_height 0.5829238891601562
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7794926
+feet_height -0.18189898
+z_height 0.6063183546066284
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.5381951
+feet_height -0.1496965
+z_height 0.624564528465271
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.400621
+feet_height -0.120651394
+z_height 0.6387901902198792
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3005803
+feet_height -0.098955244
+z_height 0.6492754817008972
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.2189373
+feet_height -0.082628794
+z_height 0.6563343405723572
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.1664468
+feet_height -0.06960607
+z_height 0.6602038741111755
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1384715
+feet_height -0.059538357
+z_height 0.6610893607139587
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1355845
+feet_height -0.05313448
+z_height 0.6588820219039917
+contact [False False False False]
+torque [ 0. -0.  0.  0. -0.  0.  0.  0.  0.  0.  0. -0.]
+vel 1.1529417
+feet_height -0.05029565
+z_height 0.6533969044685364
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.1925741
+feet_height -0.05053088
+z_height 0.6445884704589844
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0. -0.  0.  0.]
+vel 1.2512447
+feet_height -0.053610817
+z_height 0.6322585344314575
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0. -0. -0.  0.  0.  0.]
+vel 1.3295361
+feet_height -0.058401003
+z_height 0.6164353489875793
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 1.4186989
+feet_height -0.064845316
+z_height 0.5968073606491089
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.5385569
+feet_height -0.07137756
+z_height 0.5731009244918823
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.682018
+feet_height -0.07700451
+z_height 0.5453795790672302
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 1.8340399
+feet_height -0.0824052
+z_height 0.5134939551353455
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0.  0.]
+vel 2.005941
+feet_height -0.08753617
+z_height 0.47726985812187195
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.1895075
+feet_height -0.09206894
+z_height 0.4366917610168457
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0. -0.  0.  0. -0.  0.  0. -0.]
+vel 2.376689
+feet_height -0.09600754
+z_height 0.3917747437953949
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.5655692
+feet_height -0.09875506
+z_height 0.3428383469581604
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.7379465
+feet_height -0.10032493
+z_height 0.29012763500213623
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0. -0.]
+vel 2.9112232
+feet_height -0.10141297
+z_height 0.23357360064983368
+contact [False False False False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.094442
+feet_height -0.10228662
+z_height 0.17329663038253784
+contact [False False  True False]
+torque [ 0.  0. -0.  0.  0.  0.  0.  0. -0.  0.  0.  0.]
+vel 3.1654043
+feet_height -0.101583555
+z_height 0.1316109597682953
+contact [ True  True  True  True]
+torque [ 0. -0.  0.  0.  0.  0. -0.  0.  0.  0. -0.  0.]
+vel 1.6667212
+feet_height -0.11108684
+z_height 0.12804386019706726
+contact [ True  True  True  True]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 1.2268287
+feet_height -0.109588005
+z_height 0.16032281517982483
+contact [ True  True  True  True]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.3231127
+feet_height -0.14498675
+z_height 0.20708611607551575
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.6997557
+feet_height -0.1969642
+z_height 0.26261454820632935
+contact [ True  True False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 3.0650578
+feet_height -0.24943356
+z_height 0.3222901225090027
+contact [ True  True False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 3.029084
+feet_height -0.28708857
+z_height 0.37884706258773804
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.876382
+feet_height -0.3118652
+z_height 0.4318980276584625
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0. -0.  0.  0.  0.  0.  0.]
+vel 2.8408208
+feet_height -0.32217395
+z_height 0.47911566495895386
+contact [False False False False]
+torque [ 0.  0.  0. -0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 2.528892
+feet_height -0.30541056
+z_height 0.519382119178772
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 2.2502172
+feet_height -0.26324832
+z_height 0.5536884069442749
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.9695007
+feet_height -0.21823862
+z_height 0.5828163027763367
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.7787359
+feet_height -0.18188518
+z_height 0.6062265038490295
+contact [False False False False]
+torque [ 0.  0.  0.  0.  0.  0.  0.  0.  0. -0.  0.  0.]
+vel 1.537153
+feet_height -0.14963955
+z_height 0.6244916915893555
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.3994254
+feet_height -0.1205938
+z_height 0.6387418508529663
+contact [False False False False]
+torque [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+vel 1.2991391
+feet_height -0.09892225
+z_height 0.6492557525634766
+contact [False False False False]
+torque [-0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
+vel 1.2172118
+feet_height -0.08261682

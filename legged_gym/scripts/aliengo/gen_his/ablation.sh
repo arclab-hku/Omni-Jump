@@ -7,7 +7,7 @@ TIMES=5
 
 for ((i = 1; i <= TIMES; i++)); do
     PARAM="$i"
-    OUTPUT_FILE="${OUTPUT_BASE_ablation_self}_${i}.txt"
+    OUTPUT_FILE="Ablation_WO_HR_${i}"
     echo "Execution $i"
     bash "$SCRIPT" "0" "$PARAM" "$OUTPUT_FILE"
 done

@@ -194,18 +194,16 @@ class ActorCritic(nn.Module):
         # ZXY tracking and feet pos:
         obs = obs_dict['obs']
         #obs_vel = obs_dict['privileged_info'][:, 7:10]
-        obs_vel = obs_dict['privileged_info'][:, 10 -7:13 -7]
-        #obs_feet_pos = obs_dict['privileged_info'][:, 3:7]
-        #obs_zxy = obs_dict['privileged_info'][:, 0:3]
+        obs_vel = obs_dict['privileged_info'][:, 10:13]
+        obs_feet_pos = obs_dict['privileged_info'][:, 3:7]
+        obs_zxy = obs_dict['privileged_info'][:, 0:3]
         
-        obs_ang_vel = obs_dict['privileged_info'][:, 7 -7:10 -7]
-        #obs_hight = obs_dict['privileged_info'][:, 3:200]
-        #obs_hight = obs_dict['privileged_info'][:, 10:207]#+264]
-        obs_hight = obs_dict['privileged_info'][:, 13 -7:210 -7]
+        obs_ang_vel = obs_dict['privileged_info'][:, 7:10]
+        obs_hight = obs_dict['privileged_info'][:, 13:210]
         obs_proprio_hist = obs_dict['proprio_hist']
         obs_his = obs_proprio_hist
         #extrin_gt = obs_dict['privileged_info'][:, 0:10] 
-        extrin_gt = obs_dict['privileged_info'][:, 0:13 -7] 
+        extrin_gt = obs_dict['privileged_info'][:, 0:13] 
         # Z tracking:
         # obs = obs_dict['obs']
         # obs_vel = obs_dict['privileged_info'][:, 4:7]#obs_dict['privileged_info'][:, 10:13]
@@ -249,8 +247,8 @@ class ActorCritic(nn.Module):
         actor_obs = torch.cat([extrin_en, obs], dim=-1)#torch.cat([ obs, extrin_en, obs_hight], dim=-1) # 45 + 3 + 197
         #critic_obs = torch.cat([obs_z, obs_mass, obs_ang_vel, obs_feet_pos, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
         #critic_obs = torch.cat([obs_z, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
-        #critic_obs = torch.cat([obs_zxy, obs_feet_pos, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
-        critic_obs = torch.cat([obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)
+        critic_obs = torch.cat([obs_zxy, obs_feet_pos, obs_ang_vel, obs_vel, obs, obs_hight], dim=-1)  ## 45+3+197 = 245
+        #critic_obs = torch.cat([obs_vel, obs, obs_hight], dim=-1)
 
         # extrin_en and the input observation of critics最好一一对应
         mu = self.actor(actor_obs)

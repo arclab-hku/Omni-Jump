@@ -7,7 +7,3 @@ python play.py --task=go2 --s_flag=1 \
 --checkpoint_model=last.pt \
 --export_policy \
 --export_onnx_policy
-
-
-
-

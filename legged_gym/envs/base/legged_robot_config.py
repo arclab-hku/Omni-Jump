@@ -91,7 +91,7 @@ class LeggedRobotCfg(BaseConfig):
         num_commands = 6#5#4  # default: lin_vel_x, lin_vel_y, ang_vel_yaw, heading (in heading mode ang_vel_yaw is recomputed from heading error)
         resampling_time = 10.  # time before command are changed[s]
         height_command = True
-        heading_command = False#True  # if true: compute ang vel command from heading error
+        heading_command = True  # if true: compute ang vel command from heading error
         tracking_z = True
         desired_jumping_height = 0.85
 
@@ -100,12 +100,12 @@ class LeggedRobotCfg(BaseConfig):
         bool_jump = False#True # is true use the newcode structure
 
         class ranges:
-            lin_vel_x = [-0.6, 1.0]#[1.0, 3.0] #[-0.6, 1.0] aliengo#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
-            lin_vel_y = [-0.6, 0.6] #[-0., 0.] #[-0.5, 0.6] # min max [m/s]
-            ang_vel_yaw = [-1.0, 1.0]#[-1., 1.] long_jump# [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
-            height_z = [0.5, 0.8] #[0.45, 0.99]
+            lin_vel_x = [-0.2, 1.0]#[1.0, 3.0] #[-0.6, 1.0] aliengo#[-0., 0.]#[-1.0, 1.0]  # min max [m/s]
+            lin_vel_y = [-0.5, 0.5] #[-0., 0.] #[-0.5, 0.6] # min max [m/s]
+            ang_vel_yaw = [-0.8, 0.8]#[-1., 1.] long_jump# [-1.5, 1.5] # [-0.00,0.00]#consider it as target_yaw #[-1, 1]  # min max [rad/s]\
+            height_z = [0.32, 0.85] #0.85 #[0.45, 0.99]
 
-            heading = [-3.14, 3.14]#[-0.314,0.314]#[-3.14, 3.14]
+            heading = [-1., 1.]#[-0.314,0.314]#[-3.14, 3.14]
             vel_z_bool = [0,1]
 
             z_jump = [0.55, 0.75] #root max height(command for jumping)

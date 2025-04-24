@@ -37,22 +37,23 @@ from legged_gym.utils import  get_args, export_policy_as_jit, task_registry, Log
 
 import numpy as np
 import torch
+#from robot_data_recorder import RobotDataRecorder
 
 
 def play(args):
     env_cfg, train_cfg = task_registry.get_cfgs(name=args.task)
     # override some parameters for testing
     env_cfg.env.num_envs = min(env_cfg.env.num_envs, 10)
-    env_cfg.terrain.num_rows = 6
-    env_cfg.terrain.num_cols = 4
+    env_cfg.terrain.num_rows = 2
+    env_cfg.terrain.num_cols = 2
 
     # env_cfg.terrain.terrain_length = 10.
     # env_cfg.terrain.terrain_width = 10.
     # env_cfg.terrain.num_rows = 10  # number of terrain rows (levels)
     # env_cfg.terrain.num_cols = 20  # number of terrain cols (types)
 
-    max_init_terrain_level = 10 # starting curriculum state
-    env_cfg.terrain.curriculum = True
+    max_init_terrain_level = 5 # starting curriculum state
+    env_cfg.terrain.curriculum = False
     env_cfg.noise.add_noise = True
     env_cfg.domain_rand.randomize_friction = False
     env_cfg.domain_rand.push_robots = False
@@ -60,10 +61,10 @@ def play(args):
     env_cfg.domain_rand.randomize_limb_mass = False
     
     # fixed velocity direction evaluation (make sure the value is within the training range)
-    env_cfg.commands.ranges.lin_vel_x = [1.0, 1.0]
+    env_cfg.commands.ranges.lin_vel_x = [0., 0.]
     env_cfg.commands.ranges.lin_vel_y = [-0., -0.]
     env_cfg.commands.ranges.ang_vel_yaw = [0., 0.]
-    env_cfg.commands.ranges.height_z = [0.7, 0.7]
+    env_cfg.commands.ranges.height_z = [0.8, 0.8]
     env_cfg.commands.ranges.heading = [-0, -0]
 
     # prepare environment
@@ -90,11 +91,13 @@ def play(args):
     camera_vel = np.array([1., 1., 0.])
     camera_direction = np.array(env_cfg.viewer.lookat) - np.array(env_cfg.viewer.pos)
     img_idx = 0
+    #recorder = RobotDataRecorder(frame_duration=env.dt)
 
     for i in range(1000*int(env.max_episode_length)):
         actions = policy(obs_dict)
         _, _, _, ests, _ = estimation(obs_dict)
-        obs_dict, rews, dones, infos = env.step(actions.detach(), ests.detach())
+        obs_dict, rews, dones, infos = env.step(actions.detach())
+        #recorder.record_frame(env, robot_index)
         if RECORD_FRAMES:
             if i % 2:
                 filename = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'frames', f"{img_idx}.png")
@@ -131,6 +134,7 @@ def play(args):
                     logger.log_rewards(infos["episode"], num_episodes)
         elif i==stop_rew_log:
             logger.print_rewards()
+    #recorder.save("./dummy_data.txt")
 
 if __name__ == '__main__':
     EXPORT_POLICY = False

@@ -307,7 +307,6 @@ go2_long_jump_pose2_2_9_P0: tracking_air_angle with 0 default hip angle regulati
 
 go2_long_jump_pose2_2_7: (POSE) continue training on the 2_2_5 with lin_vel(1.6,3.5) and add the bounding_box constraints only on rewards.其他不变
 
-
 go2_long_jump_pose3: 相比于2增加了，task_max_height reward tracking_lin_vel (-1,1)
 go2_long_jump_pose4: 相比于3，增加了jumping 1->1.5; task_max_height 0,1 -> 0.2
 

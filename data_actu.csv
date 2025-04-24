@@ -1,0 +1,2078 @@
+Importing module 'gym_38' (/home/leo/research/isaacgym/python/isaacgym/_bindings/linux-x86_64/gym_38.so)
+Setting GYM_USD_PLUG_INFO_PATH to /home/leo/research/isaacgym/python/isaacgym/_bindings/linux-x86_64/usd/plugInfo.json
+PyTorch version 1.13.0+cu117
+Device count 1
+/home/leo/research/isaacgym/python/isaacgym/_bindings/src/gymtorch
+ninja: no work to do.
+Not connected to PVD
++++ Using GPU PhysX
+Physics Engine: PhysX
+Physics Device: cuda:0
+GPU Pipeline: enabled
+[Warning] [carb.gym.plugin] Acquiring DOF force tensor, but no actors have DOF force sensors enabled.
+[Warning] [carb.gym.plugin] -> Enabled DOF force sensors for all eligible actors.
+Exported graph: graph(%observation : Float(1, 59, strides=[59, 1], requires_grad=0, device=cpu),
+      %0.weight : Float(512, 59, strides=[59, 1], requires_grad=1, device=cpu),
+      %0.bias : Float(512, strides=[1], requires_grad=1, device=cpu),
+      %2.weight : Float(256, 512, strides=[512, 1], requires_grad=1, device=cpu),
+      %2.bias : Float(256, strides=[1], requires_grad=1, device=cpu),
+      %4.weight : Float(128, 256, strides=[256, 1], requires_grad=1, device=cpu),
+      %4.bias : Float(128, strides=[1], requires_grad=1, device=cpu),
+      %6.weight : Float(12, 128, strides=[128, 1], requires_grad=1, device=cpu),
+      %6.bias : Float(12, strides=[1], requires_grad=1, device=cpu)):
+  %/0/Gemm_output_0 : Float(1, 512, strides=[512, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/0/Gemm"](%observation, %0.weight, %0.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::0 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1/Elu_output_0 : Float(1, 512, strides=[512, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1/Elu"](%/0/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %/2/Gemm_output_0 : Float(1, 256, strides=[256, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/2/Gemm"](%/1/Elu_output_0, %2.weight, %2.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::2 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1_1/Elu_output_0 : Float(1, 256, strides=[256, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1_1/Elu"](%/2/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %/4/Gemm_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/4/Gemm"](%/1_1/Elu_output_0, %4.weight, %4.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::4 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/1_2/Elu_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Elu[alpha=1., onnx_name="/1_2/Elu"](%/4/Gemm_output_0), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.activation.ELU::1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1548:0
+  %action : Float(1, 12, strides=[12, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/6/Gemm"](%/1_2/Elu_output_0, %6.weight, %6.bias), scope: torch.nn.modules.container.Sequential::/torch.nn.modules.linear.Linear::6 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  return (%action)
+
+Exported graph: graph(%observation : Float(1, 230, strides=[230, 1], requires_grad=0, device=cpu),
+      %encoder.0.weight : Float(258, 230, strides=[230, 1], requires_grad=1, device=cpu),
+      %encoder.0.bias : Float(258, strides=[1], requires_grad=1, device=cpu),
+      %encoder.2.weight : Float(128, 258, strides=[258, 1], requires_grad=1, device=cpu),
+      %encoder.2.bias : Float(128, strides=[1], requires_grad=1, device=cpu),
+      %encoder.4.weight : Float(13, 128, strides=[128, 1], requires_grad=1, device=cpu),
+      %encoder.4.bias : Float(13, strides=[1], requires_grad=1, device=cpu)):
+  %/encoder/encoder.0/Gemm_output_0 : Float(1, 258, strides=[258, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.0/Gemm"](%observation, %encoder.0.weight, %encoder.0.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.0 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/encoder/encoder.1/Relu_output_0 : Float(1, 258, strides=[258, 1], requires_grad=1, device=cpu) = onnx::Relu[onnx_name="/encoder/encoder.1/Relu"](%/encoder/encoder.0/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.ReLU::encoder.1 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1457:0
+  %/encoder/encoder.2/Gemm_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.2/Gemm"](%/encoder/encoder.1/Relu_output_0, %encoder.2.weight, %encoder.2.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.2 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %/encoder/encoder.3/Relu_output_0 : Float(1, 128, strides=[128, 1], requires_grad=1, device=cpu) = onnx::Relu[onnx_name="/encoder/encoder.3/Relu"](%/encoder/encoder.2/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.ReLU::encoder.3 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/functional.py:1457:0
+  %/encoder/encoder.4/Gemm_output_0 : Float(1, 13, strides=[13, 1], requires_grad=1, device=cpu) = onnx::Gemm[alpha=1., beta=1., transB=1, onnx_name="/encoder/encoder.4/Gemm"](%/encoder/encoder.3/Relu_output_0, %encoder.4.weight, %encoder.4.bias), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.linear.Linear::encoder.4 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/linear.py:114:0
+  %action : Float(1, 13, strides=[13, 1], requires_grad=1, device=cpu) = onnx::Tanh[onnx_name="/encoder/encoder.5/Tanh"](%/encoder/encoder.4/Gemm_output_0), scope: rl.Gen_his.modules.actor_critic.DmEncoder::/torch.nn.modules.container.Sequential::encoder/torch.nn.modules.activation.Tanh::encoder.5 # /home/leo/anaconda3/envs/moral/lib/python3.8/site-packages/torch/nn/modules/activation.py:358:0
+  return (%action)
+
+53
+Setting seed: 1
+Enable Visualization
+z_height 0.33809253573417664
+contact [ True  True False False]
+torque [[  2.3494644    0.82888263   2.2225442   -1.0007586   -2.2444775
+    7.2282267   -0.20162085   1.9764686  -11.009722     1.5282619
+    4.0532002    1.0341237 ]]
+vel 0.48230833
+feet_height -0.30208224
+'train_cfg' provided -> Ignoring 'name=go2'
+load model model_300.pt
+resume name: resume_name
+ActorCritic.__init__ got unexpected arguments, which will be ignored: ['Hist_info_dim', 'HistoryLen', 'checkpoint_model', 'decoder_mlp_units', 'estLen', 'priv_info', 'priv_info_dim', 'priv_mlp_units', 'proprio_adapt', 'proprio_adapt_out_dim', 'velLen']
+Encoder MLP: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+Actor MLP: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+Critic MLP: Sequential(
+  (0): Linear(in_features=256, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=1, bias=True)
+)
+**********  Hist_info_shape   [230]
+z_height 0.3345945179462433
+contact [False False  True False]
+torque [[ 4.2736382   2.1083295  -7.587197   -0.5567431  -0.6890926  -0.48505884
+  -0.96197397 -8.19333    12.356169    0.7882168  -3.2472472  17.05233   ]]
+vel 0.47632486
+feet_height -0.3069725
+Loading model from: ('/home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_jump2_4_4_newACTU6', 'stage1_nn', '/home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_jump2_4_4_newACTU6/stage1_nn/model_300.pt')
+Exporting policy to jit module(C++)
+exported jit actor: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+exported jit encoder: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+Exporting policy to onnx module(C++)
+************** dummy observation size torch.Size([1, 59]) **************
+************** dummy observation size torch.Size([1, 230]) **************
+exported onnx actor: Sequential(
+  (0): Linear(in_features=59, out_features=512, bias=True)
+  (1): ELU(alpha=1.0)
+  (2): Linear(in_features=512, out_features=256, bias=True)
+  (3): ELU(alpha=1.0)
+  (4): Linear(in_features=256, out_features=128, bias=True)
+  (5): ELU(alpha=1.0)
+  (6): Linear(in_features=128, out_features=12, bias=True)
+)
+exported onnx encoder: DmEncoder(
+  (encoder): Sequential(
+    (0): Linear(in_features=230, out_features=258, bias=True)
+    (1): ReLU()
+    (2): Linear(in_features=258, out_features=128, bias=True)
+    (3): ReLU()
+    (4): Linear(in_features=128, out_features=13, bias=True)
+    (5): Tanh()
+  )
+)
+**************** start loading model from:****************  /home/leo/research/leggedR/adaptive_legged_gym/outputs/go2/gen_his/go2_jump2_4_4_newACTU6/stage1_nn/model_300.pt
+**************** RUNNER  <rl.Gen_his.runners.gen_policy_runner.GenHisPolicyRunner object at 0x7f519b942b20>
+z_height 0.3307579755783081
+contact [ True  True  True  True]
+torque [[-0.23206925  7.431956    3.226253   -0.10750636 -1.8248198   5.1561503
+  -0.27468926 -3.1153975   1.8784919   0.8330774  -1.798753    6.9215503 ]]
+vel 0.47820488
+feet_height -0.30825225
+z_height 0.32146579027175903
+contact [False False False False]
+torque [[ 23.7          7.9643025  -17.070005   -16.55417     -5.16839
+   -3.9531608   -3.338973    -1.9373696  -10.250724    -0.74189997
+    3.3001919  -12.978775  ]]
+vel 0.78652483
+feet_height -0.24425049
+z_height 0.30272912979125977
+contact [False False False False]
+torque [[  5.276818     6.1858478   -9.626005    -2.016259    -0.17624813
+  -11.992422     4.237033     0.79540306  -9.645901    -8.0343485
+   -3.8832226   -1.0339968 ]]
+vel 1.2093511
+feet_height -0.11858998
+z_height 0.281947523355484
+contact [False False False False]
+torque [[ 2.2796721e+01 -4.9905014e+00 -1.3917231e+01  7.6610403e+00
+   1.4470135e+01 -7.0247903e+00  4.4012775e+00 -1.8602967e-02
+   1.2185287e+00 -5.6108623e+00 -6.4608455e-01 -1.5669661e+01]]
+vel 1.0234185
+feet_height -0.04620933
+z_height 0.25894537568092346
+contact [False False False False]
+torque [[ 23.7        -5.433862   -8.806196    3.411037    5.507563   -0.6449291
+   -4.240781    4.380819  -23.739925    1.5910597   5.86004    -6.258472 ]]
+vel 1.1912521
+feet_height -0.026557893
+z_height 0.23626753687858582
+contact [False False False False]
+torque [[ 23.7         -2.6080601    5.2403655   -8.437012    -5.2884893
+    0.87605304  -5.310264    -5.1704245  -22.726267    -7.764607
+   -0.512838   -23.625587  ]]
+vel 1.2403558
+feet_height -0.03817398
+z_height 0.21156452596187592
+contact [False False False False]
+torque [[ 23.7        -4.5025725 -25.81937     1.6488817   2.4095585   1.971596
+    3.5407996  -6.102504  -23.695015  -15.498516   -3.6360414 -16.910181 ]]
+vel 1.3866674
+feet_height -0.04954643
+z_height 0.18459516763687134
+contact [False  True False False]
+torque [[ 23.7          0.22437334  -2.3218145    9.564713    16.406439
+   24.003716     0.23533648  -5.02786    -21.488485     4.967029
+   -3.223532   -27.73006   ]]
+vel 1.4877262
+feet_height -0.06369456
+z_height 0.15656669437885284
+contact [False  True False False]
+torque [[ 23.227444   -2.411037    4.202748   18.29396    13.2245655  44.875443
+    6.55323    -1.861907  -17.81844    10.741678    3.5526166 -19.936592 ]]
+vel 1.3994613
+feet_height -0.07401261
+z_height 0.13637053966522217
+contact [False  True  True  True]
+torque [[  2.943265    -0.25592792  25.551025    -3.2764115    6.140351
+   45.43       -14.824807    -1.3799841  -19.710754     1.0100253
+   -7.2729836    2.2742362 ]]
+vel 0.5819183
+feet_height -0.08438501
+z_height 0.1303061991930008
+contact [False  True  True  True]
+torque [[ -3.5430067  -4.935061   43.052727   -0.4273639  -6.9956594  25.972307
+  -16.313337   16.059704   15.119474    1.8752201   1.6831195   7.043425 ]]
+vel 0.4474113
+feet_height -0.10453178
+z_height 0.12754130363464355
+contact [ True  True  True  True]
+torque [[-23.7        15.304443   45.43       15.061822    1.5558972  34.079597
+   -5.3964396  -1.3678682  22.502985    7.261351   -0.521078   45.43     ]]
+vel 0.3617018
+feet_height -0.10132527
+z_height 0.1322648972272873
+contact [ True  True  True  True]
+torque [[-21.021255   23.7        45.05006    23.7        21.060574   22.288406
+   -8.31295    -6.8010592  16.825851    6.135506   -8.859822   45.43     ]]
+vel 0.5359311
+feet_height -0.10686281
+z_height 0.143909752368927
+contact [ True  True  True  True]
+torque [[-23.7        23.7        45.43       23.7        21.769732   35.573944
+   -2.1471448   5.0100913  45.43       -1.2615552  -3.5879393  45.43     ]]
+vel 0.91844124
+feet_height -0.119445905
+z_height 0.16185706853866577
+contact [ True  True  True  True]
+torque [[-23.7        23.7        38.975174   23.7        23.7        33.502182
+   -2.7650576   0.218054   45.43       -2.3388076  -1.4130056  42.06646  ]]
+vel 1.2862501
+feet_height -0.13786787
+z_height 0.18593357503414154
+contact [ True  True  True  True]
+torque [[-23.7        23.7        29.751171   23.7        23.7        35.322697
+   -3.1793928  -5.0754595  45.350266   -3.8327856   3.1123576  45.43     ]]
+vel 1.6523514
+feet_height -0.16107145
+z_height 0.2152014821767807
+contact [ True  True  True  True]
+torque [[-19.966185   23.7        31.068077   23.7        23.7        35.287544
+   -1.0992823 -11.817598   45.43       -1.876955   -2.218736   45.43     ]]
+vel 1.9622461
+feet_height -0.18644169
+z_height 0.24899691343307495
+contact [ True  True  True  True]
+torque [[-23.258255    23.7         42.697342    23.7         23.7
+   38.463615    -0.61335856 -20.23602     22.232265     0.72213656
+  -12.447532    38.737988  ]]
+vel 2.2114632
+feet_height -0.21287943
+z_height 0.2868328392505646
+contact [ True  True  True  True]
+torque [[-23.7        17.104063   38.991173   23.7        23.503944   16.071495
+   -6.082075  -22.429585    5.2929425   7.1513014 -21.49028     1.5128591]]
+vel 2.4010172
+feet_height -0.24074763
+z_height 0.3258903920650482
+contact [False False False  True]
+torque [[-23.7         6.905092   45.43       15.293319   -4.3756285  45.43
+   -3.2458944  -6.381977    5.4721117   7.6664963 -17.196205   -0.7750794]]
+vel 2.2784297
+feet_height -0.27175212
+z_height 0.3594094216823578
+contact [False False False False]
+torque [[ -0.19185334 -12.711807    42.965645   -11.59659    -23.7
+   45.43         5.1506963    5.783117    35.961613     1.4595141
+    4.256128    -1.9110556 ]]
+vel 2.0419395
+feet_height -0.28082982
+z_height 0.3873021602630615
+contact [False False False False]
+torque [[ -7.5976806 -11.304427   45.43        1.7802942 -18.001842   45.43
+    2.7781947   4.366972    7.869857   -4.135368   -1.5740194  44.778053 ]]
+vel 1.8496755
+feet_height -0.26997054
+z_height 0.41040563583374023
+contact [False False False False]
+torque [[ -5.4047537   -6.408714    45.43        -1.2834165  -11.940639
+   45.43         0.45790416   0.5047584   45.43        -5.1207128
+    1.5547333   45.43      ]]
+vel 1.7266259
+feet_height -0.25538564
+z_height 0.42932260036468506
+contact [False False False False]
+torque [[ -1.4332602  -9.468576   45.43       -6.6745915 -12.276511   45.43
+    6.6562753   3.4848773  45.43       -3.954862    3.1424406  45.43     ]]
+vel 1.5929574
+feet_height -0.23725048
+z_height 0.4443800747394562
+contact [False False False False]
+torque [[-0.75840193 -9.449993   45.43       -6.8501143  -9.889776   45.43
+   4.0104876   2.1492865  45.43       -1.4208746   2.9583406  45.43      ]]
+vel 1.4941137
+feet_height -0.21721372
+z_height 0.45599666237831116
+contact [False False False False]
+torque [[ 1.8467577 -8.252536  44.998016  -4.3041973 -7.9052906 42.6942
+   2.690022   2.242324  45.43      -2.9434197  1.9440103 45.43     ]]
+vel 1.410848
+feet_height -0.20094284
+z_height 0.46398085355758667
+contact [False False False False]
+torque [[ 2.5877683 -6.134666  45.43      -3.8903995 -3.9436712 21.15474
+   2.447863   2.836252  45.43      -5.363503   3.2357678 45.43     ]]
+vel 1.3465027
+feet_height -0.18748572
+z_height 0.46797648072242737
+contact [False False False False]
+torque [[ 0.571362   -0.57457817 14.54876     0.55411977 -0.49337196  2.8526764
+   0.63669246  3.6961799  44.92157    -2.2223063   2.9085486  45.43      ]]
+vel 1.3030207
+feet_height -0.17044576
+z_height 0.467305451631546
+contact [False False False False]
+torque [[-0.23385112 -1.7208495  -8.666595    1.421004    1.0042171  -8.510543
+  -2.189747    0.8997079  13.610521   -0.69479024  0.62707704  1.4174695 ]]
+vel 1.2984574
+feet_height -0.13909832
+z_height 0.4625745713710785
+contact [False False False False]
+torque [[  0.45352316   3.7893674   -1.7586889    4.987076     0.6329482
+  -12.948885    -0.9365142   -5.177983   -13.255516    -3.2979465
+   -4.1975718   -7.974684  ]]
+vel 1.302378
+feet_height -0.12185556
+z_height 0.45540377497673035
+contact [False False False False]
+torque [[ -2.8608515    0.12571442 -23.370188     0.3280822    0.79021996
+  -14.113707    -1.9347682    1.0176141  -14.759339     0.28592062
+   -0.33604658 -10.337207  ]]
+vel 1.3258812
+feet_height -0.1172235
+z_height 0.445111483335495
+contact [False False False False]
+torque [[  0.8584502   -1.0576748  -12.44922     -1.589284    -0.41511995
+  -14.133223     1.7124598    1.177943    -7.048246     3.5888543
+    0.73355365 -10.540289  ]]
+vel 1.3868041
+feet_height -0.10892503
+z_height 0.4307769238948822
+contact [False False False False]
+torque [[  6.6925187   -0.819797   -16.195354     0.3943144   -0.09156039
+   -8.0582       3.8529065    2.7047114  -12.125931     6.4103284
+    0.37533247 -10.705243  ]]
+vel 1.4895937
+feet_height -0.090999395
+z_height 0.41270798444747925
+contact [False False False False]
+torque [[  5.179545   -1.8674226   2.8220837   7.1325383   2.953771  -24.010635
+    4.0942445   1.6016963  -1.7975388   9.647993    0.5031956 -11.315525 ]]
+vel 1.5793508
+feet_height -0.080470406
+z_height 0.3906727433204651
+contact [False False False False]
+torque [[  9.292797     0.89508337 -15.087121     8.760266     3.2654457
+  -23.62577      5.8687468   -0.23774612  -8.776796     9.32111
+   -0.36292344 -18.24284   ]]
+vel 1.7655257
+feet_height -0.07433357
+z_height 0.36489349603652954
+contact [False False False False]
+torque [[ 12.718275   -4.9066243 -23.794144    6.297326    1.0372198 -25.534122
+    5.305532   -2.4063916  -8.2603245   9.635827   -0.748557  -19.622759 ]]
+vel 1.9301157
+feet_height -0.077675745
+z_height 0.3350279629230499
+contact [False False False False]
+torque [[ 13.96578    -1.8277342 -17.746948    8.762909    2.7685788 -19.418041
+    5.451304   -2.2693372 -21.532606    7.22149    -1.0557919 -24.279034 ]]
+vel 2.070434
+feet_height -0.08137079
+z_height 0.30082666873931885
+contact [False False False False]
+torque [[  7.9209533   -1.4643006  -23.342878    11.063019     0.9048297
+  -20.0145       8.409078     0.14887121 -23.015574    10.265308
+    1.7338006  -18.415403  ]]
+vel 2.239085
+feet_height -0.083643496
+z_height 0.26400646567344666
+contact [False False False False]
+torque [[  2.4821067    0.25579453 -25.3861      14.924581     1.8344908
+  -20.853714    17.54393     -4.3194695  -22.547276    17.155594
+   -0.45770627 -25.305637  ]]
+vel 2.2955942
+feet_height -0.088760085
+z_height 0.22255386412143707
+contact [False False False False]
+torque [[  5.123833    -1.7403274  -14.139096     8.326904     3.4756634
+  -22.063953    11.967174    -5.116687   -21.340061    13.257775
+    0.26625168 -24.8296    ]]
+vel 2.5352724
+feet_height -0.09084754
+z_height 0.17625276744365692
+contact [False False False False]
+torque [[  5.0539184   -0.62612456 -13.819186    11.914265     0.95370203
+  -20.721018     7.0475755   -2.8919008  -20.881737     6.6531305
+   -0.3164181  -25.205408  ]]
+vel 2.7340972
+feet_height -0.08989866
+z_height 0.12841424345970154
+contact [ True  True False False]
+torque [[  0.41508055 -17.257633   -10.91255     10.25872    -20.666698
+  -24.948624    10.322286    -4.4915156  -21.356283     5.998915
+   -0.501346   -24.10204   ]]
+vel 2.229276
+feet_height -0.08256414
+z_height 0.10443057119846344
+contact [ True  True False  True]
+torque [[  2.1520042 -23.7       -24.30307     2.0658975 -23.7       -18.94209
+   -7.34484    -3.5521946 -24.576832    8.443299   -3.5327506 -21.575195 ]]
+vel 1.0401686
+feet_height -0.07524195
+z_height 0.1045684963464737
+contact [ True  True  True  True]
+torque [[-17.865856 -23.7        2.403255  12.180992 -12.683538   4.526792
+   -9.313231 -23.7       43.255928   7.972257 -19.222801  28.953762]]
+vel 0.7494461
+feet_height -0.08350703
+z_height 0.12290969491004944
+contact [ True  True  True False]
+torque [[  0.7485997  -21.023052    45.43        14.032946   -14.699475
+   43.707047   -13.400261    -5.071378    20.184267     2.9820955
+   -0.22515923  42.09633   ]]
+vel 1.2205778
+feet_height -0.098628715
+z_height 0.1483791321516037
+contact [ True  True  True  True]
+torque [[ -8.981589  -23.7        42.374374   12.7191925 -15.572344   44.28711
+  -11.576646   -4.9703703  38.053093    3.0139031  -2.388202   40.017868 ]]
+vel 1.5472811
+feet_height -0.12348298
+z_height 0.17958980798721313
+contact [ True  True  True  True]
+torque [[-11.861368  -18.4388     31.846546    6.2097754  -9.226085   33.49498
+   -2.885231   -4.534981   35.02854     9.141982   -2.438657   40.872616 ]]
+vel 1.7998621
+feet_height -0.15384147
+z_height 0.21552929282188416
+contact [ True  True  True  True]
+torque [[-12.458524  -16.747242   28.513199    5.3782563 -10.973782   42.124912
+   -3.0167177  -1.389509   23.080595    3.6235883  -5.835793   31.412354 ]]
+vel 1.9931267
+feet_height -0.19069524
+z_height 0.25597068667411804
+contact [ True  True  True  True]
+torque [[-14.652944  -23.03056    26.597557   12.022919  -17.065681   26.71143
+   -5.634002   -0.3982584  18.745647    5.5655355 -11.680355    8.153946 ]]
+vel 2.1696603
+feet_height -0.23550144
+z_height 0.29976147413253784
+contact [ True  True False False]
+torque [[-23.7       -23.7        22.501503   23.7       -23.7        25.576887
+    2.3076649   2.5408008   7.6720676   1.6587434   2.434132    7.3511353]]
+vel 2.26058
+feet_height -0.28370392
+z_height 0.33899804949760437
+contact [False False False False]
+torque [[ 0.42531127 -2.604791    4.105403    1.5941095  -1.5937464   5.1959586
+   1.4972615  17.389198   27.249472   -2.2180777  13.857594   12.129561  ]]
+vel 2.0063114
+feet_height -0.29781902
+z_height 0.37071147561073303
+contact [False False False False]
+torque [[ 1.9066188   3.726489   16.051037   -1.7914553   3.2304265   7.568057
+   3.5053277  -8.800236   45.43        0.6404955   0.31485254  5.679149  ]]
+vel 1.704745
+feet_height -0.2583053
+z_height 0.3979155719280243
+contact [False False False False]
+torque [[ -1.6958079  -6.4767575  45.43       -4.2288094 -16.084496   45.43
+   -0.5286857   1.7950482  45.43       -0.7267592  -1.7500257  45.43     ]]
+vel 1.5243127
+feet_height -0.2153285
+z_height 0.4207713305950165
+contact [False False False False]
+torque [[  5.8663964 -12.932653   45.43       -5.4411945  -6.2736583  41.69022
+    5.9090114   2.162378   45.43       -2.5531473   2.1020007  45.43     ]]
+vel 1.3165417
+feet_height -0.1729513
+z_height 0.4384506642818451
+contact [False False False False]
+torque [[  5.230641  -19.425932   45.43       -3.4348266  -1.0212874  45.43
+    9.410013    1.1743851  45.43       -3.7922716   2.2905855  45.43     ]]
+vel 1.1181456
+feet_height -0.12879682
+z_height 0.45283007621765137
+contact [False False False False]
+torque [[  5.1479025 -21.502317   45.43       -3.7277017  -1.9527087  45.43
+    7.474868    2.3468602  45.43       -3.3241854   0.7462679  45.43     ]]
+vel 1.0026379
+feet_height -0.093781635
+z_height 0.4642890989780426
+contact [False False False False]
+torque [[  6.413659  -23.7        45.43       -3.3799958  -4.0320497  45.43
+    6.8257318   1.2414112  45.43       -4.6681643   1.7576809  45.43     ]]
+vel 0.90499157
+feet_height -0.071240045
+z_height 0.4726831912994385
+contact [False False False False]
+torque [[  6.8282323 -23.7        45.16871    -4.097018   -4.1655684  44.87542
+    6.56965     1.6417549  45.43       -5.1681714   2.531147   45.43     ]]
+vel 0.8236354
+feet_height -0.059369177
+z_height 0.47760269045829773
+contact [False False False False]
+torque [[  6.5731254 -21.775124   44.030994   -4.204744   -3.7160168  45.43
+    4.8159304   1.2129037  45.43       -4.1262107   2.4290547  45.43     ]]
+vel 0.76033634
+feet_height -0.052051082
+z_height 0.4789295196533203
+contact [False False False False]
+torque [[  6.211811  -19.649595   43.11066    -2.582426   -1.578444   16.632137
+    2.9123492  -0.8683422  44.543686   -2.169455    2.3881202  44.272182 ]]
+vel 0.7320505
+feet_height -0.047371194
+z_height 0.47670355439186096
+contact [False False False False]
+torque [[ 1.4397597e+00 -4.0494628e+00  3.5863986e+00 -5.0548357e-01
+  -3.4603286e+00 -5.9237218e+00  6.7718446e-01  1.2387607e+00
+   3.3980125e+01  4.1341782e-04  2.8525417e+00  2.8734570e+01]]
+vel 0.7106741
+feet_height -0.045197465
+z_height 0.4704638421535492
+contact [False False False False]
+torque [[ -1.5762906   -0.22731836  -7.027025     0.9093732    0.17015773
+   -7.282986     1.2007782   -2.2168417    2.086337     0.5161486
+    4.552318   -10.674122  ]]
+vel 0.75948364
+feet_height -0.0479178
+z_height 0.46111398935317993
+contact [False False False False]
+torque [[  4.648021     3.743838   -11.708813     8.55665      1.2509692
+  -15.106096     4.6198344   -0.88243234 -13.332993     3.584502
+   -0.4112247  -10.4508    ]]
+vel 0.86231
+feet_height -0.065238185
+z_height 0.4484156370162964
+contact [False False False False]
+torque [[  6.009801     1.6804662  -10.007607     3.1698895    3.0096633
+   -5.089917     4.7336674    0.48285043  -4.0760746    2.2965584
+    1.7095857  -12.155959  ]]
+vel 0.98220205
+feet_height -0.07642267
+z_height 0.43246424198150635
+contact [False False False False]
+torque [[  4.0230155    0.97541386 -11.709974    13.904276     2.634431
+    2.749075     5.015856    -0.13660327 -15.017751     9.343751
+    0.7980402  -12.116851  ]]
+vel 1.1156999
+feet_height -0.086432815
+z_height 0.4125962555408478
+contact [False False False False]
+torque [[ 11.459425     2.7549722    2.810136    10.04718      1.9331508
+    0.5718222    8.383297    -0.32663167  -6.6689906    8.022619
+    0.94203895 -10.606289  ]]
+vel 1.2790934
+feet_height -0.08360543
+z_height 0.38809630274772644
+contact [False False False False]
+torque [[  8.183666    2.1657553   5.626742   15.685709    5.3392086 -18.174911
+    6.155864   -1.4479344  -9.710816    6.568015    1.0185928   0.3839348]]
+vel 1.4684201
+feet_height -0.08218269
+z_height 0.3592599034309387
+contact [False False False False]
+torque [[ 12.469545    -3.1115527    1.2131343   17.920559     9.592007
+  -18.932356     5.4580665   -1.5600221  -27.206688    11.091064
+   -0.34240562 -10.664594  ]]
+vel 1.6780033
+feet_height -0.0761198
+z_height 0.3259814381599426
+contact [False False False False]
+torque [[  3.9508948   2.1118784 -16.00106    22.752234    8.628595  -24.748938
+    5.790861   -0.8594189 -23.891872    9.700832    1.0432074 -32.77285  ]]
+vel 1.8670404
+feet_height -0.07863681
+z_height 0.2890012860298157
+contact [False False False False]
+torque [[ 10.37388     -0.41755593 -23.913208    16.264023     5.7975574
+  -23.622242     4.374883    -0.7208593  -17.00338      8.441151
+    0.15794593 -26.523567  ]]
+vel 2.054861
+feet_height -0.08266406
+z_height 0.24798153340816498
+contact [False False False False]
+torque [[  3.0422206   0.5626903 -24.171238    9.210655    1.4279606 -18.401386
+    7.2586846   1.0812871 -25.060968    6.254577   -3.122765  -17.030571 ]]
+vel 2.2436352
+feet_height -0.08501972
+z_height 0.20309345424175262
+contact [False False False False]
+torque [[ 14.884886   -3.2828586 -25.2235     10.560987    4.7277427 -20.425621
+    1.3520005  -0.7261833 -25.33091    12.487477   -1.0064225 -18.087002 ]]
+vel 2.4326994
+feet_height -0.08679516
+z_height 0.1543402373790741
+contact [False False False False]
+torque [[ 18.322868     0.48264372 -17.435097     8.429608     2.4311247
+  -20.896605    16.275917    -5.693951   -14.821062     9.981075
+   -1.1534586  -24.863373  ]]
+vel 2.6701207
+feet_height -0.088173434
+z_height 0.11033060401678085
+contact [ True False  True False]
+torque [[ 16.654112   -21.340054   -20.662077     8.8855915    0.15178576
+  -20.221619    15.257818   -23.7        -18.35865     11.00901
+   -1.0595603  -23.542774  ]]
+vel 1.5067501
+feet_height -0.082093135
+z_height 0.09939661622047424
+contact [ True  True False  True]
+torque [[  4.5222974   -4.8053493  -17.970984     0.4388004  -21.941782
+  -16.75476      3.68999     -3.184859   -31.108227     0.76754767
+   -0.9874168  -24.329222  ]]
+vel 0.87074226
+feet_height -0.07847735
+z_height 0.11459050327539444
+contact [False  True  True  True]
+torque [[ -4.8096347    4.825835   -19.923847     9.68824     11.526366
+  -21.07486     -8.814624     0.04459661   4.25727     -5.1254354
+  -22.624401    17.065197  ]]
+vel 1.269963
+feet_height -0.08525792
+z_height 0.13804233074188232
+contact [ True  True  True  True]
+torque [[ -7.6266556  -10.362981    44.146633     8.129086    -5.923903
+   24.804056    -0.7390406   -1.4318926   22.594856     1.607552
+    0.39976996  31.128674  ]]
+vel 1.3691406
+feet_height -0.10917838
+z_height 0.16414368152618408
+contact [ True  True  True  True]
+torque [[-7.2087493 -7.8100924 45.43       4.7286305 -5.9852777 45.43
+   2.78467   -2.2922401 34.53299   18.258123  -9.839907  34.637566 ]]
+vel 1.5532228
+feet_height -0.13425767
+z_height 0.1954023391008377
+contact [ True  True  True  True]
+torque [[-13.957624    -3.773172    41.46355     -0.08895814 -14.209286
+   36.917313     3.2257047   -1.8024521   33.370907     4.959884
+  -11.292633    36.435257  ]]
+vel 1.7833128
+feet_height -0.16553456
+z_height 0.23020729422569275
+contact [ True  True  True  True]
+torque [[-9.101488   -2.923964   31.61622     1.5131297  -5.6562514  39.277695
+   1.0572522   0.28723574 24.588314    6.836396   -3.714072   23.351711  ]]
+vel 1.8937815
+feet_height -0.20288888
+z_height 0.26868683099746704
+contact [ True  True False  True]
+torque [[-18.619265   -14.398827    37.214645    10.240444   -19.049623
+   27.060568    -3.8540878   -0.65954566   4.9728885    9.719883
+  -11.288488     3.067295  ]]
+vel 2.0540397
+feet_height -0.24727304
+z_height 0.3098558187484741
+contact [ True  True False False]
+torque [[-23.7       -23.7        34.214775   23.7       -23.7        32.594475
+   -4.0150576   2.756482    8.294008    1.5126646   7.0258775  10.806455 ]]
+vel 2.126671
+feet_height -0.29150218
+z_height 0.34776636958122253
+contact [ True  True False False]
+torque [[-11.797428   -6.3808007   2.617054    9.785064   -5.0543756  15.450105
+   10.0519285  19.545452   21.97744    -0.5970357  14.622828   13.333498 ]]
+vel 1.9663478
+feet_height -0.29722187
+z_height 0.37827828526496887
+contact [False False False False]
+torque [[ 6.471995   6.8974776 34.55544    0.3292604  4.2440457 22.872082
+   5.4204583 -3.96245   40.267838  -2.6490917 -8.615955  45.43     ]]
+vel 1.6500617
+feet_height -0.25800538
+z_height 0.40463459491729736
+contact [False False False False]
+torque [[ -1.8557363   2.3426726  45.43       -1.8176622 -11.275669   45.43
+    2.9862719   2.0052319  45.43       -7.0361896  -5.2705107  45.43     ]]
+vel 1.4770727
+feet_height -0.21269284
+z_height 0.4260859191417694
+contact [False False False False]
+torque [[ 2.2037852  -3.5831928  45.43       -4.153802   -0.8617444  45.43
+  -0.10690427  3.5038483  45.43       -0.4001577   1.627449   45.43      ]]
+vel 1.2816665
+feet_height -0.16581236
+z_height 0.44354793429374695
+contact [False False False False]
+torque [[  6.613786   -10.975841    45.43        -4.3734617   -0.43683237
+   45.43        -1.5096412    0.28179806  45.43        -2.8949487
+    2.6129339   45.43      ]]
+vel 1.1157246
+feet_height -0.12422186
+z_height 0.457307904958725
+contact [False False False False]
+torque [[  4.9193053 -14.576945   45.43       -3.838501   -2.2276764  44.11447
+   11.127093    0.3750406  45.43       -3.5933418   2.1525204  45.43     ]]
+vel 0.97881335
+feet_height -0.09296376
+z_height 0.46820205450057983
+contact [False False False False]
+torque [[  4.4157686  -16.437422    45.43        -3.1389623   -3.0113566
+   45.43         6.447231     0.93607837  45.43        -5.452937
+    2.6120756   45.43      ]]
+vel 0.8908474
+feet_height -0.073198095
+z_height 0.4759300947189331
+contact [False False False False]
+torque [[  6.4813924 -17.704136   45.43       -3.3760254  -4.4999504  44.837536
+    6.2670903   1.3843861  45.43       -6.2934337   1.8860669  45.43     ]]
+vel 0.81247437
+feet_height -0.0624007
+z_height 0.4802120327949524
+contact [False False False False]
+torque [[  6.1476974 -14.301006   44.954376   -3.7059112  -2.2915246  35.443455
+    3.7560189   1.015645   45.43       -4.212689    2.1682286  45.43     ]]
+vel 0.7533491
+feet_height -0.056243263
+z_height 0.48098623752593994
+contact [False False False False]
+torque [[ 3.690513   -6.9390903  30.4532     -1.7967684  -0.43760115  0.9499002
+   1.1178713  -0.55552983 45.426357   -2.2802324   2.583814   42.7248    ]]
+vel 0.7216371
+feet_height -0.053366527
+z_height 0.4775960445404053
+contact [False False False False]
+torque [[ -1.8074954    0.14804932  -3.1827397   -0.49011716  -2.5855618
+  -11.004308     0.62374413   1.3431239   14.198505    -1.5380251
+    1.7287104    4.3102016 ]]
+vel 0.7296783
+feet_height -0.045317173
+z_height 0.4701974093914032
+contact [False False False False]
+torque [[ -0.88847226   3.679843   -17.828003     0.1405229   -0.451545
+   -3.178679    -0.10696174  -3.8887153   -5.9837174   -0.5877835
+   -3.0412087   -9.866048  ]]
+vel 0.8024767
+feet_height -0.051507816
+z_height 0.45996737480163574
+contact [False False False False]
+torque [[ -0.5388397    0.95408267 -15.159505    -0.67792356   1.0242732
+  -18.277905    -1.9790885   -0.18891644 -10.876463     0.63920355
+    1.0527942  -18.928907  ]]
+vel 0.89583796
+feet_height -0.06564098
+z_height 0.44668343663215637
+contact [False False False False]
+torque [[  0.41442508   1.1672866   -6.3369026    1.5781763    2.4257622
+   -8.716277    -0.80581987  -0.3062584  -11.286278    -1.1302085
+   -0.44729784 -13.45081   ]]
+vel 1.0138015
+feet_height -0.0746981
+z_height 0.4296296536922455
+contact [False False False False]
+torque [[  4.7930207   -0.46708155  -3.9721675    1.3718889    1.7892208
+   -6.565367     1.2894716    0.03153875 -12.12384      0.27623892
+    0.02287704 -11.576969  ]]
+vel 1.1862817
+feet_height -0.07525319
+z_height 0.40833839774131775
+contact [False False False False]
+torque [[ 11.448662     0.85551834 -12.1664505   13.583265     7.198126
+   -8.889636     3.9127684   -2.1058168   -5.6829724    8.229475
+   -0.73511803  -8.215497  ]]
+vel 1.338719
+feet_height -0.06651095
+z_height 0.383648157119751
+contact [False False False False]
+torque [[  4.2175355    0.1356898  -12.861949     9.116211     4.1927485
+  -20.52157      3.9761643    0.53781396  -2.306148     6.7395744
+    0.17474562 -25.137602  ]]
+vel 1.524408
+feet_height -0.07176031
+z_height 0.3541971743106842
+contact [False False False False]
+torque [[  7.6912565   2.5416741 -17.99405    13.946482    3.7752023 -26.037388
+   15.247115   -5.754068  -12.510331    9.467406    2.2627454 -25.265507 ]]
+vel 1.7437032
+feet_height -0.07797234
+z_height 0.32090163230895996
+contact [False False False False]
+torque [[ 9.0313215e+00 -2.4623573e-02 -2.2490337e+01  7.2363820e+00
+  -1.0274565e+00 -1.4531591e+01  1.2812235e+00 -9.1155005e-01
+  -1.3847233e+01  4.6488981e+00 -5.1540869e-01 -3.0153030e+01]]
+vel 1.8987983
+feet_height -0.08295472
+z_height 0.2832137644290924
+contact [False False False False]
+torque [[  6.708297    -2.2799225  -24.109623    21.813421     9.1613245
+  -17.998228     0.46308875   1.4202425  -13.8067255    9.335066
+   -1.4106145  -29.776012  ]]
+vel 2.0514195
+feet_height -0.0854357
+z_height 0.24174776673316956
+contact [False False False False]
+torque [[ 14.386289   -2.9072893 -20.750114   15.17191     3.9777117 -22.71717
+   13.857843   -2.697047  -16.520138   14.64429    -1.6590433 -22.230501 ]]
+vel 2.2487292
+feet_height -0.08811575
+z_height 0.19647809863090515
+contact [False False False False]
+torque [[  5.9471354    2.8730192  -21.522005    11.791796     2.7172713
+  -21.837236    14.549334    -1.6875284  -16.327024     0.21925312
+   -0.24760449 -21.706518  ]]
+vel 2.469559
+feet_height -0.090294115
+z_height 0.1459776610136032
+contact [False False  True False]
+torque [[  6.572973    -1.8761861  -13.886327    12.628709     0.68877226
+  -20.65145      1.7957153   -2.0623112  -18.928867     8.001229
+   -0.3581429  -21.480808  ]]
+vel 2.523533
+feet_height -0.085327804
+z_height 0.11238907277584076
+contact [ True False  True False]
+torque [[ 21.484776    -8.53903    -14.333562     2.2996273   -0.8974194
+  -22.320816    12.927839   -16.054857   -25.7405       2.2357545
+    0.56709033 -21.006548  ]]
+vel 1.4064113
+feet_height -0.08362356
+z_height 0.10430759936571121
+contact [ True  True False  True]
+torque [[  2.7703397  -3.0940537 -14.216172    3.3339264 -20.006233  -18.292585
+   -4.571633   -9.970832  -34.043716    1.240766  -12.678423  -27.576183 ]]
+vel 0.98193544
+feet_height -0.08292169
+z_height 0.12092345952987671
+contact [False  True  True  True]
+torque [[ -1.2338185  -1.190906  -12.149771   12.716459    4.1319923 -22.402279
+  -10.299694   -8.42173     6.9936357 -14.622861  -21.945581   45.43     ]]
+vel 1.3838226
+feet_height -0.09028427
+z_height 0.14519131183624268
+contact [ True  True  True  True]
+torque [[-13.003599   -1.3141077  32.579243    2.4199429  -5.130198    7.4626245
+   -8.883101    3.2036426  45.43        2.209301   -4.738974   33.49903  ]]
+vel 1.4873635
+feet_height -0.11543324
+z_height 0.17188841104507446
+contact [ True  True  True  True]
+torque [[ -6.9784656  -2.9355228  33.62584    -1.1361465  -0.5902365  44.813168
+    1.0879791  -4.3843293  35.36068    11.057712  -17.40791    36.819134 ]]
+vel 1.6522464
+feet_height -0.13913456
+z_height 0.2030031532049179
+contact [ True  True  True  True]
+torque [[-11.420335  -13.006372   30.773453   -2.6431413  -8.690168   42.20568
+    6.444858   -1.1767004  29.24585     9.342117  -11.364616   25.757622 ]]
+vel 1.8338633
+feet_height -0.16984363
+z_height 0.23857492208480835
+contact [ True  True  True  True]
+torque [[-1.2384626e+01 -9.2849140e+00  3.5240288e+01  1.0521069e+00
+  -1.4352206e+01  4.0549866e+01  2.9127984e+00 -2.3838803e-02
+   2.4075670e+01  9.6694469e+00 -9.3755741e+00  2.3710531e+01]]
+vel 1.9938692
+feet_height -0.20802136
+z_height 0.2782707214355469
+contact [ True  True False  True]
+torque [[-19.049126   -18.31054     34.806053    11.019011   -23.7
+   26.401289     0.09012863  -0.97883624   4.93751      8.404884
+  -10.18292      9.492186  ]]
+vel 2.1290293
+feet_height -0.25382578
+z_height 0.31959569454193115
+contact [ True  True False False]
+torque [[-23.7       -23.7        26.480408   23.7       -23.7        18.659058
+    4.625959    7.27532    13.138456    2.4150503  11.396922   27.116026 ]]
+vel 2.1433673
+feet_height -0.2900096
+z_height 0.35514387488365173
+contact [False False False False]
+torque [[ 2.6874032  6.4849267 11.220625  -5.440747   3.9661288  4.042874
+   8.02851    9.997389  25.587044  -2.0048852  5.409952  20.201199 ]]
+vel 1.8549663
+feet_height -0.2708451
+z_height 0.3844490647315979
+contact [False False False False]
+torque [[ 4.291496    0.81613505 28.000526   -1.4122536   0.47193855 28.986017
+   1.7468965  -6.497725   45.43        3.0684354  -8.006901   45.43      ]]
+vel 1.6193523
+feet_height -0.2210388
+z_height 0.41000881791114807
+contact [False False False False]
+torque [[-2.4584131  -4.620762   45.43       -1.6184595  -6.709362   45.43
+   8.4093075   6.5687985  45.43        3.638875   -0.19853163 45.43      ]]
+vel 1.4268339
+feet_height -0.17687139
+z_height 0.4299370050430298
+contact [False False False False]
+torque [[  9.25915    -12.654003    45.43        -5.055175     0.3446853
+   45.43        13.224531     0.79810876  45.43        -2.2257755
+    1.7260156   45.43      ]]
+vel 1.1844676
+feet_height -0.12332049
+z_height 0.44583573937416077
+contact [False False False False]
+torque [[  2.2136765  -15.647562    45.43        -4.2190423    0.51488084
+   45.43         7.197334     0.1085723   45.43        -2.9175053
+    1.7073627   45.43      ]]
+vel 1.0460341
+feet_height -0.07664525
+z_height 0.4584953486919403
+contact [False False False False]
+torque [[  5.672731  -18.521843   45.43       -0.8038098  -2.7387187  45.43
+    6.152464    1.0817482  45.43       -3.075868    1.1870937  45.202297 ]]
+vel 0.93336225
+feet_height -0.042117417
+z_height 0.46820691227912903
+contact [False False False False]
+torque [[  5.851402   -19.163765    45.43        -2.0170765   -3.7400074
+   45.43         5.8313212    0.50223124  45.43        -4.4066677
+    1.8302815   45.43      ]]
+vel 0.85089254
+feet_height -0.01858268
+z_height 0.47459089756011963
+contact [False False False False]
+torque [[  6.342715  -18.902775   45.43       -2.7593253  -4.6073866  45.43
+    4.642817    1.0260582  45.43       -4.6910524   3.0471902  45.43     ]]
+vel 0.7856368
+feet_height -0.0029786527
+z_height 0.47762688994407654
+contact [False False False False]
+torque [[  6.154856   -17.248692    45.43        -4.0819654   -4.3756757
+   42.965164     2.638667     0.64221406  45.43        -3.9066257
+    2.8431287   45.43      ]]
+vel 0.7480031
+feet_height 0.0071503744
+z_height 0.4772642254829407
+contact [False False False False]
+torque [[  5.7085586  -14.768566    44.136063    -0.34302837  -3.087968
+   12.57421      2.0938241    0.4579885   44.314354    -2.6234355
+    3.5101595   45.43      ]]
+vel 0.742706
+feet_height 0.014501885
+z_height 0.47356322407722473
+contact [False False False False]
+torque [[ -0.5357079  -1.8655167   4.9902945  -2.5522225  -3.5493164 -11.103516
+    0.5252713   3.2904234  36.219727   -0.7205755   2.5106633  23.803837 ]]
+vel 0.73439556
+feet_height 0.019342445
+z_height 0.46659055352211
+contact [False False False False]
+torque [[ -5.023431    -2.259955   -10.118469     2.518135    -0.92713916
+   -9.312649     1.1619024   -1.887188     7.1831827    1.0589216
+   -4.3740897    3.2473345 ]]
+vel 0.8028573
+feet_height 0.015455291
+z_height 0.4572370648384094
+contact [False False False False]
+torque [[ -0.23196542   1.4441388  -13.51287      1.6384463    0.47174186
+   -3.1699724   -1.2415562   -0.653585   -10.1538925   -0.70465076
+    1.4779432   -9.918724  ]]
+vel 0.88443387
+feet_height -0.007287927
+z_height 0.44452714920043945
+contact [False False False False]
+torque [[  2.8548656    3.853421   -17.546616     1.6294465    0.5361794
+   -1.0592504   -0.36278003  -0.2559613  -15.961112     1.3945673
+    2.030572    -8.709385  ]]
+vel 1.0159521
+feet_height -0.026271857
+z_height 0.42752745747566223
+contact [False False False False]
+torque [[  2.3605728    1.8395483    4.2205043    1.777375     2.424993
+  -18.723053     0.76433545   1.5595195   -3.1430175    2.3911583
+    1.8698869   -6.016626  ]]
+vel 1.193901
+feet_height -0.03704214
+z_height 0.4061192274093628
+contact [False False False False]
+torque [[  4.550397    -1.4205165   12.800644    -3.350772     0.78453964
+   -4.742939    -1.8861451    1.17787    -10.291234     0.9834606
+   -0.4730762  -13.085176  ]]
+vel 1.3802202
+feet_height -0.04695201
+z_height 0.38050520420074463
+contact [False False False False]
+torque [[ -4.015453     1.9004185  -16.375324   -11.455232     0.96666247
+  -17.8278      -3.6209326    1.7262368   -6.2352934   -2.7806869
+   -1.2044408   -8.476938  ]]
+vel 1.595446
+feet_height -0.059240308
+z_height 0.35026073455810547
+contact [False False False False]
+torque [[-10.755315     4.4458566  -13.90845     -5.8913198    2.8673182
+  -29.427649    -8.763423     0.83933437 -17.081097    -5.3850365
+   -3.5236626   -7.970992  ]]
+vel 1.8041706
+feet_height -0.059662864
+z_height 0.31541958451271057
+contact [False False False False]
+torque [[-16.602238     6.4775968   -8.644232    -7.2985926   -0.42907184
+  -20.398066    -1.5765061    5.108338   -21.650635   -10.011068
+    0.09986275 -22.420712  ]]
+vel 2.0080888
+feet_height -0.06604119
+z_height 0.2773973345756531
+contact [False False False False]
+torque [[-10.745415     1.8023119  -17.561935   -15.101903    -2.4048378
+  -21.069622   -11.470684     0.73432934 -14.114916    -8.514453
+    3.5675225  -25.375471  ]]
+vel 2.1393197
+feet_height -0.0741813
+z_height 0.23587048053741455
+contact [False False False False]
+torque [[-18.443504    2.4170427 -17.017714   -9.081565   -3.588472  -22.075071
+  -17.963444   -1.6157947 -23.498451   -8.688126   -3.6569262 -24.616776 ]]
+vel 2.2738109
+feet_height -0.081341624
+z_height 0.19093415141105652
+contact [False False False False]
+torque [[ -3.0797293   2.5006778 -29.50099    -3.844591   -0.9772346 -20.071472
+    4.2654557  -4.02386   -18.78276     0.9238376   1.8482649 -24.439213 ]]
+vel 2.46543
+feet_height -0.08750857
+z_height 0.15256209671497345
+contact [ True  True False False]
+torque [[  4.8058133 -23.7       -23.867079   -9.204235   -2.032058  -20.484825
+   -0.2680201   0.8764294 -15.45968    -0.7740521  -7.1466136 -22.421413 ]]
+vel 1.4670969
+feet_height -0.08487613
+z_height 0.13448569178581238
+contact [False  True False False]
+torque [[ -3.9447532  -11.801563    -6.6728735   -1.6140058  -23.7
+  -27.56241     -2.0723581   -0.14812818 -14.988224    -2.1397514
+   -4.518651   -21.992023  ]]
+vel 0.65005875
+feet_height -0.08424308
+z_height 0.12521858513355255
+contact [False  True  True  True]
+torque [[-5.0382524   0.07363254 -4.6632895   8.0359335   1.2169888   4.2765326
+   0.8650244  -7.544171    3.1153927   3.7310739  -1.6503344   8.816843  ]]
+vel 0.38874185
+feet_height -0.10540074
+z_height 0.12810790538787842
+contact [ True  True  True  True]
+torque [[ -6.144203    -7.310224    45.43         8.049072    -6.3046327
+   45.43         0.89210576 -19.465996    44.36776     10.94031
+   -4.7992826   45.43      ]]
+vel 0.5971865
+feet_height -0.10337347
+z_height 0.14144058525562286
+contact [ True  True  True  True]
+torque [[  1.7547162  -5.3117704  43.960266    2.370607  -20.223385   45.43
+   -2.2869716  -6.1311626  28.285202    4.022302   -8.212213   38.534615 ]]
+vel 0.95087934
+feet_height -0.115049824
+z_height 0.16281962394714355
+contact [ True  True  True  True]
+torque [[ -6.4848986 -16.369602   42.35267     4.3107934 -14.953537   27.806705
+   -2.3014793  -8.521989   45.43        6.021587   -4.5458884  26.990658 ]]
+vel 1.3112782
+feet_height -0.13583592
+z_height 0.19021078944206238
+contact [ True  True  True  True]
+torque [[ -8.455912   -12.439871    42.41088      3.0595944  -11.350248
+   45.43         0.19872355  -6.9783053   39.11064      6.95685
+   -1.7000651   37.555077  ]]
+vel 1.5608444
+feet_height -0.16366124
+z_height 0.22238309681415558
+contact [ True  True  True  True]
+torque [[-10.765319  -14.495059   44.615356    2.89086    -8.021469   39.793545
+   -1.1755488  -7.6114764  32.13829     3.4716706  -6.2805867  35.1932   ]]
+vel 1.7781188
+feet_height -0.1979576
+z_height 0.2595924735069275
+contact [ True  True  True  True]
+torque [[-13.939475  -21.039934   35.780045   12.704462  -18.816368   25.404972
+   -4.976068  -12.555933   16.426048    4.5757003 -12.512899    7.9188876]]
+vel 1.986918
+feet_height -0.24124163
+z_height 0.3006359040737152
+contact [ True  True False False]
+torque [[-23.7       -23.7        34.901646   23.634438  -23.7        27.10353
+   -3.4692664   4.088783   40.353897   -1.4305212   5.0927835   6.8629017]]
+vel 2.0869186
+feet_height -0.28712547
+z_height 0.33937615156173706
+contact [ True  True False False]
+torque [[-16.413101   -8.692384    3.7195446  15.952639   -8.8589     28.979296
+    7.6448503  19.64786    24.306406   -1.4163995   5.125942   20.56024  ]]
+vel 1.981811
+feet_height -0.30133408
+z_height 0.3713592290878296
+contact [False False False False]
+torque [[  5.6372943   5.738501   45.43      -10.671928    1.7269921  45.43
+    2.6506648  -4.455142   32.71872    -1.8291073   5.636948   45.43     ]]
+vel 1.6512935
+feet_height -0.2665659
+z_height 0.3983636796474457
+contact [False False False False]
+torque [[-3.1087174   0.87289727 45.43       -1.7491972  -6.7847447  45.43
+   4.026423   -0.12619793 45.43        1.4283473  -5.6868844  45.43      ]]
+vel 1.4861093
+feet_height -0.21588254
+z_height 0.4206584692001343
+contact [False False False False]
+torque [[ 1.8320014  -4.5673385  45.43       -4.044619   -0.6763894  45.43
+   8.982342    7.9307055  45.43       -0.85250944  3.4116726  45.43      ]]
+vel 1.2676835
+feet_height -0.1659572
+z_height 0.4385557770729065
+contact [False False False False]
+torque [[  5.8032494 -11.919408   45.43       -3.1326423  -0.7303086  45.43
+    9.574089    1.7036924  45.43       -2.7488132   1.445555   45.43     ]]
+vel 1.0859119
+feet_height -0.11962316
+z_height 0.4530283808708191
+contact [False False False False]
+torque [[  8.474916  -15.9321785  45.43       -1.5448337  -1.8087502  45.43
+   12.510279    1.6121569  45.43       -3.7374325   1.0121017  45.43     ]]
+vel 0.9561022
+feet_height -0.08510456
+z_height 0.4643995463848114
+contact [False False False False]
+torque [[  6.0894704  -19.207073    45.43         0.95511395  -3.610262
+   45.065216    11.145167     0.43174207  45.43        -5.112209
+    2.1624463   45.43      ]]
+vel 0.85471845
+feet_height -0.06297471
+z_height 0.4728453755378723
+contact [False False False False]
+torque [[  7.3298206  -19.75952     45.43        -0.35667583  -4.3571944
+   44.76596      5.8947444    0.6605495   45.43        -5.755274
+    0.7475262   45.291927  ]]
+vel 0.77198297
+feet_height -0.05181153
+z_height 0.4779610335826874
+contact [False False False False]
+torque [[ 6.6251984e+00 -1.9355412e+01  4.4429890e+01 -3.7298841e+00
+  -4.2144194e+00  4.5430000e+01  3.4197838e+00 -8.4962922e-01
+   4.4974491e+01 -4.8549867e+00 -1.0538846e-03  4.5430000e+01]]
+vel 0.70051277
+feet_height -0.045506924
+z_height 0.47964945435523987
+contact [False False False False]
+torque [[  5.5137763  -15.202508    37.519768    -2.1644547   -2.071412
+   14.770468     1.7751884   -3.054433    45.43        -2.8147972
+   -0.29076335  44.385696  ]]
+vel 0.66219294
+feet_height -0.042860985
+z_height 0.47772249579429626
+contact [False False False False]
+torque [[-0.8261909  -3.7122684  -0.867372   -0.39299023 -3.5359821  -7.4634237
+   0.5282884  -1.2632663  25.23439    -0.31957737  2.1298885  23.9187    ]]
+vel 0.6447567
+feet_height -0.042526126
+z_height 0.47202563285827637
+contact [False False False False]
+torque [[-3.8170614  -0.08756365 -7.9797716  -0.29542342  0.7871583  -9.961382
+   0.80306286 -1.0389712  -7.4271684  -0.12801224 -1.1798949  -0.2864263 ]]
+vel 0.6899164
+feet_height -0.055280373
+z_height 0.463112473487854
+contact [False False False False]
+torque [[  0.6065884    4.115971    -9.820599     0.39457604   1.7345662
+  -28.48402     -0.74023384  -1.439728   -10.83934     -1.4095161
+    0.0870955  -12.031474  ]]
+vel 0.81462
+feet_height -0.07630323
+z_height 0.45077580213546753
+contact [False False False False]
+torque [[  0.86722046   2.051169   -23.653933     0.66563517   3.4858212
+   -4.752387     0.3157526   -0.11370704  -8.681857     0.5279219
+    0.41646695 -14.781192  ]]
+vel 0.9393377
+feet_height -0.088160396
+z_height 0.43441373109817505
+contact [False False False False]
+torque [[  3.451208     0.04479432  -3.3291621   -0.23097593   1.5413985
+  -15.741803     1.2408838   -0.22184026 -14.634815     0.30008465
+   -0.61445946 -11.019518  ]]
+vel 1.1247642
+feet_height -0.08857895
+z_height 0.4135962426662445
+contact [False False False False]
+torque [[  3.7128909    1.5183475   -2.0011816    3.3530686    1.7322931
+  -15.287024     3.0001168   -0.92745376  -5.252321     1.6412506
+    0.69358504  -9.140597  ]]
+vel 1.3040688
+feet_height -0.07875485
+z_height 0.38899436593055725
+contact [False False False False]
+torque [[  2.9458547  -0.0840472 -12.056202   14.190394    4.073215  -26.480257
+    2.5408792   0.1397168  -4.010375   11.594839    1.6647463  -3.3795357]]
+vel 1.4417937
+feet_height -0.072840564
+z_height 0.359915554523468
+contact [False False False False]
+torque [[  5.127996    -1.7533097  -10.858822     2.3479795    0.8437641
+  -16.62818      5.27537     -4.323319   -13.85962     15.712302
+   -0.45692268 -22.401134  ]]
+vel 1.6631497
+feet_height -0.07281585
+z_height 0.32680583000183105
+contact [False False False False]
+torque [[ 13.998894    -9.75405    -16.728693    21.530823     2.406941
+  -24.991108    18.639935    -5.510031   -16.139067     2.890633
+    0.37332204 -29.880524  ]]
+vel 1.8821003
+feet_height -0.07563108
+z_height 0.2897997796535492
+contact [False False False False]
+torque [[  7.116362   -0.6855429 -23.13151    18.49207     3.5728145 -16.516264
+    6.343822   -6.1824846 -16.060926    8.254244   -1.8960443 -30.2639   ]]
+vel 1.9902356
+feet_height -0.077759765
+z_height 0.24906890094280243
+contact [False False False False]
+torque [[ 14.232109     0.6605098  -23.743855     3.5671728    3.383669
+  -21.82544      7.9210544   -7.46405    -15.701066     9.706281
+   -0.57925844 -26.348143  ]]
+vel 2.241482
+feet_height -0.080215834
+z_height 0.20406371355056763
+contact [False False False False]
+torque [[ 12.061489   -2.9250882 -16.491405    9.550373    2.942155  -21.592463
+    4.474996   -1.3724658 -16.530619   10.275051   -0.5974663 -23.22002  ]]
+vel 2.4143882
+feet_height -0.08037351
+z_height 0.1556927114725113
+contact [False False  True False]
+torque [[ 12.695359    -2.2750974  -24.173014    12.856701     3.2939053
+  -20.18093     12.734355    -3.5745516  -17.741053    14.249307
+   -0.40107605 -20.872898  ]]
+vel 2.4268048
+feet_height -0.08171083
+z_height 0.11920226365327835
+contact [ True False  True False]
+torque [[ 21.489113   -7.1174245 -16.27096     4.2520585   2.5739486 -31.667301
+   14.031593  -21.386272  -27.315275    1.6075327   3.5636756 -21.152912 ]]
+vel 1.2443345
+feet_height -0.07673683
+z_height 0.10967182368040085
+contact [ True  True False False]
+torque [[ 10.515071   -1.4243155 -19.932255    4.17646     3.6334872 -14.402402
+    5.2535405   1.7100077 -19.863802    2.3043752  -2.5763178 -21.871859 ]]
+vel 1.2708768
+feet_height -0.07641571
+z_height 0.11877943575382233
+contact [False  True False  True]
+torque [[ -7.502009    3.8696911 -20.244802   17.416615    2.9149485 -18.57282
+  -16.257765   -2.7544513  -7.5219474  -4.7612176 -23.7        45.43     ]]
+vel 1.3931528
+feet_height -0.08681062
+z_height 0.14102044701576233
+contact [ True  True  True  True]
+torque [[-1.4524435e+01 -2.7872639e+00  4.5430000e+01  3.9629400e-02
+  -1.4217537e+01  3.7117378e+01 -1.6638515e+01  1.5400069e+00
+   4.2172878e+01  2.9934502e+00 -1.3685486e+01  3.1132988e+01]]
+vel 1.529179
+feet_height -0.11272338
+z_height 0.16767618060112
+contact [ True  True  True  True]
+torque [[-13.577829   -1.445746   32.48529    -8.425775   -8.252752   45.43
+    1.8526046   2.3240988  22.425106   16.294926  -10.835399   40.79815  ]]
+vel 1.6914388
+feet_height -0.1359275
+z_height 0.19998884201049805
+contact [ True  True  True  True]
+torque [[-13.143973   -6.0885406  21.266987  -11.908579  -14.807131   27.276539
+    9.41514    -0.8804098  24.250746   12.79013   -15.57459    26.668135 ]]
+vel 1.9319541
+feet_height -0.16664648
+z_height 0.23749564588069916
+contact [ True  True  True  True]
+torque [[-12.396407  -10.420959   26.65173    -0.8088272 -18.116001   45.43
+    3.6274962   1.4420545  17.184673   13.093479   -7.415837   18.912296 ]]
+vel 2.0709426
+feet_height -0.20640984
+z_height 0.27874326705932617
+contact [ True  True False  True]
+torque [[-14.86912   -17.686386   30.860798    5.0237164 -23.7        26.07895
+    0.5551173   1.2840137   4.3640146   4.2298803  -5.082375    7.863012 ]]
+vel 2.188033
+feet_height -0.25192493
+z_height 0.32068541646003723
+contact [ True  True False False]
+torque [[-23.7       -23.431425    8.413937   23.7       -23.7        22.739758
+   -1.3749235   4.2145553  12.203609   -2.8422081   6.7815957  10.223854 ]]
+vel 2.1761868
+feet_height -0.28141505
+z_height 0.3570299446582794
+contact [False False False False]
+torque [[ 3.3207374  4.394894  37.67698   -9.810644   3.627771  15.630482
+   4.1554456  6.7299576 27.388393  -0.984734   9.718421   7.9006124]]
+vel 1.856803
+feet_height -0.2601459
+z_height 0.38712820410728455
+contact [False False False False]
+torque [[ 3.2441819  -1.158169   45.43        0.32316273  0.9252326   3.3751116
+   2.7264173  -5.858952   45.43        6.408285   -9.781992   45.43      ]]
+vel 1.6605792
+feet_height -0.20937291
+z_height 0.4132341742515564
+contact [False False False False]
+torque [[ 3.9025278  -4.877718   45.43        0.7881073   0.5368934  45.43
+   2.4015517   5.045053   45.43        7.225928   -0.95951945 45.43      ]]
+vel 1.4576073
+feet_height -0.16851819
+z_height 0.4346027672290802
+contact [False False False False]
+torque [[  6.880551  -12.061672   45.43       -2.5576892   0.6230492  45.43
+    2.9616992  -1.0420702  45.43        0.9149404   2.8632245  45.43     ]]
+vel 1.2572297
+feet_height -0.12189886
+z_height 0.45174041390419006
+contact [False False False False]
+torque [[  5.084684   -16.60165     45.43        -3.7715878   -0.13561101
+   45.43         4.332684     2.4887354   45.43        -1.3970747
+    1.8800509   45.43      ]]
+vel 1.0877162
+feet_height -0.080224216
+z_height 0.46572908759117126
+contact [False False False False]
+torque [[  5.429588  -17.071335   45.43       -1.9502451  -2.3923426  45.43
+    6.7847896   0.9097588  45.43       -2.2945518   2.2085366  45.43     ]]
+vel 0.97219205
+feet_height -0.049031258
+z_height 0.4766906201839447
+contact [False False False False]
+torque [[  6.230581  -18.104412   45.43       -2.4972687  -4.8278685  45.43
+    5.9194093   0.8080706  45.43       -3.4294891   2.30299    45.43     ]]
+vel 0.8773853
+feet_height -0.028203383
+z_height 0.48432785272598267
+contact [False False False False]
+torque [[  6.5968375 -16.86364    45.43       -4.1693864  -4.677644   45.104485
+    3.8484406   1.008219   45.43       -3.6362424   3.3701224  45.43     ]]
+vel 0.79454327
+feet_height -0.01467178
+z_height 0.48847588896751404
+contact [False False False False]
+torque [[  6.334686  -14.37958    45.03528    -1.9710236  -3.1098542  27.14873
+    2.029046    1.4302161  45.073845   -2.3092635   3.6873727  44.559055 ]]
+vel 0.7425003
+feet_height -0.006103158
+z_height 0.4892713129520416
+contact [False False False False]
+torque [[ 2.1148095  -6.494448   22.876713   -3.0212035  -2.1661932  -0.41363567
+   0.5197446   2.423413   44.5969     -1.3644521   4.1236706  31.284214  ]]
+vel 0.7011289
+feet_height -0.0021647066
+z_height 0.4861646294593811
+contact [False False False False]
+torque [[-0.9129018 -1.9158921  1.4909508  2.017982  -1.5441883 -6.8004117
+   0.8378818  2.6272612 18.180765  -1.1751902  1.186285  -0.7560509]]
+vel 0.69412565
+feet_height 0.0046097934
+z_height 0.480040043592453
+contact [False False False False]
+torque [[ -1.6137295    2.2245247   -6.369058     2.4409242   -0.42277315
+   -6.910231    -0.97730106  -2.6387596   -8.173364    -0.04704523
+   -4.297791   -10.661878  ]]
+vel 0.75064516
+feet_height -0.0069191605
+z_height 0.4708819091320038
+contact [False False False False]
+torque [[  0.5260319    1.6279142   -6.0301867   -0.5385802    0.39350528
+    4.909714    -1.7948017   -0.32815728  -9.729059     0.13220516
+    0.52477795 -13.407961  ]]
+vel 0.8682032
+feet_height -0.02772957
+z_height 0.45837071537971497
+contact [False False False False]
+torque [[  1.6811144    0.4689473   -9.330497     0.5203567    1.8800733
+  -17.47104      0.10812175   0.44619668 -14.689818     4.556698
+    0.7661835  -11.274707  ]]
+vel 0.9871365
+feet_height -0.041011013
+z_height 0.4419548511505127
+contact [False False False False]
+torque [[  2.8579183    0.47376382 -12.796947    -2.5080926    2.135922
+  -10.953466     0.1074625   -0.4790619   -0.15520746   1.6691155
+    0.5150608  -17.701824  ]]
+vel 1.1616164
+feet_height -0.044018563
+z_height 0.42134809494018555
+contact [False False False False]
+torque [[ 7.4477196e-03  1.4585414e+00 -1.6098133e+01 -8.1889778e-01
+   1.1551132e+00 -2.5456905e+01 -3.2395368e+00 -1.5581846e-02
+  -5.5570335e+00 -7.3812169e-01 -1.8752100e+00 -8.4131451e+00]]
+vel 1.3399498
+feet_height -0.049239673
+z_height 0.39666441082954407
+contact [False False False False]
+torque [[-1.1443501e+01  4.3365293e+00 -1.8223129e+01 -2.0147051e+01
+  -4.4189519e-01 -2.9937273e+01 -1.6131031e+01  2.2896323e-01
+  -1.9355709e+01 -4.8531222e+00  9.5459521e-03 -8.5038662e+00]]
+vel 1.5744351
+feet_height -0.0651605
+z_height 0.3666209578514099
+contact [False False False False]
+torque [[-2.0745453e+01  3.0436590e+00 -1.6409899e+01 -1.0225255e+01
+   3.6856025e-01 -2.2015491e+01 -8.9054976e+00  1.4863670e-02
+  -1.5246931e+01 -1.5327736e+01 -2.8876991e+00 -2.9952744e+01]]
+vel 1.7593428
+feet_height -0.06996041
+z_height 0.3343997001647949
+contact [False False False False]
+torque [[-14.84006     3.2639766 -22.395323  -13.20319    -1.3167279 -21.510088
+  -13.142193    3.1872149 -16.056763   -9.373267   -1.6556323 -24.033405 ]]
+vel 1.8495777
+feet_height -0.0798045
+z_height 0.29823654890060425
+contact [False False False False]
+torque [[ -3.843634     1.9096909  -24.697086   -10.319288    -3.8960774
+  -21.839378    -0.50499696   0.4525233  -17.905943    -9.538921
+    3.7118213  -19.800377  ]]
+vel 2.0961635
+feet_height -0.08778244
+z_height 0.2574145495891571
+contact [False False False False]
+torque [[ -7.7497106    3.629585   -25.351934    -0.31400937   3.8899531
+  -20.927528     3.704248     3.6321142  -19.686684   -13.186348
+   -1.1791275  -25.502956  ]]
+vel 2.286467
+feet_height -0.09247714
+z_height 0.21227683126926422
+contact [False False False False]
+torque [[-10.059984     3.336965   -14.623563    -7.846855    -2.3934762
+  -21.58997     -7.6160464   -0.1296909  -22.349966    -6.040753
+   -0.59788996 -25.072287  ]]
+vel 2.4521475
+feet_height -0.094919436
+z_height 0.162924662232399
+contact [False False False False]
+torque [[-15.501335    4.6539903 -13.989333  -21.784168   -2.6996555 -21.667667
+  -15.709301   -0.7388209 -24.983177  -13.371082   -9.38328   -22.094456 ]]
+vel 2.666873
+feet_height -0.09581898
+z_height 0.12272034585475922
+contact [ True  True False False]
+torque [[  6.469421  -23.7       -17.471184   -1.2551575 -16.157494  -14.19865
+   -1.352376   -4.934103  -23.033958    4.348396   -4.0042624 -21.16959  ]]
+vel 1.174194
+feet_height -0.08641237
+z_height 0.10914269089698792
+contact [False False  True  True]
+torque [[ -3.9941053  -9.87172   -27.256477    0.9724919 -11.114265  -10.921838
+   -3.2780342  -1.1975217 -17.20404    -7.9758186 -23.592638  -22.346098 ]]
+vel 0.35726127
+feet_height -0.088070005
+z_height 0.11574553698301315
+contact [ True  True  True  True]
+torque [[-12.914692   -4.0545363  26.960327    3.6777089   4.1086364  45.43
+   -4.77373   -11.282269   45.43        7.004416   -4.395715   22.961046 ]]
+vel 0.83080363
+feet_height -0.08927037
+z_height 0.132737934589386
+contact [ True  True  True False]
+torque [[-3.8920145 -8.6728525 45.43       2.5735073 -2.0047398 45.43
+  -2.1954145  3.9568324 45.43      -0.2935378 -1.1457512  7.443436 ]]
+vel 1.0116761
+feet_height -0.10794546
+z_height 0.15259504318237305
+contact [ True  True False  True]
+torque [[-10.126362  -14.86971    43.736553    8.546302  -13.328056   39.736618
+   -0.6667049   3.2580085  36.200535    5.4284153  -1.0514159  30.513683 ]]
+vel 1.2393534
+feet_height -0.1287331
+z_height 0.17791235446929932
+contact [ True  True  True  True]
+torque [[-11.516077  -23.30503    38.015793    2.399299   -6.76956    45.43
+    2.8035307  -3.8243032  31.507862    7.2929063 -11.427066   39.883617 ]]
+vel 1.5255536
+feet_height -0.15498048
+z_height 0.20903560519218445
+contact [ True  True  True  True]
+torque [[-11.933719   -16.699991    44.652283     0.9258191   -9.825968
+   42.602715     0.08473268   2.8950868   30.526455     4.388189
+   -8.755205    37.550182  ]]
+vel 1.7599359
+feet_height -0.18878427
+z_height 0.24475249648094177
+contact [ True  True  True  True]
+torque [[ -7.099335   -20.5854      45.43         9.843006   -15.661666
+   31.91037     -3.747458    -0.83650005  21.773018     1.9982326
+   -4.8600974   14.752685  ]]
+vel 1.948134
+feet_height -0.2291038
+z_height 0.2844642698764801
+contact [ True  True False False]
+torque [[-23.7        -23.7         37.97709     23.7        -23.7
+   32.62682     -6.039346     0.49128205   4.754933     1.4681847
+   -0.31752318   2.8405762 ]]
+vel 2.0998065
+feet_height -0.27462325
+z_height 0.3241840600967407
+contact [ True  True False False]
+torque [[-23.7       -23.7         8.329971   23.7       -19.453985   20.231821
+   -2.1584103   1.1217167  21.147282   -6.3792987   4.906203   25.060362 ]]
+vel 2.0647902
+feet_height -0.3019762
+z_height 0.3578526973724365
+contact [False False False False]
+torque [[ 5.360328   8.22998    1.7325284 -6.5024858  4.543657   5.118256
+   4.1534514 12.875172  25.443996  -3.309027   8.893042  30.185867 ]]
+vel 1.7166439
+feet_height -0.27079082
+z_height 0.38564246892929077
+contact [False False False False]
+torque [[  0.5871647    1.7585504   26.426254     2.9274893    0.6321973
+   11.963129    -0.33631656 -10.262722    45.43        -0.33506155
+   -3.2873824   45.43      ]]
+vel 1.5474923
+feet_height -0.21036234
+z_height 0.4097326099872589
+contact [False False False False]
+torque [[ 1.9216921 -5.229462  45.43      -2.303768  -2.4368296 45.43
+   7.4108195  1.8004735 45.43      -1.0826402  3.2485936 45.43     ]]
+vel 1.3420936
+feet_height -0.16017105
+z_height 0.42927372455596924
+contact [False False False False]
+torque [[  5.632609  -10.681314   45.43       -3.020619   -1.4248502  45.43
+    8.923684    2.8686192  45.43       -1.1242588   2.5981367  45.41729  ]]
+vel 1.1394495
+feet_height -0.11057196
+z_height 0.444832444190979
+contact [False False False False]
+torque [[  9.070253   -15.059645    45.43        -3.298595     0.10268039
+   45.43         3.9898057    0.75975883  45.43        -2.6176057
+    0.353265    45.43      ]]
+vel 0.98712635
+feet_height -0.06850479
+z_height 0.4572131037712097
+contact [False False False False]
+torque [[  4.481201   -17.181831    45.43        -2.2966175   -2.7808113
+   45.43         5.858747     0.61365026  45.43        -4.3550973
+    1.5215368   45.43      ]]
+vel 0.87258625
+feet_height -0.03934972
+z_height 0.4665849804878235
+contact [False False False False]
+torque [[  5.292892  -18.35653    45.43       -2.8161545  -4.118836   45.43
+    4.981092    0.8343629  45.43       -5.725031    1.9765778  45.43     ]]
+vel 0.78838736
+feet_height -0.021993473
+z_height 0.4725874960422516
+contact [False False False False]
+torque [[  6.6685896  -17.981537    45.43        -3.969843    -4.718267
+   45.43         3.2759335    0.92420226  45.43        -5.802726
+    1.9668498   45.43      ]]
+vel 0.71493614
+feet_height -0.011828966
+z_height 0.4751403033733368
+contact [False False False False]
+torque [[  6.0523896 -15.954941   45.43       -2.352487   -2.882801   26.077967
+    1.8453832  -1.5416276  45.43       -4.1134276   1.7843609  44.440243 ]]
+vel 0.6708054
+feet_height -0.0053058267
+z_height 0.4743756353855133
+contact [False False False False]
+torque [[ 1.2546949 -5.7043567 14.715383  -1.1511064  1.0695393 -5.393247
+   0.7200314 -0.5552059 44.633663  -1.9496927  3.4242754 36.86821  ]]
+vel 0.64391464
+feet_height -0.0039809346
+z_height 0.4699888825416565
+contact [False False False False]
+torque [[ -2.550716   -2.5945413  -7.9438915   2.8975487  -0.8812702 -14.719258
+    1.7897353   1.1430018   4.7665625  -1.4306571  -1.5331268   1.1169307]]
+vel 0.6731133
+feet_height -0.003298983
+z_height 0.46301332116127014
+contact [False False False False]
+torque [[-1.652911    2.41637    -9.183271   -0.7164757   0.81521565 -7.8963947
+   0.17277083 -3.155878   -4.4077687  -1.3773444  -1.7797456  -9.796804  ]]
+vel 0.74250406
+feet_height -0.02608098
+z_height 0.4527833163738251
+contact [False False False False]
+torque [[  0.5007188    2.1673617   -5.195265    -1.8663232    0.78907806
+   -3.3022408   -0.99593335   0.35302892 -11.001868    -1.0793052
+    1.0674222   -6.8199763 ]]
+vel 0.86931854
+feet_height -0.04848232
+z_height 0.4387548863887787
+contact [False False False False]
+torque [[  0.01764888   2.92519     -5.089298     1.4069629    1.0375121
+    4.7291365    1.0970802    0.79341704 -12.765253     0.48752493
+    0.5201939  -12.510937  ]]
+vel 1.0261141
+feet_height -0.06755888
+z_height 0.4200453460216522
+contact [False False False False]
+torque [[  4.815965     0.37962604  -4.3268003   -2.4261436    0.59650904
+  -12.767032    -0.49599886   0.8244931    0.520114    -0.02860123
+    0.24107891  -8.377609  ]]
+vel 1.2271305
+feet_height -0.06671063
+z_height 0.39694640040397644
+contact [False False False False]
+torque [[ -3.6223097    1.6985209  -12.347963    -8.137194     0.18229446
+  -13.5048      -2.95596     -0.61412513   0.42062366  -2.247036
+   -2.032743     2.3389006 ]]
+vel 1.4222807
+feet_height -0.060855195
+z_height 0.36989983916282654
+contact [False False False False]
+torque [[ -5.753946    6.030644   -6.124284   -1.4380836   2.1495004  -8.725664
+   -7.974757    1.9993603  -6.4715056   0.9011918  -1.8487928 -25.353819 ]]
+vel 1.6113333
+feet_height -0.06837541
+z_height 0.33906131982803345
+contact [False False False False]
+torque [[-14.460705     1.8032613  -18.426445    -8.258339     0.48146576
+  -15.929761   -10.809513    -0.48030895  -9.84749     -0.595766
+    1.1593363  -27.185196  ]]
+vel 1.7736057
+feet_height -0.076175064
+z_height 0.304749459028244
+contact [False False False False]
+torque [[-14.220806     3.2194233  -24.906387    -8.7078       1.9283733
+  -17.778885    -0.5990519    2.0348465  -22.201931    -4.5060267
+    0.13460672 -17.083235  ]]
+vel 1.9701337
+feet_height -0.08387385
+z_height 0.2659822404384613
+contact [False False False False]
+torque [[-13.16884      2.9376984  -17.140764    -8.684951    -2.5471513
+  -19.873978   -10.382678    -0.19334579 -23.29732    -13.289348
+   -7.9809246  -24.37861   ]]
+vel 2.1426132
+feet_height -0.08845283
+z_height 0.22285211086273193
+contact [False False False False]
+torque [[ -9.918429     0.67783433 -14.047469   -19.513943    -5.3554435
+  -21.051468    -0.6750402    0.30397314 -22.378565    -4.732463
+   -5.5063148  -25.589195  ]]
+vel 2.4056122
+feet_height -0.09152077
+z_height 0.176944300532341
+contact [False False False False]
+torque [[-11.528406     3.2317321  -17.284697   -10.2873335    0.48188204
+  -21.451477    -8.944248     1.0224581  -21.290928   -13.373997
+    0.05330306 -24.477556  ]]
+vel 2.4997647
+feet_height -0.09677304
+z_height 0.13036136329174042
+contact [ True  True False False]
+torque [[  4.2103705 -17.287024  -23.128178    3.3545887  -8.394068  -20.457462
+    1.7799156   0.2994693 -25.00974     9.047525   -8.479541  -22.999273 ]]
+vel 1.8313528
+feet_height -0.08998901
+z_height 0.10970644652843475
+contact [ True  True  True  True]
+torque [[  3.0571318  -22.822989    -9.071281     0.75583476 -23.7
+  -19.615892    -3.4314084   -3.5022688  -23.39257      2.142065
+   -4.0323014  -21.464308  ]]
+vel 0.35931173
+feet_height -0.09051175
+z_height 0.11452606320381165
+contact [ True  True  True  True]
+torque [[-10.480951   -7.6967454  17.450083    8.276       1.1757598  20.217897
+   -4.647499  -23.7        14.786577    6.1975236 -18.738087   40.32821  ]]
+vel 0.7244701
+feet_height -0.09070561
+z_height 0.13218922913074493
+contact [ True  True False  True]
+torque [[ 1.082994   -7.536758   45.43        2.3738194  -3.4751682  45.43
+  -4.3930984   1.4193788  34.162663    2.549725   -0.35234797 21.699135  ]]
+vel 0.9816079
+feet_height -0.10689644
+z_height 0.15265929698944092
+contact [ True  True  True  True]
+torque [[ -4.6053576  -8.491299   42.187737    5.231708  -12.1961355  45.43
+   -5.6095166   3.1382904  33.01672     4.3875575  -1.8937662  32.380642 ]]
+vel 1.1957642
+feet_height -0.12759152
+z_height 0.17695137858390808
+contact [ True  True  True  True]
+torque [[-12.69074     -7.417646    45.43         0.53014386  -4.633901
+   35.219666     2.7642345   -1.9181583   16.611969     6.312365
+   -5.067228    33.821182  ]]
+vel 1.391272
+feet_height -0.15171364
+z_height 0.20508025586605072
+contact [ True  True  True  True]
+torque [[-10.283212    -6.6469283   36.8834      -0.5026191   -7.9483037
+   41.004807     1.0828221    0.18870825  40.678375     4.8215137
+   -9.389186    38.73402   ]]
+vel 1.5911752
+feet_height -0.18005951
+z_height 0.23735304176807404
+contact [ True  True  True  True]
+torque [[ -7.5233045 -10.192015   45.095146    3.9301615  -8.895543   30.620472
+   -3.2286227  -4.4207087  18.422249    2.753304  -11.413595   33.465446 ]]
+vel 1.7775654
+feet_height -0.21480142
+z_height 0.2746836841106415
+contact [ True  True  True  True]
+torque [[-16.86962   -23.7        34.66883    17.777756  -23.7        35.606457
+   -7.355712   -8.767403    7.3783727   3.648736  -14.061369    4.3257937]]
+vel 1.9806412
+feet_height -0.25774068
+z_height 0.31523415446281433
+contact [ True  True False False]
+torque [[-23.7        -23.7         35.80994     23.7        -23.7
+   27.185581    -2.3091252    8.276279    28.732674    -0.30432856
+    6.0444894    5.0882897 ]]
+vel 2.0664477
+feet_height -0.29964572
+z_height 0.35226333141326904
+contact [ True  True False False]
+torque [[-8.713871  -5.315229   8.104748   6.953611  -4.3609633  5.7501845
+   7.21505   16.797544  29.86727   -1.6798329  7.9936557 40.75297  ]]
+vel 1.8929033
+feet_height -0.3065012
+z_height 0.38215112686157227
+contact [False False False False]
+torque [[ 5.045756    7.2025385  45.43       -5.7525992   3.12665    45.43
+   0.41793555 -9.425845   43.16163    -1.7001483  -4.2571225  45.43      ]]
+vel 1.5972408
+feet_height -0.26385266
+z_height 0.40757066011428833
+contact [False False False False]
+torque [[-1.9012873   0.72696286 45.43        0.10885574 -2.8019524  45.43
+   4.676165    1.9722009  45.43        4.9228034  -3.1269145  45.43      ]]
+vel 1.4070789
+feet_height -0.2126664
+z_height 0.4285345673561096
+contact [False False False False]
+torque [[ 7.256047  -4.7017055 45.43      -2.4749308  2.7054725 45.43
+   8.583891   2.5418622 45.43      -0.1514312  1.563133  45.43     ]]
+vel 1.2063363
+feet_height -0.16114447
+z_height 0.44515812397003174
+contact [False False False False]
+torque [[  8.623135   -11.559153    45.43        -3.249968     1.6709805
+   45.31819      9.058668     0.23638856  45.43        -2.4713607
+   -0.12122637  45.43      ]]
+vel 1.0355797
+feet_height -0.11556879
+z_height 0.45862048864364624
+contact [False False False False]
+torque [[  5.8154697  -14.638992    45.43        -2.0049415    0.27279198
+   45.270527     8.032925     1.1581311   45.43        -4.3161607
+    1.5493085   45.43      ]]
+vel 0.9187147
+feet_height -0.08369954
+z_height 0.4688912034034729
+contact [False False False False]
+torque [[  5.78423    -16.733356    45.43        -2.6371777   -1.7911184
+   45.43         6.661506     0.75073165  45.43        -6.1157355
+    2.2412944   45.43      ]]
+vel 0.8199196
+feet_height -0.06297349
+z_height 0.4759318232536316
+contact [False False False False]
+torque [[  6.018288  -16.850899   45.43       -3.6374593  -2.6380992  45.43
+    5.813997    1.2680044  45.43       -6.0714374   2.34533    45.43     ]]
+vel 0.74228203
+feet_height -0.051147312
+z_height 0.47950756549835205
+contact [False False False False]
+torque [[  6.0646744 -14.73088    44.482254   -3.051065   -0.9331445  39.814804
+    3.3110704   0.4455151  45.426872   -4.55012     1.9905756  45.197205 ]]
+vel 0.6866999
+feet_height -0.044310406
+z_height 0.47964388132095337
+contact [False False False False]
+torque [[ 3.6530972 -7.0336165 27.677864  -1.3639011  1.0064993  4.1674266
+   1.0007713 -1.7621474 45.43      -3.143192   1.9123752 43.234535 ]]
+vel 0.66218305
+feet_height -0.041243345
+z_height 0.4757302701473236
+contact [False False False False]
+torque [[ -0.41392463  -0.9892649   -2.2080626    0.40873283  -3.1449132
+  -13.323141     1.4202831   -0.37251028  14.669494    -1.9467816
+    1.9333959    5.474838  ]]
+vel 0.68139225
+feet_height -0.035112344
+z_height 0.46825310587882996
+contact [False False False False]
+torque [[ -1.6846075    3.8883052  -16.46553      0.65777725  -0.41060954
+  -12.254543     1.1632814   -5.0985594   -7.819985    -1.2695115
+   -2.0745142   -6.61069   ]]
+vel 0.75369763
+feet_height -0.04676488
+z_height 0.45774921774864197
+contact [False False False False]
+torque [[  0.7376951    1.4674182   -5.6791596    2.2607822    0.5618872
+   -8.849003    -0.22459516  -0.52297676 -11.732637     3.3686335
+    0.08844036  -5.0976005 ]]
+vel 0.8616784
+feet_height -0.06574783
+z_height 0.44426247477531433
+contact [False False False False]
+torque [[  3.4081702    0.9207458    0.40489584  10.709213     4.122748
+   -7.184502     3.3035042    0.07715577 -11.09631      2.1732247
+    0.16158094 -12.422357  ]]
+vel 0.9859978
+feet_height -0.07945205
+z_height 0.42707887291908264
+contact [False False False False]
+torque [[  9.021011     0.4092215   -2.256726     6.9970603    2.900076
+  -25.97182      9.348911    -1.2691839  -13.58658      6.4296365
+    0.17121649  -8.927008  ]]
+vel 1.1509463
+feet_height -0.08373738
+z_height 0.4053811728954315
+contact [False False False False]
+torque [[  9.841679     1.3524661  -12.344196    12.615274     6.162471
+   -6.589077     5.7456584   -1.6574044   -7.2464833    9.734698
+   -0.03341529  -6.144854  ]]
+vel 1.32001
+feet_height -0.07434572
+z_height 0.3794983923435211
+contact [False False False False]
+torque [[  9.382854    -3.2790167  -22.908504     8.709387     2.1685698
+  -23.712439     2.9905148    0.23586428  -0.04443425   9.943163
+    1.0125942  -22.571198  ]]
+vel 1.5219511
+feet_height -0.074827455
+z_height 0.3501799702644348
+contact [False False False False]
+torque [[ 14.816818   -3.0875974 -24.85397     9.623043    3.787751  -24.949345
+   11.639759   -5.239659  -18.167603    5.3889446   2.8502011 -26.634815 ]]
+vel 1.7278705
+feet_height -0.08191255
+z_height 0.3160203695297241
+contact [False False False False]
+torque [[  7.800436    -1.5527904  -23.26417      4.0308194    3.154168
+  -24.3803       2.6170301    0.28400362 -14.300187     2.351221
+   -2.632274   -30.52103   ]]
+vel 1.9236654
+feet_height -0.08569202
+z_height 0.2782253921031952
+contact [False False False False]
+torque [[ 13.758423     1.2773006  -18.413307    13.418095     3.1628063
+  -19.351725     7.054581     0.2971508  -14.336463    15.631484
+   -0.21530724 -23.82082   ]]
+vel 2.0535402
+feet_height -0.08998553
+z_height 0.23650451004505157
+contact [False False False False]
+torque [[ 15.462884    -2.7488313  -21.247929     3.4560335    0.06867045
+  -19.295269     7.252789    -1.2169695  -13.236236     6.7796016
+    0.19500417 -20.878147  ]]
+vel 2.288554
+feet_height -0.09328769
+z_height 0.19044679403305054
+contact [False False False False]
+torque [[ 10.091774    -4.481908   -23.916603     8.421612     0.4169616
+  -18.307308     2.3452332    1.9762158  -16.14527     -1.5200129
+   -0.73621726 -17.763569  ]]
+vel 2.479453
+feet_height -0.09438511
+z_height 0.1401042938232422
+contact [False False  True False]
+torque [[ -2.769086     2.6752822  -23.885517     4.984938    -0.08087355
+  -19.022036     3.9863434   -1.924618   -16.196732     2.794247
+   -1.2249751  -19.341751  ]]
+vel 2.5482147
+feet_height -0.09446495
+z_height 0.1034485250711441
+contact [ True  True  True  True]
+torque [[ 18.418943  -10.846123  -15.162713    5.7690167   0.8259025 -21.606417
+    3.8518984 -20.800964  -26.814445    3.4574475 -15.694262   -9.189188 ]]
+vel 1.1832831
+feet_height -0.083782405
+z_height 0.10739642381668091
+contact [ True  True False  True]
+torque [[ -0.35921448  -2.4181216  -21.474726     4.614005   -14.622175
+  -25.233438    -0.37280005  -4.1712418  -18.549519     1.6692917
+  -11.379124   -26.471733  ]]
+vel 1.1332505
+feet_height -0.08626039
+z_height 0.13315336406230927
+contact [False False  True  True]
+torque [[ -4.090539    -1.3167295  -15.340656     5.8386407   -1.2143319
+  -17.818964    -0.74540037 -12.760933    23.284767    -7.488482
+  -13.306431     5.530061  ]]
+vel 1.5770408
+feet_height -0.10371308
+z_height 0.16087302565574646
+contact [ True  True False  True]
+torque [[-2.08252    -2.279734   25.034477    1.4202297  -5.953503   30.770142
+  -2.6828992   0.65911776 18.509026   -0.09741265 -0.72164756 32.96226   ]]
+vel 1.5453583
+feet_height -0.13603257
+z_height 0.18919508159160614
+contact [ True  True  True  True]
+torque [[-4.1775427  3.127349  25.782179  -0.7067295  2.0768585 39.830414
+  -2.5278127  1.1422477 28.084934   5.0930266 -8.31849   39.78492  ]]
+vel 1.644182
+feet_height -0.16269463
+z_height 0.22005876898765564
+contact [ True  True  True  True]
+torque [[-11.467289   -1.3840988  40.50365    -4.1588883  -9.436759   34.803566
+    7.837717   -3.5706277  27.542461    5.172509  -21.48361    44.02453  ]]
+vel 1.8071792
+feet_height -0.19374636
+z_height 0.2564148008823395
+contact [ True  True False  True]
+torque [[-10.027567   -15.67445     38.746834     5.3215566  -21.640265
+   32.728733    -0.9944357    0.07270539   2.1235929    3.4007862
+   -7.916722    17.648325  ]]
+vel 1.9834833
+feet_height -0.23537421
+z_height 0.2966165542602539
+contact [ True  True False False]
+torque [[-23.7       -23.7        25.984741   19.776054  -23.7        22.720234
+   -1.1628046   2.2272565   2.3432393   4.555926   -1.9616821   5.0780096]]
+vel 2.0974894
+feet_height -0.28132945
+z_height 0.33682525157928467
+contact [ True  True False False]
+torque [[-23.7       -20.678024   18.937683   23.7       -23.499052   13.712038
+    3.5727334  12.854277   10.818088    1.0982225  14.947483   10.750219 ]]
+vel 2.0619595
+feet_height -0.30806023
+z_height 0.3705078959465027
+contact [False False False False]
+torque [[  5.6037593   6.724546   40.509926  -12.29228     7.231005   21.298641
+    6.0599623   3.3918803  44.35044    -2.6464381  15.500158   20.65047  ]]
+vel 1.720212
+feet_height -0.27966094
+z_height 0.3983915150165558
+contact [False False False False]
+torque [[  1.2960846   5.75988    25.33557     8.053768   -2.352364   10.086935
+    3.801923   -5.760451   45.43        4.2659698 -13.672837   45.43     ]]
+vel 1.5643541
+feet_height -0.21467948
+z_height 0.4225860834121704
+contact [False False False False]
+torque [[ 2.1799304 -4.398535  45.43      -0.3032257  0.3668242 45.43
+  12.50894    4.2752395 45.43       4.01751   -1.3647258 45.43     ]]
+vel 1.3508741
+feet_height -0.1607576
+z_height 0.442728728055954
+contact [False False False False]
+torque [[ 6.4764657 -8.706756  45.43      -2.3858182  1.1820297 45.43
+  13.315109   0.2980582 45.43      -2.3551054  3.4113545 45.43     ]]
+vel 1.1601946
+feet_height -0.10952981
+z_height 0.45918384194374084
+contact [False False False False]
+torque [[ 8.0488958e+00 -1.1836275e+01  4.5430000e+01 -1.4314578e+00
+  -3.9337474e-01  4.4963577e+01  1.2312328e+01 -3.1799495e-02
+   4.5430000e+01 -2.8119352e+00  2.2133577e+00  4.5430000e+01]]
+vel 1.0105404
+feet_height -0.067867994
+z_height 0.47226256132125854
+contact [False False False False]
+torque [[  4.624717  -13.319646   45.43       -1.7236733  -2.5540917  45.43
+    6.6483445  -1.5799015  45.43       -4.341051    2.5184584  45.43     ]]
+vel 0.89266217
+feet_height -0.038345724
+z_height 0.4821050763130188
+contact [False False False False]
+torque [[  5.7441792 -14.3029785  45.43       -2.023621   -4.015787   45.43
+    4.948767    0.3997639  45.43       -5.2588468   2.4292743  45.43     ]]
+vel 0.7974588
+feet_height -0.018502988
+z_height 0.4885636568069458
+contact [False False False False]
+torque [[  5.935084  -13.45385    45.43       -3.41599    -4.660895   45.43
+    2.6848586   1.3143532  45.43       -5.582233    3.321486   44.89349  ]]
+vel 0.72629035
+feet_height -0.0055294484
+z_height 0.4916779398918152
+contact [False False False False]
+torque [[  5.767066  -11.775832   45.43       -0.949485   -2.8758435  23.855095
+    1.4884248   0.3441433  45.43       -4.3548512   3.4630618  45.43     ]]
+vel 0.6780761
+feet_height 0.00229311
+z_height 0.49129247665405273
+contact [False False False False]
+torque [[  1.6621404  -4.1813264  16.320068    2.088909    4.0255637 -10.310457
+    0.4977343   1.5732648  45.43       -2.5788      3.9393525  27.739815 ]]
+vel 0.6486931
+feet_height 0.006942898
+z_height 0.4872967302799225
+contact [False False False False]
+torque [[-3.2447855  -2.399201   -4.618482    1.8823328  -2.2922552  -4.8454432
+   1.7708988   2.0276341  10.574326   -0.87747633 -0.83583623  0.30045658]]
+vel 0.6679433
+feet_height 0.01151076
+z_height 0.4805743992328644
+contact [False False False False]
+torque [[-0.41715166  0.1934241  -8.191376    1.8956766   0.3328759  -6.012463
+  -0.18145558 -3.0549917  -6.9178224   0.2265181  -4.308452   -7.543995  ]]
+vel 0.73674095
+feet_height -0.00490357
+z_height 0.47083580493927
+contact [False False False False]
+torque [[  0.6119961    2.6206853   -2.9153545   -0.75930595   0.5022115
+   -6.567706    -1.5879045    0.23323548  -9.7552185    0.26551875
+    0.85737145 -16.894882  ]]
+vel 0.8517948
+feet_height -0.026684389
+z_height 0.45732030272483826
+contact [False False False False]
+torque [[  2.9900465    0.6524397  -18.851507    -1.35075      1.8149581
+   -6.5979342   -1.4164696    0.78480965 -14.985583     1.636008
+    0.50967336  -9.686392  ]]
+vel 1.0003484
+feet_height -0.039377898
+z_height 0.4394286274909973
+contact [False False False False]
+torque [[  3.6510477    0.5275489   -9.844124    -0.80844927   1.3346729
+  -12.675963    -1.2746751   -0.38282776   0.22787577   0.6237826
+    0.32496282  -9.522181  ]]
+vel 1.1924164
+feet_height -0.04217247
+z_height 0.4174412786960602
+contact [False False False False]
+torque [[ -1.3579216    1.4600682  -18.235573    -7.7651787    0.99777526
+  -10.422747    -4.3967857    0.5387881  -14.753584    -5.6645517
+   -0.65468967  -3.892445  ]]
+vel 1.3832009
+feet_height -0.049520884
+z_height 0.39130663871765137
+contact [False False False False]
+torque [[-12.719513    7.656562   -5.4470177 -10.751373    1.281374  -32.0014
+   -4.13442     1.1985478 -15.234368  -16.408184   -0.9410781  -8.04383  ]]
+vel 1.5992831
+feet_height -0.06344259
+z_height 0.3605981171131134
+contact [False False False False]
+torque [[-14.006147    3.734126  -21.410664   -7.057958    1.3749251 -22.819187
+   -1.2793002   3.2257807 -17.091576   -8.660524   -1.7358804 -28.118069 ]]
+vel 1.7904971
+feet_height -0.0709745
+z_height 0.32723909616470337
+contact [False False False False]
+torque [[-13.367344    1.3691263 -21.87555    -1.2734294  -2.023053  -21.801521
+   -6.5700088   1.7982979 -15.364778  -10.367901   -2.562326  -16.600128 ]]
+vel 1.913265
+feet_height -0.08090821
+z_height 0.28921782970428467
+contact [False False False False]
+torque [[ -3.7367995    2.315603   -25.280582   -14.441977    -5.771245
+  -21.76635     -5.7739224    0.05023316 -15.233494    -6.3398547
+    3.9026804  -26.702251  ]]
+vel 2.1506746
+feet_height -0.086125806
+z_height 0.24670837819576263
+contact [False False False False]
+torque [[ -6.739057     0.06668365 -14.137588   -10.830894     3.8514667
+  -20.822346   -11.009306    -0.77797216 -15.769511   -11.021361
+   -7.1987157  -24.42121   ]]
+vel 2.318058
+feet_height -0.08886876
+z_height 0.20127573609352112
+contact [False False False False]
+torque [[-19.51133     2.8444088 -13.593675   -8.251858   -3.0170674 -20.44614
+   -6.9959292   0.5070022 -18.645199  -15.724375   -5.5861573 -24.827839 ]]
+vel 2.441549
+feet_height -0.09398303
+z_height 0.15207380056381226
+contact [ True  True False False]
+torque [[  1.0737956    3.2699597  -14.386885    -8.382958     0.3647911
+  -20.824827    -9.397522    -0.43346247 -21.5313     -13.5392685
+   -1.778604   -21.61128   ]]
+vel 2.4125524
+feet_height -0.09408444
+z_height 0.12230964750051498
+contact [ True  True False False]
+torque [[  4.3881764 -23.7       -26.0292     -8.632776  -23.7       -29.20367
+  -14.029122   -4.330585  -22.40126    -6.184837   -3.9140651 -20.668728 ]]
+vel 0.8028173
+feet_height -0.08556835
+z_height 0.11486292630434036
+contact [ True  True  True  True]
+torque [[-14.95578    -4.036181    2.2953393   3.6838083  -6.2602997   6.0577774
+    1.130198  -20.888515   45.43        1.4826865 -19.626637   45.43     ]]
+vel 0.22646056
+feet_height -0.092376806
