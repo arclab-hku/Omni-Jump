@@ -1,14 +1,9 @@
 # Isaac Gym Environments for Legged Robots #
 This repository provides the environment used to train Unitree Go1 to walk on rough terrain using NVIDIA's Isaac Gym.
 It includes all components needed for sim-to-real transfer: actuator network(TODO), friction & mass randomization, noisy observations and random pushes during training.  
-**Maintainer**: Zeren Luo  
-**Affiliation**: Unitree Robotics
+**Maintainer**: Yimin Han
 
 [//]: # (**Contact**:  luozeren2@gmail.com )
-
-### Useful Links ###
-Original Project website: https://leggedrobotics.github.io/legged_gym/
-Paper: https://arxiv.org/abs/2109.11978
 
 ### Installation ###
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
@@ -33,7 +28,8 @@ Paper: https://arxiv.org/abs/2109.11978
 4. Tasks must be registered using `task_registry.register(name, EnvClass, EnvConfig, TrainConfig)`. This is done in `envs/__init__.py`, but can also be done from outside of this repository.  
 
 ### Usage ###
-1. Train:  
+1. Train: 
+For omni-jumping, gen_his algorithm fits the task best. Task-specific rewards are set in the legged_gym/envs/base/legged_robot.py and the config should also be tuned in legged_gym/envs/go2/go2_config_baseline.py
   ```python legged_gym/legged_gym/script/train.py --task=go1 --num_envs=1800```
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
     -  To run headless (no rendering) add `--headless`.
@@ -71,29 +67,3 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
 4. Register your env in `isaacgym_anymal/envs/__init__.py`.
 5. Modify/Tune other parameters in your `cfg`, `cfg_train` as needed. To remove a reward set its scale to zero. Do not modify parameters of other envs!
 
-
-### Troubleshooting ###
-1. If you get the following error: `ImportError: libpython3.8m.so.1.0: cannot open shared object file: No such file or directory`, do: `sudo apt install libpython3.8`
-
-### Known Issues ###
-1. The contact forces reported by `net_contact_force_tensor` are unreliable when simulating on GPU with a triangle mesh terrain. A workaround is to use force sensors, but the force are propagated through the sensors of consecutive bodies resulting in an undesireable behaviour. However, for a legged robot it is possible to add sensors to the feet/end effector only and get the expected results. When using the force sensors make sure to exclude gravity from trhe reported forces with `sensor_options.enable_forward_dynamics_forces`. Example:
-```
-    sensor_pose = gymapi.Transform()
-    for name in feet_names:
-        sensor_options = gymapi.ForceSensorProperties()
-        sensor_options.enable_forward_dynamics_forces = False # for example gravity
-        sensor_options.enable_constraint_solver_forces = True # for example contacts
-        sensor_options.use_world_frame = True # report forces in world frame (easier to get vertical components)
-        index = self.gym.find_asset_rigid_body_index(robot_asset, name)
-        self.gym.create_asset_force_sensor(robot_asset, index, sensor_pose, sensor_options)
-    (...)
-
-    sensor_tensor = self.gym.acquire_force_sensor_tensor(self.sim)
-    self.gym.refresh_force_sensor_tensor(self.sim)
-    force_sensor_readings = gymtorch.wrap_tensor(sensor_tensor)
-    self.sensor_forces = force_sensor_readings.view(self.num_envs, 4, 6)[..., :3]
-    (...)
-
-    self.gym.refresh_force_sensor_tensor(self.sim)
-    contact = self.sensor_forces[:, :, 2] > 1.
-```

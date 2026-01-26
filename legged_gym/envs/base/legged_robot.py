@@ -2609,31 +2609,6 @@ class LeggedRobot(BaseTask):
         rew[idx] = torch.exp(-ori_tracking_error_yaw[idx]/0.05)
 
         return rew 
-    
-    def _reward_headup(self): 
-        # start jumping threshold
-        #fhip_pos = self.front_hip_center()
-        #walking_mask = self.cur_goals[:, 0] - fhip_pos[:,0] > 2*self.cur_reward_point[:, 2]
-        #walking_mask = self.cur_goals[:, 0] - self.root_states[:,0] > 1.9 #(self.cur_reward_point[:, 2]/self.cfg.vertical_scale) * self.cfg.horizontal_scale
-        #print("goal_x is:", self.cur_goals[:, 0])          # approximately 40-200
-        #print("rpoint_z is:", self.cur_reward_point[:, 2]) # approximately 0.7
-        #jumping_mask = ~walking_mask
-        #desired pitch angle:
-        #desired_angle = torch.atan2(self.target_pos_z[:, 2]*1.5, self.target_pos_z[:, 0])
-        #desired_angle = torch.pi/4
-        #headup = self.forward[:, 2]/self.forward[:, 0] # when head up forward[:, 2] is positive. Head down, forward[:,2] is negative.
-        headup = torch.atan2(self.forward[:, 2], self.forward[:, 0])
-        #print("z dimension is: ", self.forward[:, 2])
-        #print("x dimension is: ", self.forward[:, 0])
-        #print("headup is :", headup)
-        #error = torch.abs(headup - desired_angle) #torch.pi/6) 4
-        #print("mean headup reward is:",torch.mean(error))
-        #print("-sum rew is :", -torch.sum(error, dim=-1)) # nearly -30 
-        #masked_error = jumping_mask * error
-        rew = torch.exp(headup)/(torch.exp(headup) + 1)
-        #rew = torch.exp(-error)
-        #print("rew is :", rew)
-        return rew
 
     def _reward_vel_switch(self):
         lin_vel_error = torch.square(self.commands[:, 0] - self.base_lin_vel[:, 0])
@@ -2643,26 +2618,6 @@ class LeggedRobot(BaseTask):
         trackx = ~trackz_agent_mask * torch.exp(-lin_vel_error / self.cfg.rewards.tracking_sigma)
         rew = trackz+trackx
         return rew
-
-    def _reward_pitch_tracking(self): # 1st order
-        world_vel = self.root_states[:, 7:10]
-        base_vel = self.forward
-        dot_product = torch.einsum('ij,ij->i', world_vel, base_vel) # output is in the shape num_envs
-        world_vel_norm = torch.norm(world_vel, dim=-1)
-        base_vel_norm = torch.norm(base_vel, dim=-1)
-        temp = world_vel_norm * base_vel_norm 
-        f = (dot_product/temp) + 1 # 值域[0,2], 单调递减, [num_envs,]
-        rew = f/2
-
-        return rew
-
-    def _reward_pitch_vel_tracking(self): #2nd order
-        last_vel = self.last_root_vel[:,0:3]
-        last_forward = self.forward
-        vel_acc = (self.root_states[:, 7:10] - last_vel) / self.dt
-        forward_acc = (self.forward - last_forward) / self.dt
-        rew = torch.exp(-torch.sum(torch.square(vel_acc - forward_acc), dim=1))
-        return rew/0.005
 
     def _reward_reaction_force(self):
         upward_agent = self.root_states[:, 9] > 0
@@ -2726,23 +2681,7 @@ class LeggedRobot(BaseTask):
         walking_ids = self.commands[:, 3] < 0.38
         rew[walking_ids] = 0
     
-        return rew #* (self.commands[:, 4])
-    
-    def _reward_base_height_flight(self):  # maybe useful
-        # Reward flight height
-        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-
-
-        # if self.jump_type == "upwards":
-        #     base_height_flight = (self.root_states[self.mid_air, 2] - 0.7)
-        # else:
-        base_height_flight = (self.root_states[self.mid_air, 2] - 0.8) # aliengo 0.85
-
-        rew[self.mid_air] = torch.exp(-torch.square(base_height_flight)/0.1)
-
-        rew[self.has_jumped + ~self.mid_air] = 0. # True + False = True
-
-        return rew 
+        return rew #* (self.commands[:, 4]) 
     
     def _reward_base_height_stance(self):
         # Reward feet height
@@ -2782,17 +2721,6 @@ class LeggedRobot(BaseTask):
         #rew[self.commands[:, 3]<0.45] = 0  ### only when stick on ground
         return rew
 
-# bounding box design
-    # def _reward_bounding_box(self): 
-    #     rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-    #     up_bond = self.commands[:, 3]+0.06
-    #     low_bond = self.commands[:, 3]-0.05
-    #     for i in range(10):
-    #         reward_ids = self.root_states_stored[:,2,i]>low_bond #整个轨迹全部落在框框里面就行
-    #     return rew
-        #self.root_states_stored[:,0:3,0:5]
-        #self.root_states_stored[:,0:3,5:10]
-
         
     def _reward_constrained_jumping(self):
         # 加上框的长度信息 bounding box
@@ -2806,60 +2734,8 @@ class LeggedRobot(BaseTask):
         bounding_box_cons = rewed_ids * passed_ids
         rew[rewed_ids] = 1
         #rew[bounding_box_cons] = 10        
-        return rew                       
-
-    def _reward_stick_to_ground(self):
-        # Reward maintaining contact at the very beginning of the episode:
-
-        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        command_ids = self.commands[:,3] < 0.45
-
-        # Give a reward of 1 if all feet are in contact: torch.all
-        idx = torch.all(self.contacts,dim=1)
-        # Give a reward of 1 if anyone feet are in contact: torch.all
-        #idx = torch.any(self.contacts,dim=1)
-        rew[torch.logical_and(command_ids,idx)] = 1.
-
-        return rew
-
-
-    def _reward_early_contact(self):
-        # Reward maintaining contact at the very beginning of the episode:
-        
-
-        env_ids = torch.logical_or((self.episode_length_buf - self.settled_after_init_timer <= 10) * \
-                                   (self.episode_length_buf - self.settled_after_init_timer >= 0) * self.settled_after_init,
-                                    (self.episode_length_buf - self._has_jumped_switched_time <= 10) *\
-                                    (self.episode_length_buf - self._has_jumped_switched_time >= 0) * self.settled_after_init)
-
-
-        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        # Give a reward of 1 if all feet are in contact:
-        idx = torch.all(self.contacts,dim=1)
-        rew[torch.logical_and(env_ids,idx)] = 1.
-        # Give a smaller reward if all feet are in contact when landed:
-        rew[self.has_jumped * self.was_in_flight * idx] = 0.2
-
-        return rew
-
-    def _reward_has_jumped(self): # when trigger the termination reward, provide a large reward in case the robot do not jump at all.
-        rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        #contact_f = torch.norm(self.contact_forces[:, self.feet_indices, 2], dim=-1)
-        contact_f = self.contact_forces[:, self.feet_indices, 2]
-        contact0 = contact_f[:,0] > 1.0
-        contact1 = contact_f[:,1] > 1.0
-        contact2 = contact_f[:,2] > 1.0
-        contact3 = contact_f[:,3] > 1.0    
-        contact = contact0 * contact1 * contact2 * contact3  
-        ids = torch.logical_and(contact,
-              torch.logical_and(self.root_states[:, 2]<0.39,
-              torch.logical_and(self.has_jumped, self.max_height>0.65)))
-        
-        rew[ids] = 100    
-        #print("has jumped reward is: ", torch.max(rew))
-        return rew        
+        return rew                             
     
-
     def _reward_base_height(self):
         # Penalize Base height away from target
         # print('sdfswwf',self.root_states[:, 2].unsqueeze(1).shape, self.measured_heights.shape, (self.root_states[:, 2].unsqueeze(1) - self.measured_heights).shape)
@@ -2964,46 +2840,11 @@ class LeggedRobot(BaseTask):
         #print('rew mean', torch.mean(rew*in_the_air))
         return rew*in_the_air
 
-    def _reward_uf_forces(self): # only encourage the up and forward GRF
-        z_contact = torch.sum(self.last_contact_forces[:, self.feet_indices, 2],dim=1)
-        upwards = z_contact > (self.G*1.1)
-        x_contact = torch.sum(self.last_contact_forces[:, self.feet_indices, 0],dim=1)
-        forward = x_contact > self.mass * 0.1
-        mask = torch.logical_and(upwards, forward)
-        #temp = torch.log(torch.sum(upwards)+1)
-        temp = torch.log(torch.sum(mask)+1)
-        rew = temp/(temp+1)
-        return rew
-    
-    def _reward_upward_forces2(self): # encourage the robot to take the regulated GRF.
-        h =1
-        z_contact = torch.sum(self.last_contact_forces[:, self.feet_indices, 2],dim=1)
-        z_des_acc = torch.sqrt(2*(-9.81)*h)/self.dt
-        z_error = torch.square(z_contact - z_des_acc)
-        rew = torch.exp(-z_error)
-        contact = torch.sum(self.contact_forces[:, self.feet_indices, 2],dim=1) > 1.
-        # last_contacts has been updated in the feet_air_reward 
-        jump_filter = torch.all(~contact, dim=1)
-        self.mid_air = jump_filter.clone()
-        return rew
-    
-    def _reward_forward_forces2(self): # encourage the robot to take the regulated GRF.
-        x_contact = torch.sum(self.last_contact_forces[:, self.feet_indices, 0],dim=1)
-        x_des_acc = self.command[:, 0]/self.dt
-        x_error = torch.square(x_contact - x_des_acc)
-        rew = torch.exp(-x_error)
-
-        return rew
-
     def _reward_orientation(self):
         # Penalize non flat Base orientation
         #print("orientation reward value is: ", torch.exp(self.projected_gravity[:, 0]))
         #return torch.exp(self.projected_gravity[:, 0])
-        return torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1)
-
-    def _reward_upright(self):
-        # Penalize non flat Base orientation
-        return torch.square(self.projected_gravity[:, 2])
+        return torch.sum(torch.square(self.projected_gravity[:, :2]), dim=1))
 
     def _reward_FL_phase_height(self):
         feet_height = self.feet_pos[:, 0, 2]
@@ -3208,40 +3049,6 @@ class LeggedRobot(BaseTask):
              4 *torch.abs(self.contact_forces[:, self.feet_indices, 2]), dim=1)
         return rew.float()
 
-    # def _reward_feet_clearance(self):
-    #     # Reward small feet distance from body
-
-    #     feet_relative = self.feet_pos[:, :, :3] - self.root_states[:, :3].unsqueeze(1)
-    #     feet_body_frame = torch.zeros(self.num_envs, 4, 3, device=self.device, requires_grad=False)
-    #     for i in range(4):
-    #         feet_body_frame[:,i,:] = quat_rotate_inverse(self.base_quat, feet_relative[:,i,:])
-    #     # feet_body_frame is with size of (num_envs, 4, 3)
-        
-    #     feet_pos_ini = torch.tensor(self.cfg.init_state.rel_foot_pos).to(self.device).transpose(1,0).view(1,4,3)
-    #     feet_pos_des = feet_pos_ini.clone()
-        
-    #     feet_force = torch.norm(self.contact_forces[:, self.feet_indices, :], dim=-1)
-    #     rising_feet_mask1 = torch.zeros([self.num_envs, 4])
-    #     rising_feet_mask2 = torch.zeros([self.num_envs, 4])
-    #     #for i in range(len(self.feet_indices)):
-    #     rising_feet_mask1 = feet_force < 0.1
-    #     rising_feet_mask2 = self.feet_pos[:, :, 2]>0.1
-    #     #print('rising_feet_mask1:',rising_feet_mask1)
-    #     #print('rising_feet_mask2:',rising_feet_mask2)
-    #     #rising_feet_mask = rising_feet_mask1 * rising_feet_mask2 # represent that both feet_force<0.1 and feet_pos > 0.05 will be consider as rised feet.
-    #     rising_feet_mask = rising_feet_mask2
-
-    #     # mask the same as the feet_air_time:
-    #     contact = self.contact_forces[:, self.feet_indices, 2] > 1.0
-    #     contact_filt = torch.logical_or(contact, self.last_contacts)
-
-    #     feet_error = torch.linalg.norm(feet_body_frame - feet_pos_des, dim=-1) # let foot pos in body frame closed to the desired foot position # num_envs, 4 
-    #     # Only reward if legs rised
-    #     #
-    #     rew = torch.sum(-torch.square(feet_error)) # this is an error.
-    #     rew[contact_filt] = 0.0
-    #     return rew
-
     def _reward_feet_air_time(self):
         # Reward long steps
         # Need to filter the contacts because the contact reporting of PhysX is unreliable on meshes
@@ -3312,13 +3119,7 @@ class LeggedRobot(BaseTask):
         angle_diff[:, 3] *= 10
         angle_diff[:, 6] *= 10   
         angle_diff[:, 9] *= 10
-        rew = torch.exp(-torch.sum(angle_diff,dim=1)*0.01)
-        # only control the feet position without joint positions:
-        # des_feet_envs = feet_pos_des.repeat(self.num_envs,1,1) #(4096,4,3)
-        # for i in range(4):
-        #     des_feet_envs[:,i,2 ] = desired_feet_pos_z #(4096,)
-        # feet_error = torch.linalg.norm(feet_body_frame - des_feet_envs, dim=-1)
-        # rew = torch.exp(-torch.sum(torch.square(feet_error), dim=-1))
+        rew = torch.exp(-torch.sum(angle_diff,dim=1)*0.01))
 
         rew[~self.mid_air] = 0.0 # only reward the agents in the mid-air        
         return rew
@@ -3509,20 +3310,6 @@ class LeggedRobot(BaseTask):
         self.body_max_heights[land_mask] = -1.
         self.all_feet_up *= ~land_mask
         return (rew_jump + rew_leave + rew_z_error) * need_to_jump - (rew_jump + rew_leave) * (~need_to_jump)
-
-    @no_jump
-    def _reward_tracking_z(self): #not used
-        z = self.root_states[:, 2]
-        z_error = torch.abs(z - self.commands_z.squeeze(1))
-        # return torch.exp(-z_error/self.cfg.rewards.tracking_sigma)
-        return -z_error
-
-    @no_jump
-    def _reward_tracking_z(self): #not used
-        z = self.root_states[:, 2]
-        z_error = torch.abs(z - self.commands_z.squeeze(1))
-        # return torch.exp(-z_error/self.cfg.rewards.tracking_sigma)
-        return -z_error
 
     def _reward_feet_angle_limit(self):
         # Penalize feet angle
