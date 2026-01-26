@@ -1,1 +1,0 @@
-z_feetTraj_hard2_2_actu_v2_1: ----------> 高度track可以。verstile jumping也不错。 可以做height_tracking 和前后左右跳，转跳的单次和多次跳跃实验。
