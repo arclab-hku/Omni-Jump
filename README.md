@@ -1,9 +1,4 @@
-# Isaac Gym Environments for Legged Robots #
-This repository provides the environment used to train Unitree Go1 to walk on rough terrain using NVIDIA's Isaac Gym.
-It includes all components needed for sim-to-real transfer: actuator network(TODO), friction & mass randomization, noisy observations and random pushes during training.  
-**Maintainer**: Yimin Han
-
-[//]: # (**Contact**:  luozeren2@gmail.com )
+# RL Jumping for Quadruped Robots #
 
 ### Installation ###
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
