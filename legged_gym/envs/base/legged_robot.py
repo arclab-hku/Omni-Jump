@@ -2492,20 +2492,6 @@ class LeggedRobot(BaseTask):
         return self.root_states[:, 9]
         #return (self.commands[:, 4])*self.root_states[:, 9]
     
-        # only let the robot on the ground to track the lin_vel_z command
-        # rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        # squat_idx = torch.logical_and(~self.mid_air,~self.has_jumped)
-        # z_vel_error = torch.square(self.commands[squat_idx, 5] - self.root_states[squat_idx, 9])
-        # rew[squat_idx] = torch.exp(-z_vel_error / self.cfg.rewards.tracking_sigma)
-        # #rew[~squat_idx] = 1
-        # # for has_jumped to track max_height ever.
-        # max_height_reward = (self.max_height[self.has_jumped] - 0.7) # encourage the max_height to approach 0.9
-        # rew[self.has_jumped] = torch.exp(-torch.square(max_height_reward)/self.cfg.rewards.tracking_sigma) * 20
-        # # for mid air to track robot height
-        # h_error = torch.square(self.root_states[self.mid_air, 2] - 0.7)
-        # rew[self.mid_air] = torch.exp(-h_error / self.cfg.rewards.tracking_sigma) * 10
-        # return rew
-    
     @no_jump
     def _reward_lin_vel_z(self):
         # return super()._reward_lin_vel_z()
@@ -2585,15 +2571,6 @@ class LeggedRobot(BaseTask):
 
         self.reset_idx_landing_error[torch.logical_and(has_jumped_idx, tracking_error>max_tracking_error)] = True
         
-        #self.tracking_error_store[has_jumped_idx] = tracking_error[has_jumped_idx]
-        #self.tracking_error_percentage_store[has_jumped_idx] = tracking_error[has_jumped_idx]/torch.linalg.norm(self.commands[has_jumped_idx,:2],dim=-1)
-
-        #if torch.all(env_ids == False): # if no env is done return 0 reward for all
-        #    pass
-        #else:
-            # Only give a reward for robots that have landed and are at the end of the episode:
-        #    idx = torch.logical_and(env_ids,has_jumped_idx)
-        #    rew[idx] = torch.exp(-torch.square(tracking_error[idx])/0.05)
         idx = has_jumped_idx
         #rew[idx] = torch.exp(-torch.square(tracking_error[idx])/0.05)
         rew[idx] = torch.exp(-tracking_error[idx]/0.05)
@@ -2632,56 +2609,6 @@ class LeggedRobot(BaseTask):
         rew[idx] = torch.exp(-ori_tracking_error_yaw[idx]/0.05)
 
         return rew 
-
-    # def _reward_tracking_lin_vel(self):
-    #     # Tracking of linear velocity commands (xy axes)
-
-    #     rew = torch.zeros(self.num_envs, device=self.device)
-    #     lin_vel_error = torch.zeros(self.num_envs, device=self.device)
-    #     # Linear velocity commands for flight phase:
-    #     flight_idx = self.mid_air * ~self.has_jumped
-    #     lin_vel_error[flight_idx] = torch.sum(torch.square(self.root_states[flight_idx, 7:9] - self.command_vels[flight_idx, :2]), dim=-1)
-    #     #lin_vel_error[flight_idx] = torch.sum(torch.square(self.root_states[flight_idx, 7:9] - self.command_vels[flight_idx, :2]), dim=-1)
-    #     # If told to stand in place, penalise the velocity:
-    #     stance_idx = self.has_jumped #* self._has_jumped_rand_envs
-    #     lin_vel_error[stance_idx] = torch.sum(torch.square(self.root_states[stance_idx, 7:9]), dim=-1)
-    #     #lin_vel_error[stance_idx] = torch.sum(torch.square(self.root_states[stance_idx, 7:9]), dim=-1)
-        
-    #     rew = torch.exp(-lin_vel_error)
-    #     rew[~self.has_jumped * ~self.mid_air] = 0
-    #     rew[self.has_jumped] = 0
-
-    #     return rew
-
-    # def _reward_tracking_ang_vel(self):
-    #     # Tracking of angular velocity commands (yaw only)
-    #     rew = torch.zeros(self.num_envs, device=self.device)
-    #     ang_vel_error = torch.zeros(self.num_envs, device=self.device) 
-
-    #     flight_idx = self.mid_air * ~self.has_jumped
-    #     ang_vel_error[flight_idx] = torch.square(self.root_states[flight_idx, 12] - self.command_vels[flight_idx, 5]) # only yaw.
-
-    #     #stance_idx = self.has_jumped 
-    #     #ang_vel_error[stance_idx] = torch.sum(torch.square(self.root_states[stance_idx, 10:13]),dim=-1)
-        
-    #     rew = torch.exp(-ang_vel_error/0.1)
-
-    #     rew[~self.has_jumped * ~self.mid_air] = 0
-    #     rew[self.has_jumped] = 0
-        
-    #     return rew
-
-    # def _reward_jumping(self):
-    #     # Reward if the robot has jumped in the episode:
-    #     env_ids = torch.logical_or(self.episode_length_buf == self.max_episode_length,
-    #               torch.logical_and(self.reset_buf, self.episode_length_buf < self.max_episode_length))
-
-
-    #     rew = torch.zeros(self.num_envs, device=self.device, requires_grad=False)
-        
-    #     rew[env_ids * self.has_jumped * self.max_height>0.50] = 1        
-        
-    #     return rew
     
     def _reward_headup(self): 
         # start jumping threshold

@@ -135,34 +135,15 @@ class Go2BaseCfg(LeggedRobotCfg):
         foot_height_target = 0.09
         max_height_reward_sigma = 0.05
 
-# yeke's
-        jump_weight = 1.0
-        jump_height_threshold = 0.55 # if body height > jump_height_threshold and first contact then it is a jump
-        hind_feet_z_axis_x_limit_upper = 0.2
-        front_feet_z_axis_x_limit_upper = 0.2
-        hind_feet_z_axis_x_limit_lower = -100.
-        front_feet_z_axis_x_limit_lower = -100.
-        hind_feet_z_axis_y_limit_upper = 0.15
-        front_feet_z_axis_y_limit_upper = 0.15
-        hind_feet_z_axis_y_limit_lower = -0.15
-        front_feet_z_axis_y_limit_lower = -0.15
-        max_air_time = 3.
 
         class scales(LeggedRobotCfg.rewards.scales):
-            task_pos = 0.#2.5
-            task_ori = 0.#2.0
             tracking_lin_vel = 1.0#2 just for walking 1.5#3.0#2.0 #3.0#2.0#1.5 #3.5#3.0#1.2#2.0#1.0#0.6#1.5#1.0
             tracking_ang_vel = 0.5#1.0 just for walking 0.6#0.8#1.0#1.2#1.0#0.8 #1.5#1.75#1.0#0.8#0.6
             tracking_pitch_vel = 0.#4.0
             tracking_yaw = 0.#0.7#0.6
             tracking_pitch = 0.
             lin_vel_z = 0.#1.5#3.5#-1.0 #-0.5 # base_lin_vel_z
-            lin_vel_z_world = 0.#0.5#0.5
-            lin_disz_world = 0.#1.0
             ang_vel_xy = 0.#-0.6#-0.6#-1.0#-0.6 # penalize on yaw
-            jump_distance = 0.#0.4
-            headup = 0#0.5#0.5
-            uf_forces = 0#2.5
             orientation = -0.4#-1.0#-0.8#-0.6#-0.5#-0.5#0.2 positive means encourage the robot to stand upright
             upright = 0.#-0.2 # negative means encourage the robot to stand upright
             vel_switch = 0.#1.0
@@ -178,25 +159,15 @@ class Go2BaseCfg(LeggedRobotCfg):
             feet_air_time = 1.#1.0 #1.0 for walking policy 0.
             stand_still = -0.1
             
-            stick_to_ground = 0.#0.5
 
             feet_distance = 0.#0.8#0.2#0.8#1.0#0.4#0.65
             feet_pos = 0.# 0 is for the walking policy 0.5 #0.4 #original design should be positive 0.6#0.6#0.8#0.4#0.6 # maybe need to be smaller
             early_contact = 0.#1.0
-            height_track = 0.#0.3#0.2#1.2#可以小一点#1.5#2.5#2.5#4.#5.#1.0#10.0#1.5#0.8  # add has_jumped mask and used the simple env
+            height_track = 0.
             max_track = 0.#1.5#2.5
-            task_max_height = 2.0#1.5#0.06 #0.08 is for walking #0.8#1.0 #0.5#1.5  #0.3#1.0#0.3#0.#0.5#0.1#0.5 #1.0 #2.0 #0.8 #2.5 #20.0 #0.
-            constrained_jumping = 0.#20.0#3.0#1.0
-            base_height = 0.#-1#0.#0.2#0.3#0.1
-            base_height_flight = 0.#0.8 #0.8 # Reward for being in the air, only active the first jump
-            base_height_stance = 0.#0.8 #0.4 # Reward fo            
+            task_max_height = 2.0#1.5#0.06 #0.08 is for walking #0.8#1.0 #0.5#1.5  #0.3#1.0#0.3#0.#0.5#0.1#0.5 #1.0 #2.0 #0.8 #2.5 #20.0 #0.         
             jumping = 40.#40.#1# 2 is for walking 30.0#40.#10.0 #25.0 #1.0
-            has_jumped = 0.#5.0 # remember to delete the has_jumped cutoff in check_termination
 
-            pitch_tracking = 0.#3.0#1.0 #1.0 需要它大，reward他 
-            pitch_vel_tracking = 0.#0.3 # penalize the acceleration difference.
-
-            feet_stumble = 0.#-0.5
             collision = -1.0
             action_rate = -0.001 #-0.01
             # #### motion
@@ -211,12 +182,6 @@ class Go2BaseCfg(LeggedRobotCfg):
             f_calf_motion = -0.02#0.#-0.2#-0.04
             r_calf_motion = -0.02#0.#-0.2#-0.04
             dof_pos_limits = 0.#-10.
-            # f_hip_motion_height = -0.08
-            # r_hip_motion_height = -0.08
-            # f_thigh_motion_height = -0.06
-            # r_thigh_motion_height = -0.06
-            # f_calf_motion_height = -0.06
-            # r_calf_motion_height = -0.06
 
             flfr_gait_diff = 0.0#0.02#-0.02#-0.06#-0.2
             flfr_gait_diff2 = 0.  #-0.015
@@ -251,13 +216,7 @@ class Go2BaseCfg(LeggedRobotCfg):
             ##imitation reward
             imitation_root_pos = 0.#10.0
             imitation_joint_angle = 0.#-0.06
-            imitation_feet_pos = 0.#-0.6#-1.0 #-0.8
-            
-            # yeke's reward
-            lin_vel_z = 0.#-1.0 #used for tracking z in normal mode at first, but it is used for              
-            tracking_z_jump = 0.#1.0
-            feet_angle_limit = 0.#-2.0   
-            tracking_z = 0.#0.5         
+            imitation_feet_pos = 0.#-0.6#-1.0 #-0.8       
 
     class evals(LeggedRobotCfg.evals):
         feet_stumble = True
