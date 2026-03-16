@@ -1,5 +1,7 @@
 # RL Jumping for Quadruped Robots #
 
+![Demo](images/algorithm_framework_final3.png)
+
 ### Paper
 https://ieeexplore.ieee.org/document/11045116/
 ### Video
