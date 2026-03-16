@@ -72,7 +72,7 @@ To explore the potential of our framework in accommodating different gaits, we c
    - `cd legged_gym && pip install -e .`
 
 ### Usage ###
-For omni-jumping, gen_his algorithm fits the task best. Task-specific rewards are set in the legged_gym/envs/base/legged_robot.py and the config should also be tuned in legged_gym/envs/go2/go2_config_baseline.py \\
+This repo only contains the RL policy part. For omni-jumping, gen_his algorithm fits the task best. Task-specific rewards are set in the legged_gym/envs/base/legged_robot.py and the config should also be tuned in legged_gym/envs/go2/go2_config_baseline.py \\
 1. Train: 
   ```python legged_gym/legged_gym/script/train.py --task=go1 --num_envs=1800```
     -  To run on CPU add following arguments: `--sim_device=cpu`, `--rl_device=cpu` (sim on CPU and rl on GPU is possible).
@@ -124,4 +124,4 @@ If you find this work useful, please cite:
 }
 ```
 ### LICENSE ###
-This repositorie is licensed under MIT license. International License and is provided for academic purpose. If you are interested in our project for commercial purposes, please contact [Dr. Peng Lu](https://arclab.hku.hk/People.html) for further communication.
+This repositorie is licensed under GPLv3 license. International License and is provided for academic purpose. If you are interested in our project for commercial purposes, please contact [Dr. Peng Lu](https://arclab.hku.hk/People.html) for further communication.
