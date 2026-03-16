@@ -1,6 +1,6 @@
 # OmniNet: Omnidirectional Jumping Neural Network With Height-Awareness for Quadrupedal Robots (RAL 2025)
 
-### [Paper](https://ieeexplore.ieee.org/document/11045116/) ###
+### [Paper📄](https://ieeexplore.ieee.org/document/11045116/) ###
 
 <p align="center">
     <strong>OmniNet: Omnidirectional Jumping Neural Network With Height-Awareness for Quadrupedal Robots</strong><br>
