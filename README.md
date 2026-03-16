@@ -1,4 +1,4 @@
-# RL Jumping for Quadruped Robots #
+# RL Jumping for Quadruped Robots (RAL 2025)#
 
 ![Demo](images/algorithm_framework_final3.png)
 
