@@ -1,5 +1,10 @@
 # RL Jumping for Quadruped Robots #
 
+### Paper
+https://ieeexplore.ieee.org/document/11045116/
+### Video
+https://www.youtube.com/watch?v=1Weu46sxc78
+
 ### Installation ###
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
 2. Install pytorch 1.10 with cuda-11.3:
