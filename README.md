@@ -1,11 +1,60 @@
-## RL Jumping for Quadruped Robots (RAL 2025)
+# OmniNet: Omnidirectional Jumping Neural Network With Height-Awareness for Quadrupedal Robots (RAL 2025)
 
+### Paper ###
+This repository contains the implementation of the following paper: 📄 [Paper](https://ieeexplore.ieee.org/document/11045116/)
+
+<p align="center">
+    <strong>OmniNet: Omnidirectional Jumping Neural Network With Height-Awareness for Quadrupedal Robots</strong><br>
+    Yimin Han, Jiahui Zhang, Zeren Luo, Yingzhao Dong, Jinghan Lin, Liu Zhao,<br>
+    Shihao Dong, and Peng Lu<br>
+    Adaptive Robotic Controls Lab (ArcLab), The University of Hong Kong.
+</p>
+
+### Demo ###
+🎥 [Video](https://www.youtube.com/watch?v=1Weu46sxc78 )
+
+### Overview ###
 ![Demo](images/algorithm_framework_final3.png)
+In the robotics community, it has been a longstanding
+challenge for quadrupeds to achieve highly explosive movements
+similar to their biological counterparts. In this work, we introduce a novel training framework that achieves height-aware and
+omnidirectional jumping for quadrupedal robots. To facilitate the
+precise tracking of the user-specified jumping height, our pipeline
+concurrently trains an estimator that infers the robot and its
+end-effector states in an online fashion. Besides, a novel reward
+is involved by solving the analytical inverse kinematics with pre-
+defined end-effector positions. Guided by this term, the robot is
+empowered to regulate its gestures during the aerial phase. In the
+comparative studies, we verify that this controller can not only
+achieve the longest relative forward jump distance, but also exhibit
+the most comprehensive jumping capabilities among all the existing
+jumping controllers.
 
-### Paper
-https://ieeexplore.ieee.org/document/11045116/
-### Video
-https://www.youtube.com/watch?v=1Weu46sxc78
+### Hardware Experiments ###
+#### Multi-directional Jump
+
+<p align="center">
+    <img src="images/output.gif" alt="output" width="48%" />
+    <img src="images/output2.gif" alt="output2" width="48%" />
+</p>
+
+#### Frame Traversing
+To better demonstrate the robot’s ability to adjust its gesture in the air, we conducted a frame-traversing experiment with the robot. The robot needs to pull its legs close to the trunk in the air, in order to jump through the frame without collision.
+<p align="center">
+    <img src="images/traversing.gif" alt="output" width="95%" />
+</p>
+
+#### Running Jump
+To explore the potential of our framework in accommodating different gaits, we combined one trotting policy and jumping policy together. The estimated height is the key for the controller switch in the low-level control loop. The experiments showcase that our framework can empower the robot’s movement to maintain continuity during gait transitions.
+<p align="center">
+    <img src="images/running_jump.gif" alt="output" width="95%" />
+</p>
+
+### CODE STRUCTURE ###
+1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
+2. Both env and config classes use inheritance.  
+3. Each non-zero reward scale specified in `cfg` will add a function with a corresponding name to the list of elements which will be summed to get the total reward.  
+4. Tasks must be registered using `task_registry.register(name, EnvClass, EnvConfig, TrainConfig)`. This is done in `envs/__init__.py`, but can also be done from outside of this repository.  
 
 ### Installation ###
 1. Create a new python virtual env with python 3.6, 3.7 or 3.8 (3.8 recommended)
@@ -22,12 +71,6 @@ https://www.youtube.com/watch?v=1Weu46sxc78
 5. Install legged_gym
     - Clone this repository
    - `cd legged_gym && pip install -e .`
-
-### CODE STRUCTURE ###
-1. Each environment is defined by an env file (`legged_robot.py`) and a config file (`legged_robot_config.py`). The config file contains two classes: one conatianing all the environment parameters (`LeggedRobotCfg`) and one for the training parameters (`LeggedRobotCfgPPo`).  
-2. Both env and config classes use inheritance.  
-3. Each non-zero reward scale specified in `cfg` will add a function with a corresponding name to the list of elements which will be summed to get the total reward.  
-4. Tasks must be registered using `task_registry.register(name, EnvClass, EnvConfig, TrainConfig)`. This is done in `envs/__init__.py`, but can also be done from outside of this repository.  
 
 ### Usage ###
 For omni-jumping, gen_his algorithm fits the task best. Task-specific rewards are set in the legged_gym/envs/base/legged_robot.py and the config should also be tuned in legged_gym/envs/go2/go2_config_baseline.py \\
@@ -69,3 +112,17 @@ The base environment `legged_robot` implements a rough terrain locomotion task. 
 4. Register your env in `isaacgym_anymal/envs/__init__.py`.
 5. Modify/Tune other parameters in your `cfg`, `cfg_train` as needed. To remove a reward set its scale to zero. Do not modify parameters of other envs!
 
+### Citation ###
+If you find this work useful, please cite:
+
+```bibtex
+@article{han2025omninet,
+    title={Omninet: Omnidirectional jumping neural network with height-awareness for quadrupedal robots},
+    author={Han, Yimin and Zhang, Jiahui and Luo, Zeren and Dong, Yingzhao and Lin, Jinghan and Zhao, Liu and Dong, Shihao and Lu, Peng},
+    journal={IEEE Robotics and Automation Letters},
+    year={2025},
+    publisher={IEEE}
+}
+```
+### LICENSE ###
+This repositorie is licensed under MIT license. International License and is provided for academic purpose. If you are interested in our project for commercial purposes, please contact [Dr. Peng Lu](https://arclab.hku.hk/People.html) for further communication.
